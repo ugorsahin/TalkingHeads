@@ -74,7 +74,7 @@ class Handler:
         text_area.send_keys(Keys.RETURN)
         while True:
             thinking = self.browser.find_elements(
-                By.CLASS_NAME, self.chatbox_cq)
+                By.CLASS_NAME, self.wait_cq)
             if len(thinking) == 0:
                 break
             time.sleep(1)
