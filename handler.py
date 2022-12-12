@@ -20,7 +20,7 @@ class Handler:
     wait_cq     = 'text-2xl'
     reset_xq    = '//a[text()="Reset Thread"]'
 
-    def __init__(self, username :str, password :str, 
+    def __init__(self, username :str, password :str,
         headless :bool = True):
         options = uc.ChromeOptions()
         options.add_argument("--incognito")
@@ -32,7 +32,7 @@ class Handler:
         self.browser.get("https://chat.openai.com/chat")
         self.login(username, password)
 
-    def login(self, username, password):
+    def login(self, username :str, password :str):
         """To enter system"""
         # Find login button, click it
         login_button = self.sleepy_find_element(By.XPATH, self.login_xq)
@@ -63,7 +63,7 @@ class Handler:
         done_button = self.sleepy_find_element(By.XPATH, self.done_xq)
         done_button.click()
 
-    def sleepy_find_element(self, by, query, attempt_count=20, sleep_duration=1):
+    def sleepy_find_element(self, by, query, attempt_count :int =20, sleep_duration :int =1):
         """If the loading time is a concern, this function helps"""
         for _ in range(attempt_count):
             item = self.browser.find_elements(by, query)
@@ -82,7 +82,7 @@ class Handler:
             time.sleep(sleep_duration)
         return
 
-    def interact(self, question):
+    def interact(self, question : str):
         """Function to get an answer for a question"""
         text_area = self.browser.find_element(By.TAG_NAME, 'textarea')
         for each_line in question.split("\n"):
@@ -102,7 +102,7 @@ class Handler:
         "Switch to tab"
         windows = self.browser.window_handles
         if idx > len(windows):
-            print("There is no tab with index {idx}")
+            print(f"There is no tab with index {idx}")
             return
         self.browser.switch_to.window(windows[idx])
 

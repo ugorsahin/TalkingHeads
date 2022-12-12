@@ -1,11 +1,10 @@
 # ChatGPT_Selenium
 An undetected-chrome interface to communicate with ChatGPT
 
-A short class definition to deal with ChatGPT via your code.
+You need to have Chrome installed.
+To pass Cloudflare robot test, undetected-chrome is a must.
 
-You need to have Chrome installed in your Linux.
-
-Here is how to quick start
+Here is how to start quickly.
 
 ```
 from handler import Handler
