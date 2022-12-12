@@ -82,7 +82,7 @@ class Handler:
             time.sleep(sleep_duration)
         return
 
-    def ask_question(self, question):
+    def interact(self, question):
         """Function to get an answer for a question"""
         text_area = self.browser.find_element(By.TAG_NAME, 'textarea')
         for each_line in question.split("\n"):
