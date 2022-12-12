@@ -1,5 +1,5 @@
 # ChatGPT_Selenium
-A Headless Chrome interface to communicate with ChatGPT
+An undetected-chrome interface to communicate with ChatGPT
 
 A short class definition to deal with ChatGPT via your code.
 
