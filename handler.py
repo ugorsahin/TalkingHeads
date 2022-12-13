@@ -18,7 +18,7 @@ class Handler:
     chatbox_cq  = 'text-sm'
     answer_cq   = 'group'
     wait_cq     = 'text-2xl'
-    reset_xq    = '//a[text()="Reset Thread"]'
+    reset_xq    = '//a[text()="New Thread"]'
 
     def __init__(self, username :str, password :str,
         headless :bool = True):
