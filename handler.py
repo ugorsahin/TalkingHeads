@@ -7,6 +7,53 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
+class TalkingHeads:
+    """An interface for talking heads"""
+    def __init__(self, username: str, password: str, headless=False, head_count=2):
+        self.heads = [Handler(username, password, headless) for _ in range(head_count)]
+        self.head_responses = [[] for _ in range(head_count)]
+
+    def interact(self, head_number, question):
+        """interact with the given head"""
+        response = self.heads[head_number].interact(question)
+        return response
+
+    def reset_thread(self, head_number):
+        """reset heads for the given number"""
+        self.heads[head_number].reset_thread()
+    
+    def reset_all_threads(self):
+        """reset heads for the given number"""
+        for head in self.heads:
+            head.reset_thread()
+
+    def start_conversation(self, text_1: str, text_2: str, use_response_1: bool= True):
+        """Starts a conversation between two heads"""
+        assert len(self.heads) >= 2, "At least 2 heads is neccessary for a conversation"
+
+        f_response = self.interact(0, text_1)
+        text_2 = text_2 + f_response if use_response_1 else text_2
+        s_response = self.interact(1, text_2)
+
+        self.head_responses[0].append(f_response)
+        self.head_responses[1].append(s_response)
+
+        return f_response, s_response
+
+    def continue_conversation(self, text_1: str= None, text_2: str= None):
+        """Make another round of conversation.
+        If text_1 or text_2 is given, the response is not used"""
+        text_1 = text_1 or self.head_responses[1][-1]
+
+        f_response = self.interact(0, text_1)
+        text_2 = text_2 or f_response
+
+        s_response = self.interact(1, text_2)
+
+        self.head_responses[0].append(f_response)
+        self.head_responses[1].append(s_response)
+        return f_response, s_response
+
 class Handler:
     """Handler class to interact with ChatGPT"""
 
@@ -18,7 +65,7 @@ class Handler:
     chatbox_cq  = 'text-sm'
     answer_cq   = 'group'
     wait_cq     = 'text-2xl'
-    reset_xq    = '//a[text()="New Chat"]'
+    reset_xq    = '//a[text()="New chat"]'
 
     def __init__(self, username :str, password :str,
         headless :bool = True):
