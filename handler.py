@@ -6,16 +6,32 @@ import undetected_chromedriver as uc
 ##from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+import selenium.common.exceptions as Exceptions
 
 class TalkingHeads:
     """An interface for talking heads"""
     def __init__(self, username: str, password: str, headless=False, head_count=2):
-        self.heads = [Handler(username, password, headless) for _ in range(head_count)]
+        self.head_count=head_count
+        self.driver = Handler(username, password, headless)
+        for _ in range(head_count-1):
+            self.driver.browser.execute_script(
+                '''window.open("https://chat.openai.com/chat","_blank");''')
+            time.sleep(1)
+
         self.head_responses = [[] for _ in range(head_count)]
+
+    def switch_to_tab(self, idx: int = 0):
+        "Switch to tab"
+        windows = self.driver.browser.window_handles
+        if idx > len(windows):
+            print(f"There is no tab with index {idx}")
+            return
+        self.driver.browser.switch_to.window(windows[idx])
 
     def interact(self, head_number, question):
         """interact with the given head"""
-        response = self.heads[head_number].interact(question)
+        self.switch_to_tab(head_number)
+        response = self.driver.interact(question)
         return response
 
     def reset_thread(self, head_number):
@@ -24,7 +40,8 @@ class TalkingHeads:
     
     def reset_all_threads(self):
         """reset heads for the given number"""
-        for head in self.heads:
+        for head in range(self.head_count):
+            self.switch_to_tab(head)
             head.reset_thread()
 
     def start_conversation(self, text_1: str, text_2: str, use_response_1: bool= True):
@@ -76,11 +93,29 @@ class Handler:
         self.browser = uc.Chrome(options=options)
         self.browser.set_page_load_timeout(15)
 
-        self.browser.get("https://chat.openai.com/chat")
+        self.browser.get("https://chat.openai.com/auth/login?next=/chat")
+
+        self.pass_verification()
         self.login(username, password)
+
+    def pass_verification(self):
+        while self.check_login_page():
+            verify_button = self.browser.find_elements(By.ID, 'challenge-stage')
+            if len(verify_button):
+                try:
+                    verify_button[0].click()
+                except Exceptions.ElementNotInteractableException:
+                    pass
+            time.sleep(1)
+        return
+
+    def check_login_page(self):
+        login_button = self.browser.find_elements(By.XPATH, self.login_xq)
+        return len(login_button) == 0
 
     def login(self, username :str, password :str):
         """To enter system"""
+
         # Find login button, click it
         login_button = self.sleepy_find_element(By.XPATH, self.login_xq)
         login_button.click()
@@ -89,11 +124,12 @@ class Handler:
         # Find email textbox, enter e-mail
         email_box = self.sleepy_find_element(By.ID, "username")
         email_box.send_keys(username)
+
         # Click continue
         continue_button = self.sleepy_find_element(By.XPATH, self.continue_xq)
         continue_button.click()
         time.sleep(1)
-        
+
         # Find password textbox, enter password
         pass_box = self.sleepy_find_element(By.ID, "password")
         pass_box.send_keys(password)
@@ -144,14 +180,6 @@ class Handler:
     def reset_thread(self):
         """the conversation is refreshed"""
         self.browser.find_element(By.XPATH, self.reset_xq).click()
-
-    def switch_to_tab(self, idx : int = 0):
-        "Switch to tab"
-        windows = self.browser.window_handles
-        if idx > len(windows):
-            print(f"There is no tab with index {idx}")
-            return
-        self.browser.switch_to.window(windows[idx])
 
 
 if __name__ == "__main__":
