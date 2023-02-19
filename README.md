@@ -73,3 +73,7 @@ If you would like to alter responses, use the positional arguments
 ```
 two_heads.continue_conversation(text_1: str= None, text_2: str= None)
 ```
+
+## Issues & Contribution
+
+I would be happy to answer any questions or accept your contributions. Let me know in issues if you need anything..
