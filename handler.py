@@ -74,18 +74,19 @@ class TalkingHeads:
 class Handler:
     """Handler class to interact with ChatGPT"""
 
-    login_xq    = '//button[text()="Log in"]'
+    login_xq    = '//button[//div[text()="Log in"]]'
     continue_xq = '//button[text()="Continue"]'
-    next_xq     = '//button[text()="Next"]'
-    done_xq     = '//button[text()="Done"]'
+    next_cq     = 'prose'
+    button_tq   = 'button'
+    # next_xq     = '//button[//div[text()="Next"]]'
+    done_xq     = '//button[//div[text()="Done"]]'
     
-    chatbox_cq  = 'text-sm'
-    answer_cq   = 'group'
+    chatbox_cq  = 'text-base'
     wait_cq     = 'text-2xl'
     reset_xq    = '//a[text()="New chat"]'
 
     def __init__(self, username :str, password :str,
-        headless :bool = True):
+        headless :bool = True, cold_start :bool = False):
         options = uc.ChromeOptions()
         options.add_argument("--incognito")
         if headless:
@@ -94,9 +95,9 @@ class Handler:
         self.browser.set_page_load_timeout(15)
 
         self.browser.get("https://chat.openai.com/auth/login?next=/chat")
-
-        self.pass_verification()
-        self.login(username, password)
+        if not cold_start:
+            self.pass_verification()
+            self.login(username, password)
 
     def pass_verification(self):
         while self.check_login_page():
@@ -139,11 +140,16 @@ class Handler:
         time.sleep(1)
 
         # Pass introduction
-        next_button = self.sleepy_find_element(By.XPATH, self.next_xq)
+        next_button = self.browser.find_element(By.CLASS_NAME, self.next_cq)
+        next_button = next_button.find_elements(By.TAG_NAME, self.button_tq)[0]
         next_button.click()
-        next_button = self.sleepy_find_element(By.XPATH, self.next_xq)
+        time.sleep(1)
+        next_button = self.browser.find_element(By.CLASS_NAME, self.next_cq)
+        next_button = next_button.find_elements(By.TAG_NAME, self.button_tq)[1]
         next_button.click()
-        done_button = self.sleepy_find_element(By.XPATH, self.done_xq)
+        time.sleep(1)
+        next_button = self.browser.find_element(By.CLASS_NAME, self.next_cq)
+        done_button = next_button.find_elements(By.TAG_NAME, self.button_tq)[1]
         done_button.click()
 
     def sleepy_find_element(self, by, query, attempt_count :int =20, sleep_duration :int =1):
@@ -173,8 +179,7 @@ class Handler:
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
         text_area.send_keys(Keys.RETURN)
         self.wait_to_disappear(By.CLASS_NAME, self.wait_cq)
-        box = self.browser.find_elements(By.CLASS_NAME, self.chatbox_cq)[0]
-        answer = box.find_elements(By.CLASS_NAME, self.answer_cq)[-1]
+        answer = self.browser.find_elements(By.CLASS_NAME, self.chatbox_cq)[-1]
         return answer.text
 
     def reset_thread(self):
