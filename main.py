@@ -2,8 +2,17 @@ from handler import Handler
 from constants import *
 
 chatgpt = Handler(USERNAME, PASSWORD, headless=False,)
-answer = chatgpt.interact("Hello, how are you today")
-chatgpt.interact("Yo! Tell me what was said in our conversatioin before")
+prompt = f"""
+Hey, I Bassel Attia and here's my resume so that you can know more about me
+{RESUME}
+I'm applying for this program
+{PROGRAM_DESCRIPTION}
+and they're asking me 
+{QUESTION}
+Answer this question considering the following points:
+{STYLE}
+"""
+answer = chatgpt.interact(prompt)
 print(answer)
 
 
