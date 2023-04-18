@@ -1,7 +1,7 @@
 from handler import Handler
 from constants import *
 
-chatgpt = Handler(USERNAME, PASSWORD, headless=False,)
+
 prompt = f"""
 Hey, I Bassel Attia and here's my resume so that you can know more about me
 {RESUME}
@@ -12,8 +12,10 @@ and they're asking me
 Answer this question considering the following points:
 {STYLE}
 """
+chatgpt = Handler(USERNAME, PASSWORD, headless=False,)
 answer = chatgpt.interact(prompt)
 print(answer)
+print(chatgpt.get_AI_percentage(answer))
 
 
 

@@ -2,7 +2,9 @@
 
 import time
 import undetected_chromedriver as uc
-
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 ##from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -92,12 +94,15 @@ class Handler:
         if headless:
             options.add_argument("--headless")
         self.browser = uc.Chrome(options=options)
-        self.browser.set_page_load_timeout(15)
-
-        self.browser.get("https://chat.openai.com/auth/login?next=/chat")
+        self.browser.set_page_load_timeout(15)  
+        self.wait = WebDriverWait(self.browser, 10)
+        self.fetch_url("https://chat.openai.com/auth/login?next=/chat")
         if not cold_start:
             self.pass_verification()
             self.login(username, password)
+    
+    def fetch_url(self, url):
+        self.browser.get(url)
 
     def pass_verification(self):
         while self.check_login_page():
@@ -116,41 +121,23 @@ class Handler:
 
     def login(self, username :str, password :str):
         """To enter system"""
-
-        # Find login button, click it
-        login_button = self.sleepy_find_element(By.XPATH, self.login_xq)
-        login_button.click()
-        time.sleep(1)
-
-        # Find email textbox, enter e-mail
-        email_box = self.sleepy_find_element(By.ID, "username")
-        email_box.send_keys(username)
-
-        # Click continue
-        continue_button = self.sleepy_find_element(By.XPATH, self.continue_xq)
-        continue_button.click()
-        time.sleep(1)
-
-        # Find password textbox, enter password
-        pass_box = self.sleepy_find_element(By.ID, "password")
-        pass_box.send_keys(password)
-        # Click continue
-        continue_button = self.sleepy_find_element(By.XPATH, self.continue_xq)
-        continue_button.click()
-        time.sleep(1)
-
+        self.wait.until(
+            EC.element_to_be_clickable(
+                (
+                    By.XPATH, self.login_xq
+                )
+            )
+        ).click()
+        self.wait.until(EC.presence_of_element_located( (By.ID, "username"))).send_keys(username)
+        self.browser.find_element(By.XPATH, self.continue_xq).click()
+        self.wait.until(EC.presence_of_element_located((By.ID, "password"))).send_keys(password)
+        self.browser.find_element(By.XPATH, self.continue_xq).click()
+        
         # Pass introduction
-        next_button = self.browser.find_element(By.CLASS_NAME, self.next_cq)
-        next_button = next_button.find_elements(By.TAG_NAME, self.button_tq)[0]
-        next_button.click()
-        time.sleep(1)
-        next_button = self.browser.find_element(By.CLASS_NAME, self.next_cq)
-        next_button = next_button.find_elements(By.TAG_NAME, self.button_tq)[1]
-        next_button.click()
-        time.sleep(1)
-        next_button = self.browser.find_element(By.CLASS_NAME, self.next_cq)
-        done_button = next_button.find_elements(By.TAG_NAME, self.button_tq)[1]
-        done_button.click()
+        self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button/div'))).click()
+        self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button[2]/div'))).click()
+        self.wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button[2]' ))).click()
+        
 
     def sleepy_find_element(self, by, query, attempt_count :int =20, sleep_duration :int =1):
         """If the loading time is a concern, this function helps"""
@@ -186,14 +173,12 @@ class Handler:
         """the conversation is refreshed"""
         self.browser.find_element(By.XPATH, self.reset_xq).click()
 
+    def get_AI_percentage(self, text):
+        self.browser.get("https://zerogpt.com/")
+        text_area = self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="input"]')))
+        text_area.send_keys(text)
+        submit_button = self.wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="submit"]')))
+        submit_button.click()
+        ai_percentage = self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="output"]/div[2]/div[1]/div[2]/div[2]')))
+        return ai_percentage.text
 
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("username")
-    parser.add_argument("password")
-    args = parser.parse_args()
-
-    chatgpt = Handler(args.username, args.password)
-    result = chatgpt.interact("Hello, how are you today")
-    print(result)
