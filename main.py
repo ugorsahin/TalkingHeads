@@ -1,21 +1,31 @@
 from handler import Handler
 from constants import *
-
+from ai_detector import AIDetector
 
 prompt = f"""
-Hey, I Bassel Attia and here's my resume so that you can know more about me
-{RESUME}
 I'm applying for this program
 {PROGRAM_DESCRIPTION}
 and they're asking me 
 {QUESTION}
 Answer this question considering the following points:
 {STYLE}
+And here's my resume so that you can know more about me
+{RESUME}
 """
-chatgpt = Handler(USERNAME, PASSWORD, headless=False,)
-answer = chatgpt.interact(prompt)
-print(answer)
-print(chatgpt.get_AI_percentage(answer))
+# chatgpt = Handler(USERNAME, PASSWORD, headless=False,)
+# answer = chatgpt.interact(prompt)
+# chatgpt.delete_current_conversation()
+# print(answer)
+answer = """Hey there!
+I am really excited about the opportunity to participate in the Youth Summer Fest in Timisoara, Romania as a volunteer in the Media and Promotion team. The idea of being part of such a vibrant and culturally rich festival in the European Capital of Culture for 2023 is truly thrilling!
+As someone with a background in computer engineering and mobile app development, I believe that my technical skills, particularly in media and content creation, would be valuable in contributing to the festival's promotional activities. I am confident in my ability to take photos and videos, write articles, and create engaging content for online promotion. Moreover, I am fluent in Arabic, English, and German, which could be an asset in communicating with a diverse team of international volunteers and promoting the festival to a wider audience.
+Aside from my technical skills, I am also passionate about youth empowerment and community engagement. I have previous experience in volunteering and organizing events for children and young people, which has honed my leadership and communication skills. I am eager to learn more about how festivals are organized and gain hands-on experience in facilitating activities during the festival.
+Furthermore, I am excited about the opportunity to share my own culture and learn about other cultures through the intercultural evenings that are part of the volunteering project. I believe that cultural exchange is a powerful way to foster understanding and create meaningful connections among people from different backgrounds.
+Overall, I am looking forward to being part of a dynamic and enthusiastic team of international volunteers, and I am confident that this experience will not only allow me to contribute to the success of the Youth Summer Fest, but also provide me with valuable skills, knowledge, and unforgettable memories. Can't wait to be a part of this amazing project!
+Cheers,
+Bassel"""
+ai_detector = AIDetector()
+print(ai_detector.get_AI_percentage(answer))
 
 
 
