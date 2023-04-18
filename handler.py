@@ -9,6 +9,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import selenium.common.exceptions as Exceptions
+import re
+import unicodedata
+
 
 class TalkingHeads:
     """An interface for talking heads"""
@@ -158,10 +161,26 @@ class Handler:
             time.sleep(sleep_duration)
         return
 
+    def remove_emojis(self,text):
+        """
+        Remove emojis from text.
+        """
+        # Create a regex pattern to match emojis
+        emoji_pattern = re.compile("["
+                                u"\U0001F600-\U0001F64F"  # emoticons
+                                u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                                u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                                u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                                u"\U00002702-\U000027B0"
+                                u"\U000024C2-\U0001F251"
+                                "]+", flags=re.UNICODE)
+        # Remove emojis from text
+        return emoji_pattern.sub(r'', text)
+
     def interact(self, question : str):
         """Function to get an answer for a question"""
         text_area = self.browser.find_element(By.TAG_NAME, 'textarea')
-        for each_line in question.split("\n"):
+        for each_line in self.remove_emojis(question).split("\n"):
             text_area.send_keys(each_line)
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
         text_area.send_keys(Keys.RETURN)
@@ -173,12 +192,8 @@ class Handler:
         """the conversation is refreshed"""
         self.browser.find_element(By.XPATH, self.reset_xq).click()
 
-    def get_AI_percentage(self, text):
-        self.browser.get("https://zerogpt.com/")
-        text_area = self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="input"]')))
-        text_area.send_keys(text)
-        submit_button = self.wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="submit"]')))
-        submit_button.click()
-        ai_percentage = self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="output"]/div[2]/div[1]/div[2]/div[2]')))
-        return ai_percentage.text
+    def delete_current_conversation(self):
+        self.wait.until(EC.presence_of_element_located((By.XPATH, '(//button[@class="p-1 hover:text-white"])[2]'))).click()    
+        self.wait.until(EC.presence_of_element_located((By.XPATH, '(//button[@class="p-1 hover:text-white"])[1]'))).click()    
+        
 
