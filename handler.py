@@ -11,7 +11,8 @@ from selenium.webdriver.common.keys import Keys
 import selenium.common.exceptions as Exceptions
 import re
 import unicodedata
-
+from cleantext import clean
+from selenium.common.exceptions import TimeoutException
 
 class TalkingHeads:
     """An interface for talking heads"""
@@ -51,7 +52,7 @@ class TalkingHeads:
 
     def start_conversation(self, text_1: str, text_2: str, use_response_1: bool= True):
         """Starts a conversation between two heads"""
-        assert len(self.heads) >= 2, "At least 2 heads is neccessary for a conversation"
+        # assert len(self.heads) >= 2, "At least 2 heads is neccessary for a conversation"
 
         f_response = self.interact(0, text_1)
         text_2 = text_2 + f_response if use_response_1 else text_2
@@ -75,7 +76,11 @@ class TalkingHeads:
         self.head_responses[0].append(f_response)
         self.head_responses[1].append(s_response)
         return f_response, s_response
-
+    def delete_all_conversations(self):
+        for i in range(2):
+            self.switch_to_tab(i)
+            self.driver.delete_current_conversation()
+        
 class Handler:
     """Handler class to interact with ChatGPT"""
 
@@ -98,7 +103,7 @@ class Handler:
             options.add_argument("--headless")
         self.browser = uc.Chrome(options=options)
         self.browser.set_page_load_timeout(15)  
-        self.wait = WebDriverWait(self.browser, 10)
+        self.wait = WebDriverWait(self.browser, 15)
         self.fetch_url("https://chat.openai.com/auth/login?next=/chat")
         if not cold_start:
             self.pass_verification()
@@ -127,13 +132,13 @@ class Handler:
         self.wait.until(
             EC.element_to_be_clickable(
                 (
-                    By.XPATH, self.login_xq
+                    By.XPATH, '//button[//div[text()="Log in"]][1]'
                 )
             )
         ).click()
-        self.wait.until(EC.presence_of_element_located( (By.ID, "username"))).send_keys(username)
+        self.wait.until(EC.presence_of_element_located((By.XPATH,'//input[@class="input cb739a8a3 c95effeb5"]'))).send_keys(username)
         self.browser.find_element(By.XPATH, self.continue_xq).click()
-        self.wait.until(EC.presence_of_element_located((By.ID, "password"))).send_keys(password)
+        self.wait.until(EC.presence_of_element_located((By.XPATH, '//input[@class="input cb739a8a3 c88749ff1"]'))).send_keys(password)
         self.browser.find_element(By.XPATH, self.continue_xq).click()
         
         # Pass introduction
@@ -161,26 +166,11 @@ class Handler:
             time.sleep(sleep_duration)
         return
 
-    def remove_emojis(self,text):
-        """
-        Remove emojis from text.
-        """
-        # Create a regex pattern to match emojis
-        emoji_pattern = re.compile("["
-                                u"\U0001F600-\U0001F64F"  # emoticons
-                                u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-                                u"\U0001F680-\U0001F6FF"  # transport & map symbols
-                                u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-                                u"\U00002702-\U000027B0"
-                                u"\U000024C2-\U0001F251"
-                                "]+", flags=re.UNICODE)
-        # Remove emojis from text
-        return emoji_pattern.sub(r'', text)
-
+    
     def interact(self, question : str):
         """Function to get an answer for a question"""
         text_area = self.browser.find_element(By.TAG_NAME, 'textarea')
-        for each_line in self.remove_emojis(question).split("\n"):
+        for each_line in clean(question, no_emoji=True).split("\n"): # remove emojis because selenium can't handle them
             text_area.send_keys(each_line)
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
         text_area.send_keys(Keys.RETURN)
