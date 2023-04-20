@@ -2,15 +2,18 @@
 
 import time
 import undetected_chromedriver as uc
-
-##from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import selenium.common.exceptions as Exceptions
+from cleantext import clean
+from selenium.common.exceptions import TimeoutException
 
 class TalkingHeads:
     """An interface for talking heads"""
-    def __init__(self, username: str, password: str, headless=False, head_count=2):
+    def __init__(self, username: str, password: str, headless=True, head_count=2):
         self.head_count=head_count
         self.driver = Handler(username, password, headless)
         for _ in range(head_count-1):
@@ -46,7 +49,7 @@ class TalkingHeads:
 
     def start_conversation(self, text_1: str, text_2: str, use_response_1: bool= True):
         """Starts a conversation between two heads"""
-        assert len(self.heads) >= 2, "At least 2 heads is neccessary for a conversation"
+        # assert len(self.heads) >= 2, "At least 2 heads is neccessary for a conversation"
 
         f_response = self.interact(0, text_1)
         text_2 = text_2 + f_response if use_response_1 else text_2
@@ -70,21 +73,14 @@ class TalkingHeads:
         self.head_responses[0].append(f_response)
         self.head_responses[1].append(s_response)
         return f_response, s_response
-
+    
+    def delete_all_conversations(self):
+        for i in range(self.head_count):
+            self.switch_to_tab(i)
+            self.driver.delete_current_conversation()
+        
 class Handler:
     """Handler class to interact with ChatGPT"""
-
-    login_xq    = '//button[//div[text()="Log in"]]'
-    continue_xq = '//button[text()="Continue"]'
-    next_cq     = 'prose'
-    button_tq   = 'button'
-    # next_xq     = '//button[//div[text()="Next"]]'
-    done_xq     = '//button[//div[text()="Done"]]'
-    
-    chatbox_cq  = 'text-base'
-    wait_cq     = 'text-2xl'
-    reset_xq    = '//a[text()="New chat"]'
-
     def __init__(self, username :str, password :str,
         headless :bool = True, cold_start :bool = False):
         options = uc.ChromeOptions()
@@ -92,13 +88,15 @@ class Handler:
         if headless:
             options.add_argument("--headless")
         self.browser = uc.Chrome(options=options)
-        self.browser.set_page_load_timeout(15)
-
-        self.browser.get("https://chat.openai.com/auth/login?next=/chat")
+        self.browser.set_page_load_timeout(10)  
+        self.wait: WebDriverWait= WebDriverWait(self.browser, 10)
+        self.fetch_url("https://chat.openai.com/auth/login?next=/chat")
         if not cold_start:
             self.pass_verification()
             self.login(username, password)
-
+    def check_login_page(self):
+        login_button = self.browser.find_elements(By.XPATH, '//button[//div[text()="Log in"]]')
+        return len(login_button) == 0
     def pass_verification(self):
         while self.check_login_page():
             verify_button = self.browser.find_elements(By.ID, 'challenge-stage')
@@ -109,58 +107,51 @@ class Handler:
                     pass
             time.sleep(1)
         return
-
-    def check_login_page(self):
-        login_button = self.browser.find_elements(By.XPATH, self.login_xq)
-        return len(login_button) == 0
+    def fetch_url(self, url):
+        self.browser.get(url)
 
     def login(self, username :str, password :str):
         """To enter system"""
-
-        # Find login button, click it
-        login_button = self.sleepy_find_element(By.XPATH, self.login_xq)
-        login_button.click()
-        time.sleep(1)
-
-        # Find email textbox, enter e-mail
-        email_box = self.sleepy_find_element(By.ID, "username")
-        email_box.send_keys(username)
-
-        # Click continue
-        continue_button = self.sleepy_find_element(By.XPATH, self.continue_xq)
-        continue_button.click()
-        time.sleep(1)
-
-        # Find password textbox, enter password
-        pass_box = self.sleepy_find_element(By.ID, "password")
-        pass_box.send_keys(password)
-        # Click continue
-        continue_button = self.sleepy_find_element(By.XPATH, self.continue_xq)
-        continue_button.click()
-        time.sleep(1)
-
-        # Pass introduction
-        next_button = self.browser.find_element(By.CLASS_NAME, self.next_cq)
-        next_button = next_button.find_elements(By.TAG_NAME, self.button_tq)[0]
-        next_button.click()
-        time.sleep(1)
-        next_button = self.browser.find_element(By.CLASS_NAME, self.next_cq)
-        next_button = next_button.find_elements(By.TAG_NAME, self.button_tq)[1]
-        next_button.click()
-        time.sleep(1)
-        next_button = self.browser.find_element(By.CLASS_NAME, self.next_cq)
-        done_button = next_button.find_elements(By.TAG_NAME, self.button_tq)[1]
-        done_button.click()
-
-    def sleepy_find_element(self, by, query, attempt_count :int =20, sleep_duration :int =1):
-        """If the loading time is a concern, this function helps"""
-        for _ in range(attempt_count):
-            item = self.browser.find_elements(by, query)
-            if len(item) > 0:
-                item = item[0]
-                break
-            time.sleep(sleep_duration)
-        return item
+        try:
+            self.wait.until(
+            EC.element_to_be_clickable(
+                (
+                    By.XPATH, '//button[//div[text()="Log in"]][1]'
+                )
+            )).click()
+            self.wait.until(
+            EC.visibility_of_element_located(
+                (
+                    By.XPATH, '//input[@class="input cb739a8a3 c95effeb5"]'
+                )
+            )).send_keys(username)
+            self.wait.until(
+            EC.element_to_be_clickable(
+                (
+                    By.XPATH, '//button[text()="Continue"]'
+                )
+            )).click()
+            self.wait.until(
+            EC.visibility_of_element_located(
+                (
+                    By.XPATH, '//input[@class="input cb739a8a3 c88749ff1"]'
+                )
+            )).send_keys(password)
+            
+            self.browser.find_element(By.XPATH, '//button[text()="Continue"]').click()
+            self.wait.until(
+            EC.element_to_be_clickable(
+                (
+                    By.XPATH, '//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button/div'
+                )
+            )).click()
+            self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button[2]/div'))).click()
+            self.wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button[2]' ))).click()
+        except TimeoutException:
+            #start from the beginning
+            self.fetch_url("https://chat.openai.com/auth/login?next=/chat")
+            self.pass_verification()
+            self.login(username, password)
 
     def wait_to_disappear(self, by, query, sleep_duration=1):
         """Wait until the item disappear, then return"""
@@ -171,29 +162,32 @@ class Handler:
             time.sleep(sleep_duration)
         return
 
+    def check_if_request_limit_exceeded(self):
+        elements = self.browser.find_elements(By.XPATH,'//div[@class="py-2 px-3 border text-gray-600 rounded-md text-sm dark:text-gray-100 border-red-500 bg-red-500/10"]')
+        if len(elements) != 0:
+            raise RequestLimitExceeded('Too many requests in 1 hour. Try again later.')
+        
     def interact(self, question : str):
         """Function to get an answer for a question"""
         text_area = self.browser.find_element(By.TAG_NAME, 'textarea')
-        for each_line in question.split("\n"):
+        for each_line in clean(question, no_emoji=True).split("\n"): # remove emojis because selenium can't handle them
             text_area.send_keys(each_line)
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
         text_area.send_keys(Keys.RETURN)
-        self.wait_to_disappear(By.CLASS_NAME, self.wait_cq)
-        answer = self.browser.find_elements(By.CLASS_NAME, self.chatbox_cq)[-1]
+        self.check_if_request_limit_exceeded()
+        self.wait_to_disappear(By.CLASS_NAME, 'text-2xl')
+        answer = self.browser.find_elements(By.CLASS_NAME, 'text-base')[-1]
         return answer.text
 
     def reset_thread(self):
         """the conversation is refreshed"""
-        self.browser.find_element(By.XPATH, self.reset_xq).click()
+        self.browser.find_element(By.XPATH,'//a[text()="New chat"]').click()
 
-
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("username")
-    parser.add_argument("password")
-    args = parser.parse_args()
-
-    chatgpt = Handler(args.username, args.password)
-    result = chatgpt.interact("Hello, how are you today")
-    print(result)
+    def delete_current_conversation(self):
+        self.wait.until(EC.presence_of_element_located((By.XPATH, '(//button[@class="p-1 hover:text-white"])[2]'))).click()    
+        self.wait.until(EC.presence_of_element_located((By.XPATH, '(//button[@class="p-1 hover:text-white"])[1]'))).click()    
+        
+    def close_webdriver(self):
+        self.browser.quit()
+class RequestLimitExceeded(Exception):
+    pass
