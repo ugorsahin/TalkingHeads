@@ -5,7 +5,6 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-##from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import selenium.common.exceptions as Exceptions
@@ -95,26 +94,10 @@ class Handler:
         self.wait: WebDriverWait= WebDriverWait(self.browser, 15)
         self.fetch_url("https://chat.openai.com/auth/login?next=/chat")
         if not cold_start:
-            self.pass_verification()
             self.login(username, password)
     
     def fetch_url(self, url):
         self.browser.get(url)
-
-    def pass_verification(self):
-        while self.check_login_page():
-            verify_button = self.browser.find_elements(By.ID, 'challenge-stage')
-            if len(verify_button):
-                try:
-                    verify_button[0].click()
-                except Exceptions.ElementNotInteractableException:
-                    pass
-            time.sleep(1)
-        return
-
-    def check_login_page(self):
-        login_button = self.browser.find_elements(By.XPATH, self.login_xq)
-        return len(login_button) == 0
 
     def wait_for_element_to_be_clickable_and_visible(self, xpath):
         self.wait.until(
@@ -136,9 +119,9 @@ class Handler:
         """To enter system"""
         self.wait_for_element_to_be_clickable_and_visible('//button[//div[text()="Log in"]][1]').click()
         self.wait_for_element_to_be_clickable_and_visible('//input[@class="input cb739a8a3 c95effeb5"]').send_keys(username)
-        self.browser.find_element(By.XPATH, self.continue_xq).click()
+        self.browser.find_element(By.XPATH, '//button[text()="Continue"]').click()
         self.wait_for_element_to_be_clickable_and_visible('//input[@class="input cb739a8a3 c88749ff1"]').send_keys(password)
-        self.browser.find_element(By.XPATH, self.continue_xq).click()
+        self.browser.find_element(By.XPATH, '//button[text()="Continue"]').click()
         
         # Pass introduction
         self.wait_for_element_to_be_clickable_and_visible('//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button/div').click()
@@ -178,13 +161,13 @@ class Handler:
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
         text_area.send_keys(Keys.RETURN)
         self.check_if_request_limit_exceeded()
-        self.wait_to_disappear(By.CLASS_NAME, self.wait_cq)
-        answer = self.browser.find_elements(By.CLASS_NAME, self.chatbox_cq)[-1]
+        self.wait_to_disappear(By.CLASS_NAME, 'text-2xl')
+        answer = self.browser.find_elements(By.CLASS_NAME, 'text-base')[-1]
         return answer.text
 
     def reset_thread(self):
         """the conversation is refreshed"""
-        self.browser.find_element(By.XPATH, self.reset_xq).click()
+        self.browser.find_element(By.XPATH,'//a[text()="New chat"]').click()
 
     def delete_current_conversation(self):
         self.wait.until(EC.presence_of_element_located((By.XPATH, '(//button[@class="p-1 hover:text-white"])[2]'))).click()    
