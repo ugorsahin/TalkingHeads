@@ -1,9 +1,3 @@
-USERNAME = 'billybutcher477@gmail.com'
-PASSWORD= 'BBb65666217'
-# USERNAME = 'moh.k.elmohamady@gmail.com'
-# PASSWORD= 'SharingWithB@$$3L'
-
-
 PROGRAM_DESCRIPTION = """
 YOUTH SUMMER FEST
 Youth Summer Fest
@@ -109,7 +103,7 @@ STYLE = """
 - Don't use sophisticated langauge and keep it simple. 
 - Make it hard to detect it as coming from ChatGPT by a ChatGPT detector. 
 - Write it like how a human would write it with more spoken language.
-- Don't write a conclusion.
+- DONT write a conclusion.
 - Try to shed light on my previous experience to highlight how it will contribute to the project to make me a better candidate.
 - When it comes to writing content, two factors are crucial, "perplexity" and "burstiness." 
   Perplexity measures the complexity of text Separately, burstiness compares the variations of sentences. 
@@ -184,3 +178,23 @@ Investopedia-Bot 2020 – 2021
 • GitHub: https://github.com/bassel27/Investopedia-Bot
 
 """
+
+
+EXAMPLE_ANSWER  = """Hey there!
+I am really excited about the opportunity to participate in the Youth Summer Fest in Timisoara, Romania as a volunteer in the Media and Promotion team. The idea of being part of such a vibrant and culturally rich festival in the European Capital of Culture for 2023 is truly thrilling!
+As someone with a background in computer engineering and mobile app development, I believe that my technical skills, particularly in media and content creation, would be valuable in contributing to the festival's promotional activities. I am confident in my ability to take photos and videos, write articles, and create engaging content for online promotion. Moreover, I am fluent in Arabic, English, and German, which could be an asset in communicating with a diverse team of international volunteers and promoting the festival to a wider audience.
+Aside from my technical skills, I am also passionate about youth empowerment and community engagement. I have previous experience in volunteering and organizing events for children and young people, which has honed my leadership and communication skills. I am eager to learn more about how festivals are organized and gain hands-on experience in facilitating activities during the festival.
+Furthermore, I am excited about the opportunity to share my own culture and learn about other cultures through the intercultural evenings that are part of the volunteering project. I believe that cultural exchange is a powerful way to foster understanding and create meaningful connections among people from different backgrounds.
+Overall, I am looking forward to being part of a dynamic and enthusiastic team of international volunteers, and I am confident that this experience will not only allow me to contribute to the success of the Youth Summer Fest, but also provide me with valuable skills, knowledge, and unforgettable memories. Can't wait to be a part of this amazing project!
+Cheers,
+Bassel"""
+
+
+WRITING_FACTORS_TO_CONSIDER = """Hey ChatGPT, regarding generating writing content, two factors are crucial to
+be in the highest degree, “perplexity” and “burstiness.” Perplexity measures
+the complexity of the text. Separately, burstiness compares the variations of
+sentences. Humans tend to write with greater burstiness, for example, with
+some longer or more complex sentences alongside shorter ones. Al sentences
+tend to be more uniform. Therefore, generated text content must have the
+highest degree of perplexity and the highest degree of burstiness. The other two
+factors are that writing should be maximum contextually relevant and maximum coherent."""
