@@ -84,18 +84,6 @@ class TalkingHeads:
         
 class Handler:
     """Handler class to interact with ChatGPT"""
-
-    login_xq    = '//button[//div[text()="Log in"]]'
-    continue_xq = '//button[text()="Continue"]'
-    next_cq     = 'prose'
-    button_tq   = 'button'
-    # next_xq     = '//button[//div[text()="Next"]]'
-    done_xq     = '//button[//div[text()="Done"]]'
-    
-    chatbox_cq  = 'text-base'
-    wait_cq     = 'text-2xl'
-    reset_xq    = '//a[text()="New chat"]'
-
     def __init__(self, username :str, password :str,
         headless :bool = True, cold_start :bool = False):
         options = uc.ChromeOptions()
@@ -178,7 +166,7 @@ class Handler:
         return
 
     def check_if_request_limit_exceeded(self):
-        elements = self.driver.browser.find_elements(By.XPATH,'//div[@class="py-2 px-3 border text-gray-600 rounded-md text-sm dark:text-gray-100 border-red-500 bg-red-500/10"]')
+        elements = self.browser.find_elements(By.XPATH,'//div[@class="py-2 px-3 border text-gray-600 rounded-md text-sm dark:text-gray-100 border-red-500 bg-red-500/10"]')
         if len(elements) != 0:
             raise RequestLimitExceeded('Too many requests in 1 hour. Try again later.')
         
