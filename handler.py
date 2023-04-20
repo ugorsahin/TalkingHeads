@@ -76,6 +76,7 @@ class TalkingHeads:
         self.head_responses[0].append(f_response)
         self.head_responses[1].append(s_response)
         return f_response, s_response
+    
     def delete_all_conversations(self):
         for i in range(2):
             self.switch_to_tab(i)
@@ -103,7 +104,7 @@ class Handler:
             options.add_argument("--headless")
         self.browser = uc.Chrome(options=options)
         self.browser.set_page_load_timeout(15)  
-        self.wait = WebDriverWait(self.browser, 15)
+        self.wait: WebDriverWait= WebDriverWait(self.browser, 15)
         self.fetch_url("https://chat.openai.com/auth/login?next=/chat")
         if not cold_start:
             self.pass_verification()
@@ -127,22 +128,32 @@ class Handler:
         login_button = self.browser.find_elements(By.XPATH, self.login_xq)
         return len(login_button) == 0
 
-    def login(self, username :str, password :str):
-        """To enter system"""
+    def wait_for_element_to_be_clickable_and_visible(self, xpath):
         self.wait.until(
             EC.element_to_be_clickable(
                 (
-                    By.XPATH, '//button[//div[text()="Log in"]][1]'
+                    By.XPATH, xpath
                 )
             )
-        ).click()
-        self.wait.until(EC.presence_of_element_located((By.XPATH,'//input[@class="input cb739a8a3 c95effeb5"]'))).send_keys(username)
+        )
+        return self.wait.until(
+            EC.visibility_of_element_located(
+                (
+                    By.XPATH, xpath
+                )
+            )
+        )
+
+    def login(self, username :str, password :str):
+        """To enter system"""
+        self.wait_for_element_to_be_clickable_and_visible('//button[//div[text()="Log in"]][1]').click()
+        self.wait_for_element_to_be_clickable_and_visible('//input[@class="input cb739a8a3 c95effeb5"]').send_keys(username)
         self.browser.find_element(By.XPATH, self.continue_xq).click()
-        self.wait.until(EC.presence_of_element_located((By.XPATH, '//input[@class="input cb739a8a3 c88749ff1"]'))).send_keys(password)
+        self.wait_for_element_to_be_clickable_and_visible('//input[@class="input cb739a8a3 c88749ff1"]').send_keys(password)
         self.browser.find_element(By.XPATH, self.continue_xq).click()
         
         # Pass introduction
-        self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button/div'))).click()
+        self.wait_for_element_to_be_clickable_and_visible('//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button/div').click()
         self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button[2]/div'))).click()
         self.wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button[2]' ))).click()
         
@@ -166,7 +177,11 @@ class Handler:
             time.sleep(sleep_duration)
         return
 
-    
+    def check_if_request_limit_exceeded(self):
+        elements = self.driver.browser.find_elements(By.XPATH,'//div[@class="py-2 px-3 border text-gray-600 rounded-md text-sm dark:text-gray-100 border-red-500 bg-red-500/10"]')
+        if len(elements) != 0:
+            raise RequestLimitExceeded('Too many requests in 1 hour. Try again later.')
+        
     def interact(self, question : str):
         """Function to get an answer for a question"""
         text_area = self.browser.find_element(By.TAG_NAME, 'textarea')
@@ -174,6 +189,7 @@ class Handler:
             text_area.send_keys(each_line)
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
         text_area.send_keys(Keys.RETURN)
+        self.check_if_request_limit_exceeded()
         self.wait_to_disappear(By.CLASS_NAME, self.wait_cq)
         answer = self.browser.find_elements(By.CLASS_NAME, self.chatbox_cq)[-1]
         return answer.text
@@ -187,3 +203,5 @@ class Handler:
         self.wait.until(EC.presence_of_element_located((By.XPATH, '(//button[@class="p-1 hover:text-white"])[1]'))).click()    
         
 
+class RequestLimitExceeded(Exception):
+    pass
