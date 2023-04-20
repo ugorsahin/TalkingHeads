@@ -8,14 +8,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import selenium.common.exceptions as Exceptions
-import re
-import unicodedata
 from cleantext import clean
 from selenium.common.exceptions import TimeoutException
 
 class TalkingHeads:
     """An interface for talking heads"""
-    def __init__(self, username: str, password: str, headless=False, head_count=2):
+    def __init__(self, username: str, password: str, headless=True, head_count=2):
         self.head_count=head_count
         self.driver = Handler(username, password, headless)
         for _ in range(head_count-1):
@@ -77,7 +75,7 @@ class TalkingHeads:
         return f_response, s_response
     
     def delete_all_conversations(self):
-        for i in range(2):
+        for i in range(self.head_count):
             self.switch_to_tab(i)
             self.driver.delete_current_conversation()
         
@@ -90,7 +88,7 @@ class Handler:
         if headless:
             options.add_argument("--headless")
         self.browser = uc.Chrome(options=options)
-        self.browser.set_page_load_timeout(15)  
+        self.browser.set_page_load_timeout(10)  
         self.wait: WebDriverWait= WebDriverWait(self.browser, 10)
         self.fetch_url("https://chat.openai.com/auth/login?next=/chat")
         if not cold_start:
@@ -112,35 +110,48 @@ class Handler:
     def fetch_url(self, url):
         self.browser.get(url)
 
-    def wait_for_element_to_be_clickable_and_visible(self, xpath):
-        self.wait.until(
-            EC.visibility_of_element_located(
-                (
-                    By.XPATH, xpath
-                )
-            )
-        )
-        time.sleep(0.2)
-        return self.wait.until(
-            EC.element_to_be_clickable(
-                (
-                    By.XPATH, xpath
-                )
-            )
-        )
-
     def login(self, username :str, password :str):
         """To enter system"""
-        self.wait_for_element_to_be_clickable_and_visible('//button[//div[text()="Log in"]][1]').click()
-        self.wait_for_element_to_be_clickable_and_visible('//input[@class="input cb739a8a3 c95effeb5"]').send_keys(username)
-        self.browser.find_element(By.XPATH, '//button[text()="Continue"]').click()
-        self.wait_for_element_to_be_clickable_and_visible('//input[@class="input cb739a8a3 c88749ff1"]').send_keys(password)
-        self.browser.find_element(By.XPATH, '//button[text()="Continue"]').click()
-        
-        # Pass introduction
-        self.wait_for_element_to_be_clickable_and_visible('//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button/div').click()
-        self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button[2]/div'))).click()
-        self.wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button[2]' ))).click()
+        try:
+            self.wait.until(
+            EC.element_to_be_clickable(
+                (
+                    By.XPATH, '//button[//div[text()="Log in"]][1]'
+                )
+            )).click()
+            self.wait.until(
+            EC.visibility_of_element_located(
+                (
+                    By.XPATH, '//input[@class="input cb739a8a3 c95effeb5"]'
+                )
+            )).send_keys(username)
+            self.wait.until(
+            EC.element_to_be_clickable(
+                (
+                    By.XPATH, '//button[text()="Continue"]'
+                )
+            )).click()
+            self.wait.until(
+            EC.visibility_of_element_located(
+                (
+                    By.XPATH, '//input[@class="input cb739a8a3 c88749ff1"]'
+                )
+            )).send_keys(password)
+            
+            self.browser.find_element(By.XPATH, '//button[text()="Continue"]').click()
+            self.wait.until(
+            EC.element_to_be_clickable(
+                (
+                    By.XPATH, '//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button/div'
+                )
+            )).click()
+            self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button[2]/div'))).click()
+            self.wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button[2]' ))).click()
+        except TimeoutException:
+            #start from the beginning
+            self.fetch_url("https://chat.openai.com/auth/login?next=/chat")
+            self.pass_verification()
+            self.login(username, password)
 
     def wait_to_disappear(self, by, query, sleep_duration=1):
         """Wait until the item disappear, then return"""
