@@ -10,9 +10,8 @@ import re
 class AIDetector(BaseScraper):
     def __init__(self):
         super().__init__()
-    
-    def get_AI_percentage(self, text):
         self.driver.get("https://zerogpt.com/")
+    def get_AI_percentage(self, text):
         text_area = self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="textArea"]')))
         text_area.send_keys(text)
         submit_button = self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'scoreButton')))
