@@ -91,24 +91,38 @@ class Handler:
             options.add_argument("--headless")
         self.browser = uc.Chrome(options=options)
         self.browser.set_page_load_timeout(15)  
-        self.wait: WebDriverWait= WebDriverWait(self.browser, 15)
+        self.wait: WebDriverWait= WebDriverWait(self.browser, 10)
         self.fetch_url("https://chat.openai.com/auth/login?next=/chat")
         if not cold_start:
+            self.pass_verification()
             self.login(username, password)
-    
+    def check_login_page(self):
+        login_button = self.browser.find_elements(By.XPATH, '//button[//div[text()="Log in"]]')
+        return len(login_button) == 0
+    def pass_verification(self):
+        while self.check_login_page():
+            verify_button = self.browser.find_elements(By.ID, 'challenge-stage')
+            if len(verify_button):
+                try:
+                    verify_button[0].click()
+                except Exceptions.ElementNotInteractableException:
+                    pass
+            time.sleep(1)
+        return
     def fetch_url(self, url):
         self.browser.get(url)
 
     def wait_for_element_to_be_clickable_and_visible(self, xpath):
         self.wait.until(
-            EC.element_to_be_clickable(
+            EC.visibility_of_element_located(
                 (
                     By.XPATH, xpath
                 )
             )
         )
+        time.sleep(0.2)
         return self.wait.until(
-            EC.visibility_of_element_located(
+            EC.element_to_be_clickable(
                 (
                     By.XPATH, xpath
                 )
@@ -127,17 +141,6 @@ class Handler:
         self.wait_for_element_to_be_clickable_and_visible('//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button/div').click()
         self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button[2]/div'))).click()
         self.wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="headlessui-dialog-panel-:r1:"]/div[2]/div[4]/button[2]' ))).click()
-        
-
-    def sleepy_find_element(self, by, query, attempt_count :int =20, sleep_duration :int =1):
-        """If the loading time is a concern, this function helps"""
-        for _ in range(attempt_count):
-            item = self.browser.find_elements(by, query)
-            if len(item) > 0:
-                item = item[0]
-                break
-            time.sleep(sleep_duration)
-        return item
 
     def wait_to_disappear(self, by, query, sleep_duration=1):
         """Wait until the item disappear, then return"""
@@ -173,6 +176,7 @@ class Handler:
         self.wait.until(EC.presence_of_element_located((By.XPATH, '(//button[@class="p-1 hover:text-white"])[2]'))).click()    
         self.wait.until(EC.presence_of_element_located((By.XPATH, '(//button[@class="p-1 hover:text-white"])[1]'))).click()    
         
-
+    def close_webdriver(self):
+        self.browser.quit()
 class RequestLimitExceeded(Exception):
     pass
