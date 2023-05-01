@@ -1,4 +1,4 @@
-# ChatGPT_Selenium
+# ChatGPT_Automation
 An undetected-chrome interface to communicate with ChatGPT
 
 You need to have Chrome installed.
