@@ -6,8 +6,18 @@ To pass Cloudflare robot test, undetected-chrome is a must.
 
 Here is how to start quickly.
 
+## Installation
+
 ```
-from handler import Handler
+git clone https://github.com/ugorsahin/ChatGPT_Automation
+cd ChatGPT_Automation
+pip setup .
+```
+
+## Usage
+
+```
+from chatgpt_automation import ChatGPT_Client
 
 chatgpt = Handler(YOUR_USERNAME, YOUR_PASSWORD)
 
@@ -23,7 +33,7 @@ This is a wrapper module to use more than one ChatGPT instance, it helps to crea
 Here is how to start quickly.
 
 ```
-from handler import TalkingHeads
+from chatgpt_automation import TalkingHeads
 
 heads = TalkingHeads(YOUR_USERNAME, YOUR_PASSWORD, 2)
 
