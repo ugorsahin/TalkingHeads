@@ -11,7 +11,7 @@ Here is how to start quickly.
 ```
 git clone https://github.com/ugorsahin/ChatGPT_Automation
 cd ChatGPT_Automation
-pip setup .
+pip install .
 ```
 
 ## Usage
