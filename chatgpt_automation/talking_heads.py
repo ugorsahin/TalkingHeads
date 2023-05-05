@@ -59,3 +59,9 @@ class TalkingHeads:
         self.head_responses[0].append(f_response)
         self.head_responses[1].append(s_response)
         return f_response, s_response
+
+    def delete_all_conversations(self):
+        for i in range(2):
+            self.switch_to_tab(i)
+            self.driver.delete_current_conversation()
+        

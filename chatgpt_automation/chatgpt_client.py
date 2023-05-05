@@ -2,6 +2,7 @@
 
 import time
 import undetected_chromedriver as uc
+from selenium.webdriver.support import expected_conditions as EC
 
 # from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -137,7 +138,9 @@ class ChatGPT_Client:
         elements = self.browser.find_elements(By.XPATH,'//div[@class="py-2 px-3 border text-gray-600 rounded-md text-sm dark:text-gray-100 border-red-500 bg-red-500/10"]')
         if len(elements) != 0:
             raise RequestLimitExceeded('Too many requests in 1 hour. Try again later.')
-    
+    def delete_current_conversation(self):
+        self.wait.until(EC.presence_of_element_located((By.XPATH, '(//button[@class="p-1 hover:text-white"])[2]'))).click()    
+        self.wait.until(EC.presence_of_element_located((By.XPATH, '(//button[@class="p-1 hover:text-white"])[1]'))).click()  
 class RequestLimitExceeded(Exception):
     pass
 
