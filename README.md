@@ -17,7 +17,7 @@ pip install .
 ## Usage
 
 ```
-from chatgpt_automation import ChatGPT_Client
+from chatgpt_automation.chatgpt_client import ChatGPT_Client
 
 chatgpt = Handler(YOUR_USERNAME, YOUR_PASSWORD)
 
