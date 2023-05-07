@@ -1,8 +1,6 @@
 [build-system]
 requires = [
     "setuptools>=61.0",
-    'selenium>=4.7.2',
-    'undetected-chromedriver>=3.4.6'
 ]
 build-backend = "setuptools.build_meta"
 
@@ -15,10 +13,16 @@ name = "chatgpt_automation"
 description = "A Headless Chrome interface to communicate with ChatGPT"
 readme = "README.md"
 requires-python = ">=3.8"
-version = "0.1.0"
+version = "0.1.1"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
 
+dependencies = [
+   'selenium>=4.7.2',
+   'undetected-chromedriver>=3.4.6'
+]
+
 [project.urls]
+Source = "https://github.com/ugorsahin/ChatGPT_Automation"
