@@ -19,7 +19,7 @@ pip install .
 ```
 from chatgpt_automation import ChatGPT_Client
 
-chatgpt = Handler(YOUR_USERNAME, YOUR_PASSWORD)
+chatgpt = ChatGPT_Client(YOUR_USERNAME, YOUR_PASSWORD)
 
 answer = chatgpt.interact("Hello, how are you today")
 
