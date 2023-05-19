@@ -7,7 +7,11 @@ import undetected_chromedriver as uc
 # from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions as Exceptions
+
+from .helpers import find_chrome_version
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
@@ -36,6 +40,8 @@ class ChatGPT_Client:
         password :str,
         headless :bool = True,
         cold_start :bool = False,
+        driver_executable_path :str =None,
+        driver_arguments : list = None,
         verbose :bool = False
     ):
         if verbose:
@@ -45,13 +51,16 @@ class ChatGPT_Client:
         options.add_argument('--incognito')
         if headless:
             options.add_argument('--headless')
+        if driver_arguments:
+            for _arg in driver_arguments:
+                options.add_argument(_arg)
 
         logging.info('Loading undetected Chrome')
         self.browser = uc.Chrome(
-            # driver_executable_path='/usr/bin/google-chrome',
+            driver_executable_path=driver_executable_path,
             options=options,
             headless=headless,
-            version_main=112
+            version_main=find_chrome_version()
         )
         self.browser.set_page_load_timeout(15)
         logging.info('Loaded Undetected chrome')
@@ -139,20 +148,25 @@ class ChatGPT_Client:
 
         try:
             # Pass introduction
-            next_button = self.browser.find_element(By.CLASS_NAME, self.next_cq)
-            next_button = next_button.find_elements(By.TAG_NAME, self.button_tq)[0]
-            next_button.click()
-            time.sleep(1)
-            next_button = self.browser.find_element(By.CLASS_NAME, self.next_cq)
-            next_button = next_button.find_elements(By.TAG_NAME, self.button_tq)[1]
-            next_button.click()
-            time.sleep(1)
-            next_button = self.browser.find_element(By.CLASS_NAME, self.next_cq)
-            done_button = next_button.find_elements(By.TAG_NAME, self.button_tq)[1]
-            done_button.click()
+            next_button = WebDriverWait(self.browser, 5).until(
+                EC.presence_of_element_located((By.CLASS_NAME, self.next_cq))
+            )
+            next_button.find_elements(By.TAG_NAME, self.button_tq)[0].click()
+
+            next_button = WebDriverWait(self.browser, 5).until(
+                EC.presence_of_element_located((By.CLASS_NAME, self.next_cq))
+            )
+            next_button.find_elements(By.TAG_NAME, self.button_tq)[1].click()
+
+            next_button = WebDriverWait(self.browser, 5).until(
+                EC.presence_of_element_located((By.CLASS_NAME, self.next_cq))
+            )
+            next_button.find_elements(By.TAG_NAME, self.button_tq)[1].click()
             logging.info('Info screen passed')
-        except Exceptions.NoSuchElementException:
+        except Exceptions.TimeoutException:
             logging.info('Info screen skipped')
+        except Exception as exp:
+            logging.error(f'Something unexpected happened: {exp}')
 
     def sleepy_find_element(self, by, query, attempt_count :int =20, sleep_duration :int =1):
         '''
