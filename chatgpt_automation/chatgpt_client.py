@@ -11,7 +11,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions as Exceptions
 
-from .helpers import find_chrome_version
+from .helpers import detect_chrome_version
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
@@ -60,7 +60,7 @@ class ChatGPT_Client:
             driver_executable_path=driver_executable_path,
             options=options,
             headless=headless,
-            version_main=find_chrome_version()
+            version_main=detect_chrome_version()
         )
         self.browser.set_page_load_timeout(15)
         logging.info('Loaded Undetected chrome')
