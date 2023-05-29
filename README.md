@@ -1,17 +1,18 @@
 # ChatGPT_Automation
-An undetected-chrome interface to communicate with ChatGPT
+Welcome to ChatGPT_Automation! 🤖🚀
 
-You need to have Chrome installed.
-To pass Cloudflare robot test, undetected-chrome is a must.
+ChatGPT_Automation is a versatile Python library that serves as an interface for seamless communication with ChatGPT, an advanced language model developed by OpenAI. 🤖💬
 
-Here is how to start quickly.
+By leveraging the power of browser automation, this library enables users to effortlessly interact with ChatGPT, providing a streamlined and automated approach to generate responses. 🚀✨
+
+# Prerequisites 📋
+
+Before you begin, please ensure that you have Chrome installed on your system. To successfully pass the Cloudflare robot test, it is necessary to have undetected-chrome. 🌐🔒
 
 ## Installation
 
 ```
-git clone https://github.com/ugorsahin/ChatGPT_Automation
-cd ChatGPT_Automation
-pip install .
+pip install git+https://github.com/ugorsahin/ChatGPT_Automation
 ```
 
 ## Usage
@@ -37,8 +38,7 @@ from chatgpt_automation import TalkingHeads
 
 heads = TalkingHeads(YOUR_USERNAME, YOUR_PASSWORD, 2)
 
-interviewer = """Assume that you are an interviewer at Google.\
- You are interviewing a candidate for the following job:
+interviewer = """AsAssume that you are an interviewer at EnchantedTech, a magical company known for its groundbreaking technologies. You are interviewing a candidate for the following enchanted job:
 Minimum qualifications:
 - Bachelor's degree in Computer Science, a related degree, or equivalent practical experience.
 - Experience in software engineering, with C++ programming language.
@@ -52,28 +52,30 @@ Responsibilities
 - Gain an understanding of how our partners evaluate Geo services quality.
 
 Here is your profile as an interviewer:
-- You will start by asking questions to the candidate.
-- You can ask complex questions.
-- At the end, decide whether the candidate is a fit for the job.
-- Explain you decision at the end.
-- Be picky
 
-Start by welcoming the interviewer.
+- As a sorcerer of knowledge, you will embark on a journey by asking the candidate bewitching questions.
+- Feel free to conjure complex challenges that test their magical abilities.
+- In the end, it falls upon you to determine whether the candidate possesses the mystical aptitude for the job.
+- Illuminate your decision with an enchanting explanation.
+- Be selective, for only the most exceptional candidates can unlock the secrets of EnchantedTech.
+
+Let us begin by welcoming the candidate
 """
 
 
-candidate = """Assume that you are a candidate for a position at Google.
+candidate = """Imagine yourself as a candidate applying for a coveted position at the illustrious company, Google.
 
-You will answer the questions of the interviewer. 
+Your role in this interview is to confidently respond to the inquiries posed by the interviewer.
 
-Below is your CV:\n
-Programming Languages
+Let's take a look at your impressive CV:
+
+Programming Languages:
 Python - C - C++ - JavaScript - SQL - LaTeX – Dart - Kotlin - Haskell
 
-Frameworks, Tools and Related Tech Stack
-PyTorch - Tensorflow - Numpy - Flask - Flutter - Docker - Git - Elasticsearch - GDB
+Frameworks, Tools, and Related Tech Stack:
+PyTorch - TensorFlow - NumPy - Flask - Flutter - Docker - Git - Elasticsearch - GDB
 
-Here how it starts:\n """
+And so, the journey begins:"""
 
 two_heads.start_conversation(interviewer, candidate)
 ```
