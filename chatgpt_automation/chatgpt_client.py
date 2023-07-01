@@ -40,6 +40,7 @@ class ChatGPT_Client:
         password :str,
         headless :bool = True,
         cold_start :bool = False,
+        incognito :bool = True,
         driver_executable_path :str =None,
         driver_arguments : list = None,
         driver_version: int = None,
@@ -49,7 +50,8 @@ class ChatGPT_Client:
             logging.getLogger().setLevel(logging.INFO)
             logging.info('Verbose mode active')
         options = uc.ChromeOptions()
-        options.add_argument('--incognito')
+        if incognito:
+            options.add_argument('--incognito')
         if headless:
             options.add_argument('--headless')
         if driver_arguments:
@@ -142,8 +144,7 @@ class ChatGPT_Client:
         pass_box.send_keys(password)
         logging.info('Filled password box')
         # Click continue
-        continue_button = self.sleepy_find_element(By.XPATH, self.continue_xq)
-        continue_button.click()
+        pass_box.send_keys(Keys.ENTER)
         time.sleep(1)
         logging.info('Logged in')
 
