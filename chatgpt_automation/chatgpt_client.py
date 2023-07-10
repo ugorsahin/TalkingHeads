@@ -1,5 +1,6 @@
 '''Class definition for ChatGPT_Client'''
 
+import os
 import logging
 import time
 import undetected_chromedriver as uc
@@ -33,11 +34,13 @@ class ChatGPT_Client:
     wait_cq     = 'text-2xl'
     reset_xq    = '//a[text()="New chat"]'
     regen_xq    = '//div[text()="Regenerate response"]'
+    textarea_tq = 'textarea'
+    textarea_iq = 'prompt-textarea'
 
     def __init__(
         self,
-        username :str,
-        password :str,
+        username :str = '',
+        password :str = '',
         headless :bool = True,
         cold_start :bool = False,
         incognito :bool = True,
@@ -46,6 +49,17 @@ class ChatGPT_Client:
         driver_version: int = None,
         verbose :bool = False
     ):
+        username = username or os.environ.get('OPENAI_UNAME')
+        password = password or os.environ.get('OPENAI_PWD')
+
+        if not username:
+            logging.error('Either provide username or set the environment variable "OPENAI_UNAME"')
+            return
+
+        if not password:
+            logging.error('Either provide password or set the environment variable "OPENAI_PWD"')
+            return
+
         if verbose:
             logging.getLogger().setLevel(logging.INFO)
             logging.info('Verbose mode active')
@@ -239,7 +253,16 @@ class ChatGPT_Client:
         Returns:
             str: The generated answer.
         '''
-        text_area = self.browser.find_element(By.TAG_NAME, 'textarea')
+
+        text_area = self.browser.find_elements(By.TAG_NAME, self.textarea_tq)
+        if not text_area:
+            logging.info('Unable to locate text area tag. Switching to ID search')
+            text_area = self.browser.find_elements(By.ID, self.textarea_iq)
+        if not text_area:
+            raise RuntimeError('Unable to find the text prompt area. Please raise an issue with verbose=True')
+
+        text_area = text_area[0]
+
         for each_line in question.split('\n'):
             text_area.send_keys(each_line)
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
