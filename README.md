@@ -88,4 +88,8 @@ two_heads.continue_conversation(text_1: str= None, text_2: str= None)
 
 ## Issues & Contribution
 
-I would be happy to answer any questions or accept your contributions. Let me know in issues if you need anything..
+I would be happy to answer any questions or accept your contributions. Let me know in issues if you need anything.
+
+Please indicate your issue with a tag enclosed by square brackets: [FEATURE], [BUG], [DOCUMENTATION], [QUESTION]. If you don't know what to write you can write [MISC].
+
+There are some features I would like to add to this repository. If you would like to help, search in issues and select the one you would like to implement. Let everyone know you are working on it by commenting on the issue and I would be glad to review your pull request.
