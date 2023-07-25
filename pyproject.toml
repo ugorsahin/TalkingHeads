@@ -13,7 +13,7 @@ name = "chatgpt_automation"
 description = "A Headless Chrome interface to communicate with ChatGPT"
 readme = "README.md"
 requires-python = ">=3.8"
-version = "0.1.4"
+version = "0.1.5"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
