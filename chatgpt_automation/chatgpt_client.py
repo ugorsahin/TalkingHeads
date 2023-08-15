@@ -211,7 +211,7 @@ class ChatGPT_Client:
             time.sleep(sleep_duration)
         return item
 
-    def wait_to_disappear(self, by, query, sleep_duration=1):
+    def wait_until_disappear(self, by, query, timeout_duration=15):
         '''
         Waits until the specified web element disappears from the page.
 
@@ -222,18 +222,22 @@ class ChatGPT_Client:
         Args:
             by (selenium.webdriver.common.by.By): The method used to locate the element.
             query (str): The query string to locate the element.
-            sleep_duration (int, optional): The duration to sleep between checks. Default: 1.
+            timeout_duration (int, optional): The total wait time before the timeout exception. Default: 15.
 
         Returns:
             None
         '''
-
-        while True:
-            thinking = self.browser.find_elements(by, query)
-            if len(thinking) == 0:
-                logging.info(f'Element {query} is present, waiting')
-                break
-            time.sleep(sleep_duration)
+        logging.info(f'Waiting element {query} to disappear.')
+        try:
+            WebDriverWait(
+                self.browser,
+                timeout_duration
+            ).until_not(
+                EC.presence_of_element_located((by, query))
+            )
+            logging.info(f'Element {query} disappeared.')
+        except Exceptions.TimeoutException:
+            logging.info(f'Element {query} still here, something is wrong.')
         return
 
     def interact(self, question : str):
@@ -269,7 +273,7 @@ class ChatGPT_Client:
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
         text_area.send_keys(Keys.RETURN)
         logging.info('Message sent, waiting for response')
-        self.wait_to_disappear(By.CLASS_NAME, self.wait_cq)
+        self.wait_until_disappear(By.CLASS_NAME, self.wait_cq)
         answer = self.browser.find_elements(By.CLASS_NAME, self.chatbox_cq)[-1]
         logging.info('Answer is ready')
         return answer.text
@@ -293,7 +297,7 @@ class ChatGPT_Client:
             regen_button = self.browser.find_element(By.XPATH, self.regen_xq)
             regen_button.click()
             logging.info('Clicked regenerate button')
-            self.wait_to_disappear(By.CLASS_NAME, self.wait_cq)
+            self.wait_until_disappear(By.CLASS_NAME, self.wait_cq)
             answer = self.browser.find_elements(By.CLASS_NAME, self.chatbox_cq)[-1]
             logging.info('New answer is ready')
         except Exceptions.NoSuchElementException:
