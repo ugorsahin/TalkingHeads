@@ -9,6 +9,10 @@ def detect_chrome_version(version_num=None):
         If the command return something else than expected output, it uses the default version 112.
     '''
 
+    if version_num:
+        logging.debug(f'Version number is provided: {version_num}')
+        return version_num
+
     if platform.system() == 'Windows':
         if not version_num:
             logging.warning('Windows detected, no version number is provided, default: 112')

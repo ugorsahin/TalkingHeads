@@ -25,15 +25,14 @@ class ChatGPT_Client:
 
     login_xq    = '//button[//div[text()="Log in"]]'
     continue_xq = '//button[text()="Continue"]'
-    next_cq     = 'prose'
+    tutorial_iq = 'radix-:ri:'
     button_tq   = 'button'
-    # next_xq     = '//button[//div[text()='Next']]'
     done_xq     = '//button[//div[text()="Done"]]'
 
     chatbox_cq  = 'text-base'
     wait_cq     = 'text-2xl'
-    reset_xq    = '//a[text()="New chat"]'
-    regen_xq    = '//div[text()="Regenerate response"]'
+    reset_xq    = '//a[//span[text()="New chat"]]'
+    regen_xq    = '//div[text()="Regenerate"]'
     textarea_tq = 'textarea'
     textarea_iq = 'prompt-textarea'
     gpt_xq    = '//span[text()="{}"]'
@@ -78,7 +77,8 @@ class ChatGPT_Client:
             driver_executable_path=driver_executable_path,
             options=options,
             headless=headless,
-            version_main=detect_chrome_version(driver_version)
+            version_main=detect_chrome_version(driver_version),
+            log_level=10,
         )
         self.browser.set_page_load_timeout(15)
         logging.info('Loaded Undetected chrome')
@@ -166,19 +166,10 @@ class ChatGPT_Client:
         try:
             # Pass introduction
             next_button = WebDriverWait(self.browser, 5).until(
-                EC.presence_of_element_located((By.CLASS_NAME, self.next_cq))
+                EC.presence_of_element_located((By.ID, self.tutorial_iq))
             )
             next_button.find_elements(By.TAG_NAME, self.button_tq)[0].click()
 
-            next_button = WebDriverWait(self.browser, 5).until(
-                EC.presence_of_element_located((By.CLASS_NAME, self.next_cq))
-            )
-            next_button.find_elements(By.TAG_NAME, self.button_tq)[1].click()
-
-            next_button = WebDriverWait(self.browser, 5).until(
-                EC.presence_of_element_located((By.CLASS_NAME, self.next_cq))
-            )
-            next_button.find_elements(By.TAG_NAME, self.button_tq)[1].click()
             logging.info('Info screen passed')
         except Exceptions.TimeoutException:
             logging.info('Info screen skipped')
