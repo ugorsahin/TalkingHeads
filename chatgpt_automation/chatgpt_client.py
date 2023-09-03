@@ -3,6 +3,7 @@
 import os
 import logging
 import time
+from datetime import datetime
 import undetected_chromedriver as uc
 
 # from selenium import webdriver
@@ -25,9 +26,16 @@ class ChatGPT_Client:
 
     login_xq    = '//button[//div[text()="Log in"]]'
     continue_xq = '//button[text()="Continue"]'
-    tutorial_iq = 'radix-:ri:'
+    tutorial_xq = '//div[contains(text(), "Okay, let’s go")]'
     button_tq   = 'button'
     done_xq     = '//button[//div[text()="Done"]]'
+
+    menu_xq     = '//button[contains(@id, "headlessui-menu-button")]'
+    custom_xq   = '//a[contains(text(), "Custom instructions")]'
+    enable_xq   = '//span[@data-state="unchecked"]'
+    disable_xq   = '//span[@data-state="checked"]'
+    custom_textarea_xq = '//textarea[@type="button"]'
+    custom_save_xq = '//div[contains(text(), "Save")]'
 
     chatbox_cq  = 'text-base'
     wait_cq     = 'text-2xl'
@@ -49,6 +57,12 @@ class ChatGPT_Client:
         driver_version: int = None,
         verbose :bool = False
     ):
+        if username or password:
+            logging.warning(
+                "The usage of username and password parameters are deprecated and will be removed in near feature."
+                "Please adjust your environment variables to pass username and password."
+            )
+
         username = username or os.environ.get('OPENAI_UNAME')
         password = password or os.environ.get('OPENAI_PWD')
 
@@ -84,10 +98,35 @@ class ChatGPT_Client:
         logging.info('Loaded Undetected chrome')
         logging.info('Opening chatgpt')
         self.browser.get('https://chat.openai.com/auth/login?next=/chat')
+        self.browser.execute_script(
+            f"window.localStorage.setItem('oai/apps/hasSeenOnboarding/chat', {datetime.today().strftime('%Y-%m-%d')});"
+        )
         if not cold_start:
             self.pass_verification()
             self.login(username, password)
         logging.info('ChatGPT is ready to interact')
+
+    def find_or_fail(self, by, query, return_elements=False, fail_ok=False):
+        """Finds a list of elements given query, if none of the items exists, throws an error
+
+        Args:
+            by (selenium.webdriver.common.by.By): The method used to locate the element.
+            query (str): The query string to locate the element.
+
+        Returns:
+            selenium.webdriver.remote.webelement.WebElement: Web element or None if not found.
+        """
+        dom_element = self.browser.find_elements(by, query)
+        if not dom_element:
+            if not fail_ok:
+                logging.error(f'{query} is not located. Please raise an issue with verbose=True')
+            return None
+
+        logging.debug(f'{query} is located.')
+        if return_elements:
+            return dom_element
+        else:
+            return dom_element[0]
 
     def pass_verification(self):
         '''
@@ -166,9 +205,9 @@ class ChatGPT_Client:
         try:
             # Pass introduction
             next_button = WebDriverWait(self.browser, 5).until(
-                EC.presence_of_element_located((By.ID, self.tutorial_iq))
-            )
-            next_button.find_elements(By.TAG_NAME, self.button_tq)[0].click()
+                EC.presence_of_element_located((By.XPATH, self.tutorial_xq))
+            ).click()
+            #next_button.find_elements(By.TAG_NAME, self.button_tq)[0].click()
 
             logging.info('Info screen passed')
         except Exceptions.TimeoutException:
@@ -313,6 +352,45 @@ class ChatGPT_Client:
             except Exceptions.NoSuchElementException:
                 logging.error('Button is not present')
         return False
+
+    def set_custom_instruction(self, mode: str, instruction: str):
+        """Sets custom instructions
+
+        Args:
+            mode (str): Either 'extra_information' or 'modulation'. Check openai help pages for more information.
+            instruction (str): _description_
+        """
+        menu_button = self.find_or_fail(By.XPATH, self.menu_xq)
+        menu_button.click()
+        custom_button = self.find_or_fail(By.XPATH, self.custom_xq)
+        custom_button.click()
+        enable_button = self.find_or_fail(By.XPATH, self.enable_xq)
+        if enable_button:
+            enable_button.click()
+        # If custom instructions are already enabled, we need to verify that.
+        else:
+            logging.debug('Enable button has not found, checking if it is already enabled')
+            disable_button = self.find_or_fail(By.XPATH, self.disable_xq)
+            if disable_button:
+                logging.debug('Custom instructions are already enabled.')
+
+        text_areas = self.find_or_fail(By.XPATH, self.custom_textarea_xq, return_elements=True)
+        text_area = text_areas[{
+            'extra_information' : 0,
+            'modulation' : 1
+        }[mode]]
+
+        text_area.send_keys(Keys.CONTROL + "a")
+        time.sleep(0.1)
+        text_area.send_keys(Keys.DELETE)
+        time.sleep(0.1)
+        text_area.send_keys(instruction)
+
+        logging.debug(f'Custom instruction-{mode} has provided')
+
+        save_button = self.find_or_fail(By.XPATH, self.custom_save_xq)
+        save_button.click()
+        return
 
 if __name__ == '__main__':
     import argparse
