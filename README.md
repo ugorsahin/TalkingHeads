@@ -11,13 +11,13 @@ Before you begin, please ensure that you have Chrome installed on your system. T
 
 ## Installation
 
-```
+```python
 pip install git+https://github.com/ugorsahin/ChatGPT_Automation
 ```
 
 ## Usage
 
-```
+```python
 from chatgpt_automation import ChatGPT_Client
 
 chatgpt = ChatGPT_Client(YOUR_USERNAME, YOUR_PASSWORD)
@@ -33,12 +33,12 @@ This is a wrapper module to use more than one ChatGPT instance, it helps to crea
 
 Here is how to start quickly.
 
-```
+```python
 from chatgpt_automation import TalkingHeads
 
 heads = TalkingHeads(YOUR_USERNAME, YOUR_PASSWORD, 2)
 
-interviewer = """AsAssume that you are an interviewer at EnchantedTech, a magical company known for its groundbreaking technologies. You are interviewing a candidate for the following enchanted job:
+interviewer = """ Assume that you are an interviewer at EnchantedTech, a magical company known for its groundbreaking technologies. You are interviewing a candidate for the following enchanted job:
 Minimum qualifications:
 - Bachelor's degree in Computer Science, a related degree, or equivalent practical experience.
 - Experience in software engineering, with C++ programming language.
@@ -48,7 +48,7 @@ Preferred qualifications:
 - Experience working with Linux.
 
 Responsibilities
-- Manage the automotive industry uses mapping data  to power autonomous and assisted driving.
+- Manage the automotive industry using mapping data  to power autonomous and assisted driving.
 - Gain an understanding of how our partners evaluate Geo services quality.
 
 Here is your profile as an interviewer:
@@ -63,7 +63,7 @@ Let us begin by welcoming the candidate
 """
 
 
-candidate = """Imagine yourself as a candidate applying for a coveted position at the illustrious company, Google.
+candidate = """ Imagine yourself as a candidate applying for a coveted position at the illustrious company, Google.
 
 Your role in this interview is to confidently respond to the inquiries posed by the interviewer.
 
@@ -79,10 +79,10 @@ And so, the journey begins:"""
 
 two_heads.start_conversation(interviewer, candidate)
 ```
-Then you can continue to the conversation, call below function.
+Then you can continue the conversation, by calling the below function.
 If you would like to alter responses, use the positional arguments
 
-```
+```python
 two_heads.continue_conversation(text_1: str= None, text_2: str= None)
 ```
 
