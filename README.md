@@ -27,6 +27,22 @@ answer = chatgpt.interact("Hello, how are you today")
 print(answer)
 ```
 
+## Features
+
+✅ Login via openai account
+
+✅ Interact
+
+✅ Start a new chat
+
+✅ Regenerate response
+
+✅ Reset thread
+
+✅ Set custom interactions
+
+✅ Switch model
+
 ## TalkingHeads
 
 This is a wrapper module to use more than one ChatGPT instance, it helps to create simulation for conversations.
