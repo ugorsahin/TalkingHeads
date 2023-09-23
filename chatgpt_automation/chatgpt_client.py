@@ -13,7 +13,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions as Exceptions
 
-from .helpers import detect_chrome_version
+from helpers import detect_chrome_version
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
@@ -192,6 +192,16 @@ class ChatGPT_Client:
         continue_button.click()
         time.sleep(1)
         logging.info('Clicked continue button')
+
+        #Wait to see if username is correct
+        try:
+            self.browser.find_element(By.ID, 'error-element-username')
+            logging.error("Failed to validate username, please ensure the username you have set is correct")
+            raise
+        except:
+            logging.info("Username was correct")
+            
+            
 
         # Find password textbox, enter password
         pass_box = self.sleepy_find_element(By.ID, 'password')
@@ -402,3 +412,4 @@ if __name__ == '__main__':
     chatgpt = ChatGPT_Client(args.username, args.password)
     result = chatgpt.interact('Hello, how are you today')
     print(result)
+

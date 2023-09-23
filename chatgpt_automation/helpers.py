@@ -16,7 +16,7 @@ def detect_chrome_version(version_num=None):
     if platform.system() == 'Windows':
         if not version_num:
             logging.warning('Windows detected, no version number is provided, default: 112')
-            return 112
+            return 116
         return version_num
 
     out = subprocess.check_output(['google-chrome', '--version'])
