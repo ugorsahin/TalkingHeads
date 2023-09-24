@@ -11,7 +11,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions as Exceptions
 
-from helpers import detect_chrome_version
+from .helpers import detect_chrome_version
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
