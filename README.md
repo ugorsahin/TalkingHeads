@@ -11,8 +11,14 @@ Before you begin, please ensure that you have Chrome installed on your system. T
 
 ## Installation
 
+Installing the library:
 ```python
 pip install git+https://github.com/ugorsahin/ChatGPT_Automation
+```
+
+Installing required packages (run this command in the same folder as the library files):
+```python
+pip install -r requirements.txt
 ```
 
 ## Usage

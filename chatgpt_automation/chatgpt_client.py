@@ -28,6 +28,10 @@ class ChatGPT_Client:
     button_tq   = 'button'
     done_xq     = '//button[//div[text()="Done"]]'
 
+    username_error = 'error-element-username'
+    password_error = 'error-element-password'
+    account_error = '//div[@data-error-code="user-blocked"]'
+
     menu_xq     = '//button[contains(@id, "headlessui-menu-button")]'
     custom_xq   = '//a[contains(text(), "Custom instructions")]'
     enable_xq   = '//span[@data-state="unchecked"]'
@@ -194,7 +198,7 @@ class ChatGPT_Client:
         #Ensure username is in the correct format
         usernameIsValid = True
         try:
-            self.browser.find_element(By.ID, 'error-element-username')
+            self.browser.find_element(By.ID, self.username_error)
             usernameIsValid = False
         except Exceptions.NoSuchElementException:
             logging.info("Username was validated")
@@ -214,7 +218,7 @@ class ChatGPT_Client:
         #Ensure password is correct
         passwordIsValid = True
         try:
-            self.browser.find_element(By.ID, 'error-element-password')
+            self.browser.find_element(By.ID, self.password_error)
             passwordIsValid = False
         except Exceptions.NoSuchElementException:
             logging.info("Password was validated")
@@ -226,7 +230,7 @@ class ChatGPT_Client:
         #Ensure account isn't blocked
         accountIsValid = True
         try:
-            self.browser.find_element(By.XPATH, '//div[@data-error-code="user-blocked"]')
+            self.browser.find_element(By.XPATH, self.account_error)
             accountIsValid = False
         except Exceptions.NoSuchElementException:
             logging.info("Account was validated, logging in")
