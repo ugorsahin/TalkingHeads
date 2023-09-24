@@ -1,8 +1,6 @@
 '''Class definition for ChatGPT_Client'''
 
-import os
-import logging
-import time
+import os, logging, time, sys
 from datetime import datetime
 import undetected_chromedriver as uc
 
@@ -193,16 +191,18 @@ class ChatGPT_Client:
         time.sleep(1)
         logging.info('Clicked continue button')
 
-        #Wait to see if username is correct
+        #Ensure username is in the correct format
+        usernameIsValid = True
         try:
             self.browser.find_element(By.ID, 'error-element-username')
-            logging.error("Failed to validate username, please ensure the username you have set is correct")
-            raise
-        except:
-            logging.info("Username was correct")
-            
-            
-
+            usernameIsValid = False
+        except Exceptions.NoSuchElementException:
+            logging.info("Username was validated")
+        except Exception as exp:
+            logging.error(f'Something unexpected happened: {exp}')
+        if not usernameIsValid:
+            raise RuntimeError("Failed to validate username, please ensure the username you have set is correct")
+        
         # Find password textbox, enter password
         pass_box = self.sleepy_find_element(By.ID, 'password')
         pass_box.send_keys(password)
@@ -210,8 +210,21 @@ class ChatGPT_Client:
         # Click continue
         pass_box.send_keys(Keys.ENTER)
         time.sleep(1)
-        logging.info('Logged in')
+        
+        #Ensure password is correct
+        passwordIsValid = True
+        try:
+            self.browser.find_element(By.ID, 'error-element-password')
+            passwordIsValid = False
+        except Exceptions.NoSuchElementException:
+            logging.info("Password was validated, logged in")
+        except Exception as exp:
+            logging.error(f'Something unexpected happened: {exp}')
+        if not passwordIsValid:
+            raise RuntimeError("Failed to validate password, please ensure the password you have set is correct")
 
+        #Ensure account isn't blocked
+#to use: //div[@data-error-code="user-blocked"]
         try:
             # Pass introduction
             next_button = WebDriverWait(self.browser, 5).until(
