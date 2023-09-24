@@ -1,6 +1,6 @@
 '''Class definition for ChatGPT_Client'''
 
-import os, logging, time, sys
+import os, logging, time
 from datetime import datetime
 import undetected_chromedriver as uc
 
@@ -201,7 +201,7 @@ class ChatGPT_Client:
         except Exception as exp:
             logging.error(f'Something unexpected happened: {exp}')
         if not usernameIsValid:
-            raise RuntimeError("Failed to validate username, please ensure the username you have set is correct")
+            raise RuntimeError("Failed to validate username, please ensure the username/email you have entered is correct")
         
         # Find password textbox, enter password
         pass_box = self.sleepy_find_element(By.ID, 'password')
@@ -217,14 +217,25 @@ class ChatGPT_Client:
             self.browser.find_element(By.ID, 'error-element-password')
             passwordIsValid = False
         except Exceptions.NoSuchElementException:
-            logging.info("Password was validated, logged in")
+            logging.info("Password was validated")
         except Exception as exp:
             logging.error(f'Something unexpected happened: {exp}')
         if not passwordIsValid:
-            raise RuntimeError("Failed to validate password, please ensure the password you have set is correct")
+            raise RuntimeError("Failed to validate password, please ensure the password you have entered is correct")
 
         #Ensure account isn't blocked
-#to use: //div[@data-error-code="user-blocked"]
+        accountIsValid = True
+        try:
+            self.browser.find_element(By.XPATH, '//div[@data-error-code="user-blocked"]')
+            accountIsValid = False
+        except Exceptions.NoSuchElementException:
+            logging.info("Account was validated, logging in")
+        except Exception as exp:
+            logging.error(f'Something unexpected happened: {exp}')
+        if not accountIsValid:
+            raise RuntimeError("Failed to validate account, it appears this account is temporarily blocked by OpenAI")
+        
+
         try:
             # Pass introduction
             next_button = WebDriverWait(self.browser, 5).until(
