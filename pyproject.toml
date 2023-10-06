@@ -20,8 +20,8 @@ classifiers = [
 ]
 
 dependencies = [
-   'selenium>=4.7.2',
-   'undetected-chromedriver>=3.4.6'
+   'selenium>=4.10.0',
+   'undetected-chromedriver>=3.5.3'
 ]
 
 [project.urls]
