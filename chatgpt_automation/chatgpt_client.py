@@ -15,6 +15,8 @@ import selenium.common.exceptions as Exceptions
 
 from .helpers import detect_chrome_version
 
+from bs4 import BeautifulSoup
+
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
     datefmt='%Y/%m/%d %H:%M:%S',
@@ -44,7 +46,7 @@ class ChatGPT_Client:
     textarea_tq = 'textarea'
     textarea_iq = 'prompt-textarea'
     gpt_xq    = '//span[text()="{}"]'
-
+    extract_code = True
     def __init__(
         self,
         username :str = '',
@@ -65,7 +67,7 @@ class ChatGPT_Client:
 
         username = username or os.environ.get('OPENAI_UNAME')
         password = password or os.environ.get('OPENAI_PWD')
-
+        self.extract_code = extract_code
         if not username:
             logging.error('Either provide username or set the environment variable "OPENAI_UNAME"')
             return
@@ -273,7 +275,7 @@ class ChatGPT_Client:
             logging.info(f'Element {query} still here, something is wrong.')
         return
 
-    def interact(self, question : str):
+    def interact(self, question: str):
         '''
         Sends a question and retrieves the answer from the ChatGPT system.
 
@@ -294,22 +296,49 @@ class ChatGPT_Client:
 
         text_area = self.browser.find_elements(By.TAG_NAME, self.textarea_tq)
         if not text_area:
-            logging.info('Unable to locate text area tag. Switching to ID search')
+            print('Unable to locate text area tag. Switching to ID search')
             text_area = self.browser.find_elements(By.ID, self.textarea_iq)
         if not text_area:
             raise RuntimeError('Unable to find the text prompt area. Please raise an issue with verbose=True')
 
         text_area = text_area[0]
 
-        for each_line in question.split('\n'):
-            text_area.send_keys(each_line)
-            text_area.send_keys(Keys.SHIFT + Keys.ENTER)
-        text_area.send_keys(Keys.RETURN)
-        logging.info('Message sent, waiting for response')
-        self.wait_until_disappear(By.CLASS_NAME, self.wait_cq)
-        answer = self.browser.find_elements(By.CLASS_NAME, self.chatbox_cq)[-1]
-        logging.info('Answer is ready')
-        return answer.text
+        text_to_insert = question.replace('"', '\\"').replace("'", "\\'").replace("\n", "\\n")
+
+
+        # Send prompt by javascript
+        js_script = f"""var textarea = document.querySelector('#prompt-textarea');
+        textarea.value = '{text_to_insert}';
+        """
+        text_area.send_keys(Keys.SHIFT + Keys.ENTER)  # Enter in the textarea to allow the submit button to be clickable
+        self.browser.execute_script(js_script)
+        time.sleep(1.5)  # Waiting for the text to be inserted (to be sure)
+        self.browser.find_elements(By.XPATH, "//form//button[contains(@class, 'p-1')]")[0].click()
+
+        logging.info('-- Message sent, waiting for response --')
+        time.sleep(1.5) # Waiting to be sure, that the "Stop generating" button appears
+        # Lunch prompt
+        self.wait_until_disappear(By.XPATH, '//button[//div[text()="Stop generating"]]', timeout_duration=300)
+
+        answ = ""
+        try:
+            answer = self.browser.find_elements(By.CLASS_NAME, self.chatbox_cq)[-1]
+
+            target_div = False
+            if self.extract_code == True:
+                html_content = answer.get_attribute('outerHTML')
+                soup = BeautifulSoup(html_content, 'html.parser')
+                target_div = soup.select_one('pre .overflow-y-auto')
+
+            if target_div:  # Check if a code block exist
+                answ = target_div.get_text()  # Get brut content and save \n
+            else:
+                answ = answer.text
+
+        except Exception as e:
+            print(f'No answer found : {e}')
+
+        return answ
 
     def reset_thread(self):
         '''Function to close the current thread and start new one'''
