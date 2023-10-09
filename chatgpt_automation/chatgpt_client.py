@@ -39,7 +39,7 @@ class ChatGPT_Client:
 
     chatbox_cq  = 'text-base'
     wait_cq     = 'text-2xl'
-    reset_xq    = '//a[//span[text()="New chat"]]'
+    reset_xq    = '//a[//span[text()="New Chat"]]'
     regen_xq    = '//div[text()="Regenerate"]'
     textarea_tq = 'textarea'
     textarea_iq = 'prompt-textarea'
@@ -98,15 +98,18 @@ class ChatGPT_Client:
         logging.info('Loaded Undetected chrome')
         logging.info('Opening chatgpt')
         self.browser.get('https://chat.openai.com/auth/login?next=/chat')
+        today_str = datetime.today().strftime('%Y-%m-%d')
         self.browser.execute_script(
-            f"window.localStorage.setItem('oai/apps/hasSeenOnboarding/chat', {datetime.today().strftime('%Y-%m-%d')});"
+            f"window.localStorage.setItem('oai/apps/hasSeenOnboarding/chat', {today_str});"
+            f"window.localStorage.setItem('oai/apps/hasUserContextFirstTime/2023-06-29', true);"
+            f"window.localStorage.setItem('oai/apps/announcement/customInstructions', 1694012515508);"
         )
         if not cold_start:
             self.pass_verification()
             self.login(username, password)
         logging.info('ChatGPT is ready to interact')
 
-    def find_or_fail(self, by, query, return_elements=False, fail_ok=False):
+    def find_or_fail(self, by, query, return_all_elements=False, fail_ok=False):
         """Finds a list of elements given query, if none of the items exists, throws an error
 
         Args:
@@ -123,7 +126,7 @@ class ChatGPT_Client:
             return None
 
         logging.debug(f'{query} is located.')
-        if return_elements:
+        if return_all_elements:
             return dom_element
         else:
             return dom_element[0]
@@ -332,7 +335,7 @@ class ChatGPT_Client:
             logging.info('New answer is ready')
         except Exceptions.NoSuchElementException:
             logging.error('Regenerate button is not present')
-        return answer
+        return answer.text
 
     def switch_model(self, model_name : str):
         '''
@@ -374,7 +377,7 @@ class ChatGPT_Client:
             if disable_button:
                 logging.debug('Custom instructions are already enabled.')
 
-        text_areas = self.find_or_fail(By.XPATH, self.custom_textarea_xq, return_elements=True)
+        text_areas = self.find_or_fail(By.XPATH, self.custom_textarea_xq, return_all_elements=True)
         text_area = text_areas[{
             'extra_information' : 0,
             'modulation' : 1
