@@ -29,3 +29,15 @@ def detect_chrome_version(version_num=None):
         logging.info(f'The version is {_v}')
 
     return _v
+
+
+save_func_map = {
+    'csv' : 'to_csv',
+    'h5' : 'to_hdf',
+    'html' : 'to_html',
+    'json' : 'to_json',
+    'orc' : 'to_orc',
+    'pkl' : 'to_pkl',
+    'xlsx' : 'to_xlsx',
+    'xml' : 'to_xml'
+}

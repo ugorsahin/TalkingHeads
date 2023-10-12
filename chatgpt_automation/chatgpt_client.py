@@ -5,15 +5,15 @@ import logging
 import time
 from datetime import datetime
 import undetected_chromedriver as uc
+import pandas as pd
 
-# from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions as Exceptions
 
-from .helpers import detect_chrome_version
+from .helpers import detect_chrome_version, save_func_map
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
@@ -40,6 +40,7 @@ class ChatGPT_Client:
     chatbox_cq  = 'text-base'
     wait_cq     = 'text-2xl'
     reset_xq    = '//a[//span[text()="New Chat"]]'
+    reset_cq    = 'truncate'
     regen_xq    = '//div[text()="Regenerate"]'
     textarea_tq = 'textarea'
     textarea_iq = 'prompt-textarea'
@@ -47,14 +48,16 @@ class ChatGPT_Client:
 
     def __init__(
         self,
-        username :str = '',
-        password :str = '',
-        headless :bool = True,
-        cold_start :bool = False,
-        incognito :bool = True,
+        username: str = '',
+        password: str = '',
+        headless: bool = True,
+        cold_start: bool = False,
+        incognito: bool = True,
         driver_executable_path :str =None,
-        driver_arguments : list = None,
+        driver_arguments: list = None,
         driver_version: int = None,
+        auto_save: bool = False,
+        save_path: str = None,
         verbose :bool = False
     ):
         if username or password:
@@ -109,6 +112,28 @@ class ChatGPT_Client:
             self.login(username, password)
         logging.info('ChatGPT is ready to interact')
 
+        self.auto_save = auto_save
+        if self.auto_save:
+            self.chat_history = pd.DataFrame(columns=['role', 'is_regen', 'content'])
+            self.set_save_path(save_path)
+
+    def __del__(self):
+        logging.info('ChatGPT_Client Instance is being deleted')
+        self.save()
+
+    def set_save_path(self, save_path):
+        self.save_path = save_path or datetime.now().strftime('%Y_%m_%d_%H_%M_%S.csv')
+        self.file_type = save_path.split('.')[-1] if save_path else 'csv'
+
+    def save(self):
+        save_func = save_func_map.get(self.file_type, None)
+        if save_func:
+            save_func = getattr(self.chat_history, save_func)
+            save_func(self.save_path)
+            logging.info(f'File saved to {self.save_path}')
+        else:
+            logging.error(f'Unsupported file type {self.file_type}')
+
     def find_or_fail(self, by, query, return_all_elements=False, fail_ok=False):
         """Finds a list of elements given query, if none of the items exists, throws an error
 
@@ -125,7 +150,7 @@ class ChatGPT_Client:
                 logging.error(f'{query} is not located. Please raise an issue with verbose=True')
             return None
 
-        logging.debug(f'{query} is located.')
+        logging.info(f'{query} is located.')
         if return_all_elements:
             return dom_element
         else:
@@ -309,11 +334,33 @@ class ChatGPT_Client:
         self.wait_until_disappear(By.CLASS_NAME, self.wait_cq)
         answer = self.browser.find_elements(By.CLASS_NAME, self.chatbox_cq)[-1]
         logging.info('Answer is ready')
+        if self.auto_save:
+            self.chat_history.loc[len(self.chat_history)] = ['user', False, question]
+            self.chat_history.loc[len(self.chat_history)] = ['chatgpt', False, answer.text]
         return answer.text
 
     def reset_thread(self):
         '''Function to close the current thread and start new one'''
-        self.browser.find_element(By.XPATH, self.reset_xq).click()
+        try:
+            self.browser.find_element(By.XPATH, self.reset_xq).click()
+            
+        except Exceptions.NoSuchElementException:
+            logging.info('New Chat button is not available, dropping to class search')
+            new_chat_button = self.find_or_fail(By.CLASS_NAME, self.reset_cq, return_all_elements=True)
+            print(new_chat_button)
+            if not new_chat_button:
+                logging.info('There is no button to click')
+                return
+            try:
+                new_chat_button[0].click()
+                logging.info('Clicked the button')
+            except: # TODO specify the exception.
+                logging.error(
+                    'It seems UI has changed.'
+                    'Please raise an issue after running the constructor with verbose=True'
+                )
+
+
         logging.info('New thread is ready')
 
     def regenerate_response(self):
@@ -335,6 +382,9 @@ class ChatGPT_Client:
             logging.info('New answer is ready')
         except Exceptions.NoSuchElementException:
             logging.error('Regenerate button is not present')
+
+        if self.auto_save:
+            self.chat_history.loc[len(self.chat_history)] = ['chatgpt', True, answer.text]
         return answer.text
 
     def switch_model(self, model_name : str):
@@ -372,10 +422,10 @@ class ChatGPT_Client:
             enable_button.click()
         # If custom instructions are already enabled, we need to verify that.
         else:
-            logging.debug('Enable button has not found, checking if it is already enabled')
+            logging.info('Enable button has not found, checking if it is already enabled')
             disable_button = self.find_or_fail(By.XPATH, self.disable_xq)
             if disable_button:
-                logging.debug('Custom instructions are already enabled.')
+                logging.info('Custom instructions are already enabled.')
 
         text_areas = self.find_or_fail(By.XPATH, self.custom_textarea_xq, return_all_elements=True)
         text_area = text_areas[{
@@ -389,7 +439,7 @@ class ChatGPT_Client:
         time.sleep(0.1)
         text_area.send_keys(instruction)
 
-        logging.debug(f'Custom instruction-{mode} has provided')
+        logging.info(f'Custom instruction-{mode} has provided')
 
         save_button = self.find_or_fail(By.XPATH, self.custom_save_xq)
         save_button.click()

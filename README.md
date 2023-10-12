@@ -43,6 +43,8 @@ print(answer)
 
 ✅ Switch model
 
+✅ (Auto) Save the conversation as csv, h5, html, json, orc, pkl, xlsx, xml
+
 ## TalkingHeads
 
 This is a wrapper module to use more than one ChatGPT instance, it helps to create simulation for conversations.
