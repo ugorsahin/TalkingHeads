@@ -1,8 +1,6 @@
 '''Class definition for ChatGPT_Client'''
 
-import os
-import logging
-import time
+import os, logging, time
 from datetime import datetime
 import undetected_chromedriver as uc
 import pandas as pd
@@ -29,6 +27,10 @@ class ChatGPT_Client:
     tutorial_xq = '//div[contains(text(), "Okay, let’s go")]'
     button_tq   = 'button'
     done_xq     = '//button[//div[text()="Done"]]'
+
+    username_error = 'error-element-username'
+    password_error = 'error-element-password'
+    account_error = '//div[@data-error-code="user-blocked"]'
 
     menu_xq     = '//button[contains(@id, "headlessui-menu-button")]'
     custom_xq   = '//a[contains(text(), "Custom instructions")]'
@@ -221,6 +223,18 @@ class ChatGPT_Client:
         time.sleep(1)
         logging.info('Clicked continue button')
 
+        #Ensure username is in the correct format
+        usernameIsValid = True
+        try:
+            self.browser.find_element(By.ID, self.username_error)
+            usernameIsValid = False
+        except Exceptions.NoSuchElementException:
+            logging.info("Username was validated")
+        except Exception as exp:
+            logging.error(f'Something unexpected happened: {exp}')
+        if not usernameIsValid:
+            raise RuntimeError("Failed to validate username, please ensure the username/email you have entered is correct")
+        
         # Find password textbox, enter password
         pass_box = self.sleepy_find_element(By.ID, 'password')
         pass_box.send_keys(password)
@@ -228,7 +242,31 @@ class ChatGPT_Client:
         # Click continue
         pass_box.send_keys(Keys.ENTER)
         time.sleep(1)
-        logging.info('Logged in')
+        
+        #Ensure password is correct
+        passwordIsValid = True
+        try:
+            self.browser.find_element(By.ID, self.password_error)
+            passwordIsValid = False
+        except Exceptions.NoSuchElementException:
+            logging.info("Password was validated")
+        except Exception as exp:
+            logging.error(f'Something unexpected happened: {exp}')
+        if not passwordIsValid:
+            raise RuntimeError("Failed to validate password, please ensure the password you have entered is correct")
+
+        #Ensure account isn't blocked
+        accountIsValid = True
+        try:
+            self.browser.find_element(By.XPATH, self.account_error)
+            accountIsValid = False
+        except Exceptions.NoSuchElementException:
+            logging.info("Account was validated, logging in")
+        except Exception as exp:
+            logging.error(f'Something unexpected happened: {exp}')
+        if not accountIsValid:
+            raise RuntimeError("Failed to validate account, it appears this account is temporarily blocked by OpenAI")
+        
 
         try:
             # Pass introduction
@@ -455,3 +493,4 @@ if __name__ == '__main__':
     chatgpt = ChatGPT_Client(args.username, args.password)
     result = chatgpt.interact('Hello, how are you today')
     print(result)
+
