@@ -4,11 +4,10 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+[project]
 authors = [
   { name="Ugur Sahin", email="ugorsahin@tutanota.de"},
 ]
-
-[project]
 name = "talkingheads"
 description = "A Headless Chrome interface to communicate with Google Bard, HuggingChat and OpenAI ChatGPT"
 readme = "README.md"
