@@ -1,11 +1,8 @@
-'''Class definition for ChatGPT_Client'''
+'''Class definition for ChatGPTClient'''
 
-import os
 import logging
 import time
 from datetime import datetime
-import undetected_chromedriver as uc
-import pandas as pd
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -13,7 +10,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions as Exceptions
 
-from .helpers import detect_chrome_version, save_func_map
+from .base_browser import BaseBrowser
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
@@ -21,8 +18,8 @@ logging.basicConfig(
     level=logging.WARNING
 )
 
-class ChatGPT_Client:
-    '''ChatGPT_Client class to interact with ChatGPT'''
+class ChatGPTClient(BaseBrowser):
+    '''ChatGPTClient class to interact with ChatGPT'''
 
     login_xq    = '//button[//div[text()="Log in"]]'
     continue_xq = '//button[text()="Continue"]'
@@ -32,10 +29,10 @@ class ChatGPT_Client:
 
     menu_xq     = '//button[contains(@id, "headlessui-menu-button")]'
     custom_xq   = '//a[contains(text(), "Custom instructions")]'
-    enable_xq   = '//span[@data-state="unchecked"]'
-    disable_xq   = '//span[@data-state="checked"]'
+    custom_toggle_xq = '//button[@role="switch"]'
     custom_textarea_xq = '//textarea[@type="button"]'
     custom_save_xq = '//div[contains(text(), "Save")]'
+    custom_tutorial_xq = '//div[text()="OK"]'
 
     chatbox_cq  = 'text-base'
     wait_cq     = 'text-2xl'
@@ -46,117 +43,24 @@ class ChatGPT_Client:
     textarea_iq = 'prompt-textarea'
     gpt_xq    = '//span[text()="{}"]'
 
-    def __init__(
-        self,
-        username: str = '',
-        password: str = '',
-        headless: bool = True,
-        cold_start: bool = False,
-        incognito: bool = True,
-        driver_executable_path :str =None,
-        driver_arguments: list = None,
-        driver_version: int = None,
-        auto_save: bool = False,
-        save_path: str = None,
-        verbose :bool = False
-    ):
-        if username or password:
-            logging.warning(
-                "The usage of username and password parameters are deprecated and will be removed in near feature."
-                "Please adjust your environment variables to pass username and password."
-            )
-
-        username = username or os.environ.get('OPENAI_UNAME')
-        password = password or os.environ.get('OPENAI_PWD')
-
-        if not username:
-            logging.error('Either provide username or set the environment variable "OPENAI_UNAME"')
-            return
-
-        if not password:
-            logging.error('Either provide password or set the environment variable "OPENAI_PWD"')
-            return
-
-        if verbose:
-            logging.getLogger().setLevel(logging.INFO)
-            logging.info('Verbose mode active')
-        options = uc.ChromeOptions()
-        if incognito:
-            options.add_argument('--incognito')
-        if headless:
-            options.add_argument('--headless')
-        if driver_arguments:
-            for _arg in driver_arguments:
-                options.add_argument(_arg)
-
-        logging.info('Loading undetected Chrome')
-        self.browser = uc.Chrome(
-            driver_executable_path=driver_executable_path,
-            options=options,
-            headless=headless,
-            version_main=detect_chrome_version(driver_version),
-            log_level=10,
+    def __init__(self, **kwargs):
+        super().__init__(
+            client_name='ChatGPT',
+            url='https://chat.openai.com/auth/login?next=/chat',
+            uname_env_var='OPENAI_UNAME',
+            pwd_env_var='OPENAI_PWD',
+            **kwargs
         )
-        self.browser.set_page_load_timeout(15)
-        logging.info('Loaded Undetected chrome')
-        logging.info('Opening chatgpt')
-        self.browser.get('https://chat.openai.com/auth/login?next=/chat')
+
+    def postload_custom_func(self):
         today_str = datetime.today().strftime('%Y-%m-%d')
         self.browser.execute_script(
             f"window.localStorage.setItem('oai/apps/hasSeenOnboarding/chat', {today_str});"
             f"window.localStorage.setItem('oai/apps/hasUserContextFirstTime/2023-06-29', true);"
             f"window.localStorage.setItem('oai/apps/announcement/customInstructions', 1694012515508);"
         )
-        if not cold_start:
-            self.pass_verification()
-            self.login(username, password)
-        logging.info('ChatGPT is ready to interact')
 
-        self.auto_save = auto_save
-        if self.auto_save:
-            self.chat_history = pd.DataFrame(columns=['role', 'is_regen', 'content'])
-            self.set_save_path(save_path)
-
-    def __del__(self):
-        logging.info('ChatGPT_Client Instance is being deleted')
-        self.save()
-
-    def set_save_path(self, save_path):
-        self.save_path = save_path or datetime.now().strftime('%Y_%m_%d_%H_%M_%S.csv')
-        self.file_type = save_path.split('.')[-1] if save_path else 'csv'
-
-    def save(self):
-        save_func = save_func_map.get(self.file_type, None)
-        if save_func:
-            save_func = getattr(self.chat_history, save_func)
-            save_func(self.save_path)
-            logging.info(f'File saved to {self.save_path}')
-        else:
-            logging.error(f'Unsupported file type {self.file_type}')
-
-    def find_or_fail(self, by, query, return_all_elements=False, fail_ok=False):
-        """Finds a list of elements given query, if none of the items exists, throws an error
-
-        Args:
-            by (selenium.webdriver.common.by.By): The method used to locate the element.
-            query (str): The query string to locate the element.
-
-        Returns:
-            selenium.webdriver.remote.webelement.WebElement: Web element or None if not found.
-        """
-        dom_element = self.browser.find_elements(by, query)
-        if not dom_element:
-            if not fail_ok:
-                logging.error(f'{query} is not located. Please raise an issue with verbose=True')
-            return None
-
-        logging.info(f'{query} is located.')
-        if return_all_elements:
-            return dom_element
-        else:
-            return dom_element[0]
-
-    def pass_verification(self):
+    def pass_verification(self, max_trial=10):
         '''
         Performs the verification process on the page if challenge is present.
 
@@ -164,10 +68,11 @@ class ChatGPT_Client:
         In that case, it looks for the verification button.
         This process is repeated until the login page is no longer displayed.
 
-        Returns:
-            None
+        Returns: None
         '''
-        while self.check_login_page():
+        for _ in range(max_trial):
+            if not self.check_login_page():
+                break
             verify_button = self.browser.find_elements(By.ID, 'challenge-stage')
             if len(verify_button):
                 try:
@@ -176,17 +81,9 @@ class ChatGPT_Client:
                 except Exceptions.ElementNotInteractableException:
                     logging.info('Verification button is not present or clickable')
             time.sleep(1)
+        else:
+            logging.error('It is not possible to pass verification')
         return
-
-    def check_login_page(self):
-        '''
-        Checks if the login page is displayed in the browser.
-
-        Returns:
-            bool: True if the login page is not present, False otherwise.
-        '''
-        login_button = self.browser.find_elements(By.XPATH, self.login_xq)
-        return len(login_button) == 0
 
     def login(self, username :str, password :str):
         '''
@@ -232,7 +129,7 @@ class ChatGPT_Client:
 
         try:
             # Pass introduction
-            next_button = WebDriverWait(self.browser, 5).until(
+            WebDriverWait(self.browser, 5).until(
                 EC.presence_of_element_located((By.XPATH, self.tutorial_xq))
             ).click()
             #next_button.find_elements(By.TAG_NAME, self.button_tq)[0].click()
@@ -242,61 +139,6 @@ class ChatGPT_Client:
             logging.info('Info screen skipped')
         except Exception as exp:
             logging.error(f'Something unexpected happened: {exp}')
-
-    def sleepy_find_element(self, by, query, attempt_count :int =20, sleep_duration :int =1):
-        '''
-        Finds the web element using the locator and query.
-
-        This function attempts to find the element multiple times with a specified
-        sleep duration between attempts. If the element is found, the function returns the element.
-
-        Args:
-            by (selenium.webdriver.common.by.By): The method used to locate the element.
-            query (str): The query string to locate the element.
-            attempt_count (int, optional): The number of attempts to find the element. Default: 20.
-            sleep_duration (int, optional): The duration to sleep between attempts. Default: 1.
-
-        Returns:
-            selenium.webdriver.remote.webelement.WebElement: Web element or None if not found.
-        '''
-        for _count in range(attempt_count):
-            item = self.browser.find_elements(by, query)
-            if len(item) > 0:
-                item = item[0]
-                logging.info(f'Element {query} has found')
-                break
-            logging.info(f'Element {query} is not present, attempt: {_count+1}')
-            time.sleep(sleep_duration)
-        return item
-
-    def wait_until_disappear(self, by, query, timeout_duration=15):
-        '''
-        Waits until the specified web element disappears from the page.
-
-        This function continuously checks for the presence of a web element.
-        It waits until the element is no longer present on the page.
-        Once the element has disappeared, the function returns.
-
-        Args:
-            by (selenium.webdriver.common.by.By): The method used to locate the element.
-            query (str): The query string to locate the element.
-            timeout_duration (int, optional): The total wait time before the timeout exception. Default: 15.
-
-        Returns:
-            None
-        '''
-        logging.info(f'Waiting element {query} to disappear.')
-        try:
-            WebDriverWait(
-                self.browser,
-                timeout_duration
-            ).until_not(
-                EC.presence_of_element_located((by, query))
-            )
-            logging.info(f'Element {query} disappeared.')
-        except Exceptions.TimeoutException:
-            logging.info(f'Element {query} still here, something is wrong.')
-        return
 
     def interact(self, question : str):
         '''
@@ -347,7 +189,6 @@ class ChatGPT_Client:
         except Exceptions.NoSuchElementException:
             logging.info('New Chat button is not available, dropping to class search')
             new_chat_button = self.find_or_fail(By.CLASS_NAME, self.reset_cq, return_all_elements=True)
-            print(new_chat_button)
             if not new_chat_button:
                 logging.info('There is no button to click')
                 return
@@ -359,8 +200,6 @@ class ChatGPT_Client:
                     'It seems UI has changed.'
                     'Please raise an issue after running the constructor with verbose=True'
                 )
-
-
         logging.info('New thread is ready')
 
     def regenerate_response(self):
@@ -413,20 +252,24 @@ class ChatGPT_Client:
             mode (str): Either 'extra_information' or 'modulation'. Check openai help pages for more information.
             instruction (str): _description_
         """
+
         menu_button = self.find_or_fail(By.XPATH, self.menu_xq)
         menu_button.click()
         custom_button = self.find_or_fail(By.XPATH, self.custom_xq)
         custom_button.click()
-        enable_button = self.find_or_fail(By.XPATH, self.enable_xq)
-        if enable_button:
-            enable_button.click()
-        # If custom instructions are already enabled, we need to verify that.
-        else:
-            logging.info('Enable button has not found, checking if it is already enabled')
-            disable_button = self.find_or_fail(By.XPATH, self.disable_xq)
-            if disable_button:
-                logging.info('Custom instructions are already enabled.')
+        custom_tutorial = self.find_or_fail(By.XPATH, self.custom_tutorial_xq, fail_ok=True)
+        if custom_tutorial:
+            custom_tutorial.click()
 
+        custom_switch = self.find_or_fail(By.XPATH, self.custom_toggle_xq)
+        if not custom_switch:
+            return
+
+        if custom_switch.get_attribute('data-state') == 'checked':
+            logging.info('Custom instructions is enabled')
+        else:
+            custom_switch.click()
+        time.sleep(0.1)
         text_areas = self.find_or_fail(By.XPATH, self.custom_textarea_xq, return_all_elements=True)
         text_area = text_areas[{
             'extra_information' : 0,
@@ -452,6 +295,6 @@ if __name__ == '__main__':
     parser.add_argument('password')
     args = parser.parse_args()
 
-    chatgpt = ChatGPT_Client(args.username, args.password)
+    chatgpt = ChatGPTClient(args.username, args.password)
     result = chatgpt.interact('Hello, how are you today')
     print(result)

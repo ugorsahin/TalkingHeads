@@ -9,11 +9,11 @@ authors = [
 ]
 
 [project]
-name = "chatgpt_automation"
-description = "A Headless Chrome interface to communicate with ChatGPT"
+name = "talkingheads"
+description = "A Headless Chrome interface to communicate with Google Bard, HuggingChat and OpenAI ChatGPT"
 readme = "README.md"
 requires-python = ">=3.8"
-version = "0.1.6"
+version = "0.2.1"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
@@ -26,4 +26,4 @@ dependencies = [
 ]
 
 [project.urls]
-Source = "https://github.com/ugorsahin/ChatGPT_Automation"
+Source = "https://github.com/ugorsahin/TalkingHeads"
