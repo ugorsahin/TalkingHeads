@@ -12,6 +12,12 @@ Before you begin, please ensure that you have Chrome installed on your system. T
 ## Installation
 
 ```python
+pip install talkingheads
+```
+
+or from source:
+
+```python
 pip install git+https://github.com/ugorsahin/TalkingHeads
 ```
 
