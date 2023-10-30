@@ -52,6 +52,11 @@ class BardClient(BaseBrowser):
             'It is not possible to provide login functionality for Google'
             'Please follow the instructions on the repo to connect Bard'
         )
+        text_area = self.find_or_fail(By.XPATH, self.textarea_xq)
+        while not text_area and not self.headless:
+            logging.error('It seems like login was unsuccessful, if you are in headless mode try login manually and press any key, it will continue if it is loaded')
+            input()
+            text_area = self.find_or_fail(By.XPATH, self.textarea_xq)
         return
 
     def interact(self, question : str):

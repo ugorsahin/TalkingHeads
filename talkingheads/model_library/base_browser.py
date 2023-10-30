@@ -49,6 +49,7 @@ class BaseBrowser:
         self.url            = url
         self.uname_env_var  = uname_env_var
         self.pwd_env_var    = pwd_env_var
+        self.headless       = headless
 
         if not skip_login and credential_check:
             if username or password:
@@ -69,13 +70,12 @@ class BaseBrowser:
                 return
 
         if verbose:
-            logging.getLogger().setLevel(logging.INFO)
+            logging.getLogger().setLevel(logging.DEBUG)
             logging.info('Verbose mode active')
         options = uc.ChromeOptions()
+        options.headless = self.headless
         if incognito:
             options.add_argument('--incognito')
-        if headless:
-            options.add_argument('--headless')
         if driver_arguments:
             for _arg in driver_arguments:
                 options.add_argument(_arg)
