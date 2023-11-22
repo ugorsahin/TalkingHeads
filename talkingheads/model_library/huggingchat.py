@@ -106,9 +106,7 @@ class HuggingChatClient(BaseBrowser):
             return ''
         answer = answer[-1]
         logging.info('Answer is ready')
-        if self.auto_save:
-            self.chat_history.loc[len(self.chat_history)] = ['user', False, question]
-            self.chat_history.loc[len(self.chat_history)] = [self.client_name, False, answer.text]
+        self.save_turn(question=question, answer=answer.text)
         return answer.text
 
     def reset_thread(self):

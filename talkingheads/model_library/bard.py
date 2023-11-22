@@ -89,10 +89,12 @@ class BardClient(BaseBrowser):
         logging.info('Message sent, waiting for response')
         self.wait_until_disappear(By.XPATH, self.wait_xq)
         answer = self.find_or_fail(By.TAG_NAME, self.chatbox_tq, return_all_elements=True)[-1]
+        if not answer:
+            logging.info('Answer is not found.')
+            return ''
+
         logging.info('Answer is ready')
-        if self.auto_save:
-            self.chat_history.loc[len(self.chat_history)] = ['user', False, question]
-            self.chat_history.loc[len(self.chat_history)] = [self.client_name, False, answer.text]
+        self.save_turn(question=question, answer=answer.text)
         return answer.text
 
     def reset_thread(self):

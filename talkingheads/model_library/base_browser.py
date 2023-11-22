@@ -8,7 +8,6 @@ import undetected_chromedriver as uc
 import pandas as pd
 
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions as Exceptions
@@ -54,23 +53,29 @@ class BaseBrowser:
         if not skip_login and credential_check:
             if username or password:
                 logging.warning(
-                    "The usage of username and password parameters are deprecated and will be removed in near feature."
-                    "Please adjust your environment variables to pass username and password."
+                    "The username and password parameters are deprecated and will be removed soon."
+                    " Please adjust your environment variables to pass username and password."
                 )
 
             username = username or os.environ.get(self.uname_env_var)
             password = password or os.environ.get(self.pwd_env_var)
 
             if not username:
-                logging.error(f'Either provide username or set the environment variable "{self.uname_env_var}"')
+                logging.error(
+                    'Either provide username or set the environment variable %s',
+                    self.uname_env_var
+                )
                 return
 
             if not password:
-                logging.error(f'Either provide password or set the environment variable "{self.pwd_env_var}"')
+                logging.error(
+                    'Either provide password or set the environment variable %s',
+                    self.pwd_env_var
+                )
                 return
 
         if verbose:
-            logging.getLogger().setLevel(logging.DEBUG)
+            logging.getLogger().setLevel(logging.INFO)
             logging.info('Verbose mode active')
         options = uc.ChromeOptions()
         options.headless = self.headless
@@ -94,7 +99,7 @@ class BaseBrowser:
             return
 
         logging.info('Loaded Undetected chrome')
-        logging.info(f'Opening {self.client_name}')
+        logging.info('Opening %s', self.client_name)
 
         self.preload_custom_func()
         self.browser.get(self.url)
@@ -103,7 +108,7 @@ class BaseBrowser:
         if not skip_login:
             self.login(username, password)
 
-        logging.info(f'{self.client_name} is ready to interact')
+        logging.info('%s is ready to interact', self.client_name)
 
         self.chat_history = pd.DataFrame(columns=['role', 'is_regen', 'content'])
         self.auto_save = auto_save
@@ -129,9 +134,9 @@ class BaseBrowser:
         if save_func:
             save_func = getattr(self.chat_history, save_func)
             save_func(self.save_path)
-            logging.info(f'File saved to {self.save_path}')
+            logging.info('File saved to %s', self.save_path)
         else:
-            logging.error(f'Unsupported file type {self.file_type}')
+            logging.error('Unsupported file type %s', self.file_type)
 
     def find_or_fail(self, by, query, return_all_elements=False, fail_ok=False):
         """Finds a list of elements given query, if none of the items exists, throws an error
@@ -222,18 +227,25 @@ class BaseBrowser:
             logging.info(f'Element {query} still here, something is wrong.')
         return
 
+    def save_turn(self, question, answer):
+        if self.auto_save:
+            self.chat_history.loc[len(self.chat_history)] = ['user', False, question]
+            self.chat_history.loc[len(self.chat_history)] = [self.client_name, False, answer]
+
     def preload_custom_func(self):
         """
         Implement specific settings for a LLM.
         """
-        logging.info('Preload behaviour is not implemented, that may be normal if verification is not necessary')
+        logging.info(
+            'Preload behaviour is not implemented, that may be normal if verification is not necessary')
         return
 
     def postload_custom_func(self):
         """
         Implement specific settings for a LLM.
         """
-        logging.info('Postload behaviour is not implemented, that may be normal if verification is not necessary')
+        logging.info(
+            'Postload behaviour is not implemented, that may be normal if verification is not necessary')
         return
 
     def pass_verification(self):
@@ -242,7 +254,8 @@ class BaseBrowser:
         Returns:
             None
         '''
-        logging.info('Verification is not implemented, that may be normal if verification is not necessary')
+        logging.info(
+            'Verification is not implemented, that may be normal if verification is not necessary')
         return
 
     def login(self, username: str, password: str):

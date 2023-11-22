@@ -34,8 +34,8 @@ class ChatGPTClient(BaseBrowser):
     custom_save_xq = '//div[contains(text(), "Save")]'
     custom_tutorial_xq = '//div[text()="OK"]'
 
-    chatbox_cq  = 'text-base'
-    wait_cq     = 'text-2xl'
+    chatbox_xq = '//div[@data-message-author-role="assistant"]'
+    wait_xq     = '//button[@aria-label="Stop generating"]'
     reset_xq    = '//a[//span[text()="New Chat"]]'
     reset_cq    = 'truncate'
     regen_xq    = '//div[text()="Regenerate"]'
@@ -164,7 +164,8 @@ class ChatGPTClient(BaseBrowser):
             logging.info('Unable to locate text area tag. Switching to ID search')
             text_area = self.browser.find_elements(By.ID, self.textarea_iq)
         if not text_area:
-            raise RuntimeError('Unable to find the text prompt area. Please raise an issue with verbose=True')
+            raise RuntimeError(
+                'Unable to find the text prompt area. Please raise an issue with verbose=True')
 
         text_area = text_area[0]
 
@@ -173,19 +174,17 @@ class ChatGPTClient(BaseBrowser):
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
         text_area.send_keys(Keys.RETURN)
         logging.info('Message sent, waiting for response')
-        self.wait_until_disappear(By.CLASS_NAME, self.wait_cq)
-        answer = self.browser.find_elements(By.CLASS_NAME, self.chatbox_cq)[-1]
+        self.wait_until_disappear(By.XPATH, self.wait_xq)
+        answer = self.browser.find_elements(By.XPATH, self.chatbox_xq)[-1]
         logging.info('Answer is ready')
-        if self.auto_save:
-            self.chat_history.loc[len(self.chat_history)] = ['user', False, question]
-            self.chat_history.loc[len(self.chat_history)] = ['chatgpt', False, answer.text]
+        self.save_turn(question=question, answer=answer.text)
+
         return answer.text
 
     def reset_thread(self):
         '''Function to close the current thread and start new one'''
         try:
             self.browser.find_element(By.XPATH, self.reset_xq).click()
-            
         except Exceptions.NoSuchElementException:
             logging.info('New Chat button is not available, dropping to class search')
             new_chat_button = self.find_or_fail(By.CLASS_NAME, self.reset_cq, return_all_elements=True)
@@ -216,8 +215,8 @@ class ChatGPTClient(BaseBrowser):
             regen_button = self.browser.find_element(By.XPATH, self.regen_xq)
             regen_button.click()
             logging.info('Clicked regenerate button')
-            self.wait_until_disappear(By.CLASS_NAME, self.wait_cq)
-            answer = self.browser.find_elements(By.CLASS_NAME, self.chatbox_cq)[-1]
+            self.wait_until_disappear(By.CLASS_NAME, self.wait_xq)
+            answer = self.browser.find_elements(By.XPATH, self.chatbox_xq)[-1]
             logging.info('New answer is ready')
         except Exceptions.NoSuchElementException:
             logging.error('Regenerate button is not present')
