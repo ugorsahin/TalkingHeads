@@ -30,7 +30,6 @@ def detect_chrome_version(version_num=None):
 
     return _v
 
-
 save_func_map = {
     'csv' : 'to_csv',
     'h5' : 'to_hdf',

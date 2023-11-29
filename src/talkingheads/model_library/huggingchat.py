@@ -49,7 +49,7 @@ class HuggingChatClient(BaseBrowser):
             password (str): The password to be entered.
 
         Returns:
-            None
+            (bool) : True if login is successful
         '''
 
         # Find login button, click it
@@ -101,21 +101,17 @@ class HuggingChatClient(BaseBrowser):
         text_area.send_keys(Keys.RETURN)
         logging.info('Message sent, waiting for response')
         self.wait_until_disappear(By.XPATH, self.stop_gen_xq, timeout_duration=30)
-        answer = self.find_or_fail(By.XPATH, self.chatbox_xq, return_all_elements=True)
+        answer = self.find_or_fail(By.XPATH, self.chatbox_xq, return_type='last')
         if not answer:
             return ''
-        answer = answer[-1]
         logging.info('Answer is ready')
         self.save_turn(question=question, answer=answer.text)
         return answer.text
 
     def reset_thread(self):
         '''Function to close the current thread and start new one'''
-        new_chat_button = self.browser.get(self.url)
-        if new_chat_button:
-            new_chat_button.click()
-            logging.info('New chat is ready')
-        return
+        self.browser.get(self.url)
+        return True
 
     def toggle_search_web(self):
         """Function to enable/disable web search feature"""
@@ -139,27 +135,29 @@ class HuggingChatClient(BaseBrowser):
         '''
         model_button = self.find_or_fail(By.XPATH, self.model_xq)
         if not model_button:
-            return
+            return False
         model_button.click()
 
-        models = self.find_or_fail(By.XPATH, self.model_li_xq, return_all_elements=True)
+        models = self.find_or_fail(By.XPATH, self.model_li_xq, return_type='all')
         if not models:
-            return
+            return False
         models = {m.get_attribute('aria-label'):m for m in models}
 
         model = models.get(model_name, None)
         if model is None:
-            logging.error(f'Model {model_name} has not found')
-            logging.error(f'Available models are: {list(models.keys())}')
-        else:
-            model.click()
-            logging.info(f'Switched to {model_name}')
+            logging.error('Model %s has not found', model_name)
+            logging.error('Available models are: %s', str(models.keys()))
+            return False
+
+        model.click()
+        logging.info('Switched to %s', model_name)
 
         apply_button = self.find_or_fail(By.XPATH, self.model_a_xq)
-        if apply_button:
-            apply_button.click()
-
-        return
+        if not apply_button:
+            return False
+        
+        apply_button.click()
+        return True
 
 if __name__ == '__main__':
     import argparse

@@ -4,15 +4,17 @@ import os
 import logging
 import time
 from datetime import datetime
+
 import undetected_chromedriver as uc
 import pandas as pd
+import yaml
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions as Exceptions
 
-from .helpers import detect_chrome_version, save_func_map
+from .utils import detect_chrome_version, save_func_map
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
@@ -49,6 +51,8 @@ class BaseBrowser:
         self.uname_env_var  = uname_env_var
         self.pwd_env_var    = pwd_env_var
         self.headless       = headless
+        self.ready          = False
+        self.auto_save = auto_save
 
         if not skip_login and credential_check:
             if username or password:
@@ -61,18 +65,12 @@ class BaseBrowser:
             password = password or os.environ.get(self.pwd_env_var)
 
             if not username:
-                logging.error(
-                    'Either provide username or set the environment variable %s',
-                    self.uname_env_var
-                )
-                return
+                raise NameError(
+                    f'Either provide username or set the environment variable {self.uname_env_var}')
 
             if not password:
-                logging.error(
-                    'Either provide password or set the environment variable %s',
-                    self.pwd_env_var
-                )
-                return
+                raise NameError(
+                    f'Either provide password or set the environment variable {self.pwd_env_var}')
 
         if verbose:
             logging.getLogger().setLevel(logging.INFO)
@@ -98,28 +96,29 @@ class BaseBrowser:
         if cold_start:
             return
 
-        logging.info('Loaded Undetected chrome')
+        logging.info('Loaded undetected Chrome')
         logging.info('Opening %s', self.client_name)
 
         self.preload_custom_func()
         self.browser.get(self.url)
         self.postload_custom_func()
-        self.pass_verification()
+        if not self.pass_verification():
+            raise RuntimeError('Verification failed, please check your connection.')
+
         if not skip_login:
             self.login(username, password)
 
         logging.info('%s is ready to interact', self.client_name)
-
+        self.ready = True
         self.chat_history = pd.DataFrame(columns=['role', 'is_regen', 'content'])
-        self.auto_save = auto_save
         self.set_save_path(save_path)
 
-    # def __del__(self):
-    #     logging.info(f'{self.client_name} Instance is being deleted')
-    #     if self.auto_save:
-    #         self.save()
+    def __del__(self):
+        self.browser.quit()
+        if self.auto_save:
+            self.save()
 
-    def set_save_path(self, save_path):
+    def set_save_path(self, save_path : str):
         """Sets the path to save the file
 
         Args:
@@ -138,29 +137,33 @@ class BaseBrowser:
         else:
             logging.error('Unsupported file type %s', self.file_type)
 
-    def find_or_fail(self, by, query, return_all_elements=False, fail_ok=False):
+    def find_or_fail(self, by : By, query : str, return_type : str = 'first', fail_ok : bool = False):
         """Finds a list of elements given query, if none of the items exists, throws an error
 
         Args:
             by (selenium.webdriver.common.by.By): The method used to locate the element.
             query (str): The query string to locate the element.
-
+            return_type (str): First|all|last. Return first element, all elements or the last one.
+            fail_ok (bool): Do not produce error if it is ok to fail.
         Returns:
             selenium.webdriver.remote.webelement.WebElement: Web element or None if not found.
         """
         dom_element = self.browser.find_elements(by, query)
         if not dom_element:
             if not fail_ok:
-                logging.error(f'{query} is not located. Please raise an issue with verbose=True')
+                logging.error('%s is not located. Please raise an issue with verbose=True', query)
             else:
-                logging.info(f'{query} is not located.')
+                logging.info('%s is not located.', query)
             return None
 
-        logging.info(f'{query} is located.')
-        if return_all_elements:
-            return dom_element
-        else:
+        logging.info('%s is located.', query)
+
+        if return_type == 'first':
             return dom_element[0]
+        elif return_type == 'all':
+            return dom_element
+        elif return_type == 'last':
+            return dom_element[-1]
 
     def check_login_page(self):
         '''
@@ -172,7 +175,7 @@ class BaseBrowser:
         login_button = self.browser.find_elements(By.XPATH, self.login_xq)
         return len(login_button) == 0
 
-    def sleepy_find_element(self, by, query, attempt_count :int =20, sleep_duration :int =1):
+    def sleepy_find_element(self, by: By, query : str, attempt_count : int = 20, sleep_duration : int = 1):
         '''
         Finds the web element using the locator and query.
 
@@ -192,13 +195,13 @@ class BaseBrowser:
             item = self.browser.find_elements(by, query)
             if len(item) > 0:
                 item = item[0]
-                logging.info(f'Element {query} has found')
+                logging.info('Element %s has found', query)
                 break
-            logging.info(f'Element {query} is not present, attempt: {_count+1}')
+            logging.info('Element %s is not present, attempt: %d', query, _count+1)
             time.sleep(sleep_duration)
         return item
 
-    def wait_until_disappear(self, by, query, timeout_duration=15):
+    def wait_until_disappear(self, by : By, query : str, timeout_duration : int = 15):
         '''
         Waits until the specified web element disappears from the page.
 
@@ -214,7 +217,7 @@ class BaseBrowser:
         Returns:
             None
         '''
-        logging.info(f'Waiting element {query} to disappear.')
+        logging.info('Waiting element %s to disappear.', query)
         try:
             WebDriverWait(
                 self.browser,
@@ -222,15 +225,17 @@ class BaseBrowser:
             ).until_not(
                 EC.presence_of_element_located((by, query))
             )
-            logging.info(f'Element {query} disappeared.')
+            logging.info('Element %s disappeared.', query)
         except Exceptions.TimeoutException:
-            logging.info(f'Element {query} still here, something is wrong.')
+            logging.info('Element %s still here, something is wrong.', query)
         return
 
-    def save_turn(self, question, answer):
+    def save_turn(self, question : str, answer : str) -> bool:
         if self.auto_save:
             self.chat_history.loc[len(self.chat_history)] = ['user', False, question]
             self.chat_history.loc[len(self.chat_history)] = [self.client_name, False, answer]
+            return True
+        return False
 
     def preload_custom_func(self):
         """
@@ -238,7 +243,7 @@ class BaseBrowser:
         """
         logging.info(
             'Preload behaviour is not implemented, that may be normal if verification is not necessary')
-        return
+        return True
 
     def postload_custom_func(self):
         """
@@ -246,7 +251,7 @@ class BaseBrowser:
         """
         logging.info(
             'Postload behaviour is not implemented, that may be normal if verification is not necessary')
-        return
+        return True
 
     def pass_verification(self):
         '''
@@ -256,7 +261,7 @@ class BaseBrowser:
         '''
         logging.info(
             'Verification is not implemented, that may be normal if verification is not necessary')
-        return
+        return True
 
     def login(self, username: str, password: str):
         '''

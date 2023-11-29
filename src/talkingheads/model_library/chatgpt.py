@@ -29,16 +29,17 @@ class ChatGPTClient(BaseBrowser):
 
     menu_xq     = '//button[contains(@id, "headlessui-menu-button")]'
     custom_xq   = '//a[contains(text(), "Custom instructions")]'
-    custom_toggle_xq = '//button[@role="switch"]'
-    custom_textarea_xq = '//textarea[@type="button"]'
-    custom_save_xq = '//div[contains(text(), "Save")]'
-    custom_tutorial_xq = '//div[text()="OK"]'
+    custom_toggle_xq    = '//button[@role="switch"]'
+    custom_textarea_xq  = '//textarea[@type="button"]'
+    custom_save_xq      = '//button[div[contains(text(), "Save")]]'
+    custom_cancel_xq    = '//button[div[contains(text(), "Cancel")]]'
+    custom_tutorial_xq  = '//div[text()="OK"]'
 
     chatbox_xq = '//div[@data-message-author-role="assistant"]'
     wait_xq     = '//button[@aria-label="Stop generating"]'
-    reset_xq    = '//a[//span[text()="New Chat"]]'
+    reset_xq    = '//div[text()="New chat"]'
     reset_cq    = 'truncate'
-    regen_xq    = '//div[text()="Regenerate"]'
+    regen_xq    = '//button//div//*[name()="svg"]'
     textarea_tq = 'textarea'
     textarea_iq = 'prompt-textarea'
     gpt_xq    = '//span[text()="{}"]'
@@ -83,7 +84,9 @@ class ChatGPTClient(BaseBrowser):
             time.sleep(1)
         else:
             logging.error('It is not possible to pass verification')
-        return
+            return False
+
+        return True
 
     def login(self, username :str, password :str):
         '''
@@ -137,8 +140,8 @@ class ChatGPTClient(BaseBrowser):
             logging.info('Info screen passed')
         except Exceptions.TimeoutException:
             logging.info('Info screen skipped')
-        except Exception as exp:
-            logging.error(f'Something unexpected happened: {exp}')
+        except Exception as err:
+            logging.error('Something unexpected has happened: %s', err)
 
     def interact(self, question : str):
         '''
@@ -175,7 +178,11 @@ class ChatGPTClient(BaseBrowser):
         text_area.send_keys(Keys.RETURN)
         logging.info('Message sent, waiting for response')
         self.wait_until_disappear(By.XPATH, self.wait_xq)
-        answer = self.browser.find_elements(By.XPATH, self.chatbox_xq)[-1]
+        answer = self.find_or_fail(By.XPATH, self.chatbox_xq, return_type='last')
+        if not answer:
+            logging.error('There is no answer, something is wrong')
+            return ''
+
         logging.info('Answer is ready')
         self.save_turn(question=question, answer=answer.text)
 
@@ -187,19 +194,23 @@ class ChatGPTClient(BaseBrowser):
             self.browser.find_element(By.XPATH, self.reset_xq).click()
         except Exceptions.NoSuchElementException:
             logging.info('New Chat button is not available, dropping to class search')
-            new_chat_button = self.find_or_fail(By.CLASS_NAME, self.reset_cq, return_all_elements=True)
-            if not new_chat_button:
+            new_button = self.find_or_fail(By.CLASS_NAME, self.reset_cq, return_type='first')
+            if not new_button:
                 logging.info('There is no button to click')
-                return
+                return False
             try:
-                new_chat_button[0].click()
+                new_button.click()
                 logging.info('Clicked the button')
-            except: # TODO specify the exception.
+            except (IndexError, Exceptions.ElementNotInteractableException) as err:
                 logging.error(
+                    '%s. '
                     'It seems UI has changed.'
-                    'Please raise an issue after running the constructor with verbose=True'
+                    'Please raise an issue after running the constructor with verbose=True',
+                    err
                 )
+                return False
         logging.info('New thread is ready')
+        return True
 
     def regenerate_response(self):
         '''
@@ -211,16 +222,19 @@ class ChatGPTClient(BaseBrowser):
         Returns:
             None
         '''
-        try:
-            regen_button = self.browser.find_element(By.XPATH, self.regen_xq)
-            regen_button.click()
-            logging.info('Clicked regenerate button')
-            self.wait_until_disappear(By.CLASS_NAME, self.wait_xq)
-            answer = self.browser.find_elements(By.XPATH, self.chatbox_xq)[-1]
-            logging.info('New answer is ready')
-        except Exceptions.NoSuchElementException:
-            logging.error('Regenerate button is not present')
+        regen_button = self.find_or_fail(By.XPATH, self.regen_xq, return_type='last')
+        if not regen_button:
+            return None
 
+        regen_button.click()
+        logging.info('Clicked regenerate button')
+        self.wait_until_disappear(By.XPATH, self.wait_xq)
+        answer = self.find_or_fail(By.XPATH, self.chatbox_xq, return_type='last')
+        if not answer:
+            logging.error('Regenerated answer is not present')
+            return ''
+
+        logging.info('New answer is ready')
         if self.auto_save:
             self.chat_history.loc[len(self.chat_history)] = ['chatgpt', True, answer.text]
         return answer.text
@@ -236,20 +250,21 @@ class ChatGPTClient(BaseBrowser):
             bool: True on success, False on fail
         '''
         if model_name in ['GPT-3.5', 'GPT-4']:
-            logging.info(f'Switching model to {model_name}')
+            logging.info('Switching model to %s', model_name)
             try:
                 self.browser.find_element(By.XPATH, self.gpt_xq.format(model_name)).click()
                 return True
             except Exceptions.NoSuchElementException:
                 logging.error('Button is not present')
+        else:
+            logging.error('Model name is not ')
         return False
 
-    def set_custom_instruction(self, mode: str, instruction: str):
-        """Sets custom instructions
+    def open_custom_instruction_tab(self):
+        """Opens the modal to access custom interactions. 
 
-        Args:
-            mode (str): Either 'extra_information' or 'modulation'. Check openai help pages for more information.
-            instruction (str): _description_
+        Returns:
+            bool: True if the process is successful, False otherwise
         """
 
         menu_button = self.find_or_fail(By.XPATH, self.menu_xq)
@@ -262,14 +277,48 @@ class ChatGPTClient(BaseBrowser):
 
         custom_switch = self.find_or_fail(By.XPATH, self.custom_toggle_xq)
         if not custom_switch:
-            return
+            return False
 
+        # If disabled, enable custom interactions
         if custom_switch.get_attribute('data-state') == 'checked':
             logging.info('Custom instructions is enabled')
         else:
             custom_switch.click()
+        time.sleep(0.2)
+
+        return True
+
+    def get_custom_instruction(self, mode: str):
+        """Gets custom instructions
+
+        Args:
+            mode (str): Either 'extra_information' or 'modulation'. Check OpenAI help pages.
+        """
+        if not self.open_custom_instruction_tab():
+            return None
+        text_areas = self.find_or_fail(By.XPATH, self.custom_textarea_xq, return_type='all')
+        text = text_areas[{
+            'extra_information' : 0,
+            'modulation' : 1
+        }[mode]].text
+        logging.info('Custom instruction is obtained: %s', text)
+
+        save_button = self.find_or_fail(By.XPATH, self.custom_cancel_xq)
+        save_button.click()
+        return text
+
+    def set_custom_instruction(self, mode: str, instruction: str):
+        """Sets custom instructions
+
+        Args:
+            mode (str): Either 'extra_information' or 'modulation'. Check OpenAI help pages.
+            instruction (str): _description_
+        """
+        if not self.open_custom_instruction_tab():
+            return False
+
         time.sleep(0.1)
-        text_areas = self.find_or_fail(By.XPATH, self.custom_textarea_xq, return_all_elements=True)
+        text_areas = self.find_or_fail(By.XPATH, self.custom_textarea_xq, return_type='all')
         text_area = text_areas[{
             'extra_information' : 0,
             'modulation' : 1
@@ -280,12 +329,12 @@ class ChatGPTClient(BaseBrowser):
         text_area.send_keys(Keys.DELETE)
         time.sleep(0.1)
         text_area.send_keys(instruction)
-
-        logging.info(f'Custom instruction-{mode} has provided')
+        time.sleep(0.1)
+        logging.info('Custom instruction-%s has provided', mode)
 
         save_button = self.find_or_fail(By.XPATH, self.custom_save_xq)
         save_button.click()
-        return
+        return True
 
 if __name__ == '__main__':
     import argparse
