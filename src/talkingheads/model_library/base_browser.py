@@ -7,7 +7,6 @@ from datetime import datetime
 
 import undetected_chromedriver as uc
 import pandas as pd
-import yaml
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -91,6 +90,11 @@ class BaseBrowser:
             headless=headless,
             version_main=detect_chrome_version(driver_version),
             log_level=10,
+        )
+        agent = self.browser.execute_script("return navigator.userAgent")
+        self.browser.execute_cdp_cmd(
+            'Network.setUserAgentOverride',
+            {"userAgent": agent.replace('Headless', '')}
         )
         self.browser.set_page_load_timeout(15)
         if cold_start:

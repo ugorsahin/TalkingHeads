@@ -61,7 +61,7 @@ class ChatGPTClient(BaseBrowser):
             f"window.localStorage.setItem('oai/apps/announcement/customInstructions', 1694012515508);"
         )
 
-    def pass_verification(self, max_trial=10):
+    def pass_verification(self, max_trial : int = 10, wait_time : int = 1) -> bool:
         '''
         Performs the verification process on the page if challenge is present.
 
@@ -81,7 +81,7 @@ class ChatGPTClient(BaseBrowser):
                     logging.info('Clicked verification button')
                 except Exceptions.ElementNotInteractableException:
                     logging.info('Verification button is not present or clickable')
-            time.sleep(1)
+            time.sleep(wait_time)
         else:
             logging.error('It is not possible to pass verification')
             return False
@@ -317,7 +317,9 @@ class ChatGPTClient(BaseBrowser):
         if not self.open_custom_instruction_tab():
             return False
 
-        time.sleep(0.1)
+        WebDriverWait(self.browser, 5).until(
+            EC.presence_of_element_located((By.XPATH, self.custom_textarea_xq))
+        )
         text_areas = self.find_or_fail(By.XPATH, self.custom_textarea_xq, return_type='all')
         text_area = text_areas[{
             'extra_information' : 0,
