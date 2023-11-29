@@ -88,7 +88,7 @@ class BardClient(BaseBrowser):
         text_area.send_keys(Keys.RETURN)
         logging.info('Message sent, waiting for response')
         self.wait_until_disappear(By.XPATH, self.wait_xq)
-        answer = self.find_or_fail(By.TAG_NAME, self.chatbox_tq, return_all_elements=True)[-1]
+        answer = self.find_or_fail(By.TAG_NAME, self.chatbox_tq, return_type='last')
         if not answer:
             logging.info('Answer is not found.')
             return ''
