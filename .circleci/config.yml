@@ -22,7 +22,7 @@ jobs:
             python -m pip install pytest
       - run:
           name: Run tests
-          command: pytest
+          command: python -m pytest
 workflows:
   sample:
     jobs:
