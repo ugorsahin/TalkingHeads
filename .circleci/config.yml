@@ -17,8 +17,9 @@ jobs:
           name: Check install
       - run:
           name: Install talkingheads and pytest
-          command: python -m pip install .
-          command: python -m pip install pytest
+          command: |
+            python -m pip install .
+            python -m pip install pytest
       - run:
           name: Run tests
           command: pytest
