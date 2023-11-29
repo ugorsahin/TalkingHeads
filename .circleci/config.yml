@@ -16,8 +16,9 @@ jobs:
             chromedriver --version
           name: Check install
       - run:
-          name: Install talkingheads
+          name: Install talkingheads and pytest
           command: python -m pip install .
+          command: python -m pip install pytest
       - run:
           name: Run tests
           command: pytest
