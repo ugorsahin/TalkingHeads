@@ -7,7 +7,6 @@ from datetime import datetime
 
 import undetected_chromedriver as uc
 import pandas as pd
-import yaml
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
