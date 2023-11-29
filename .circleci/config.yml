@@ -15,8 +15,9 @@ jobs:
             google-chrome --version
             chromedriver --version
           name: Check install
-      - python/install-packages:
-          pkg-manager: pip
+      - run:
+          name: Install talkingheads
+          command: python -m pip install .
       - run:
           name: Run tests
           command: pytest
