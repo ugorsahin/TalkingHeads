@@ -11,6 +11,9 @@
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="Licence: MIT" height="18">
   </a>
+  <a href='https://talkingheads.readthedocs.io/en/latest/?badge=latest'>
+    <img src='https://readthedocs.org/projects/talkingheads/badge/?version=latest' alt='Documentation Status' />
+  </a>
 </p>
 
 Welcome to TalkingHeads! 🤖🚀
