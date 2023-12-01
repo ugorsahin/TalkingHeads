@@ -17,12 +17,12 @@ def test_model_selection():
 
 def test_interaction():
     time.sleep(1)
-    answer = pytest.chathead.interact('Without any explanation or extra information, just repeat the following: "book."')
+    answer = pytest.chathead.interact('Without any explanation or extra information, just repeat the following: book.')
     assert answer.lower() == 'book.', f'Answer is not "book.", instead it returned {answer}'
 
 def test_reset():
     assert pytest.chathead.reset_thread()
-    assert len(pytest.chathead.browser.find_elements(By.XPATH, pytest.chathead.chatbox_xq)) == 0, 'Chat is not empty'
+    assert len(pytest.chathead.browser.find_elements(By.XPATH, pytest.chathead.markers.chatbox_xq)) == 0, 'Chat is not empty'
 
 def pytest_sessionfinish(session, exitstatus):
     del pytest.chathead

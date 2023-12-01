@@ -4,7 +4,6 @@ import os
 import logging
 import time
 from datetime import datetime
-
 import undetected_chromedriver as uc
 import pandas as pd
 
@@ -13,6 +12,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions as Exceptions
 
+from .object_map import markers
 from .utils import detect_chrome_version, save_func_map
 
 logging.basicConfig(
@@ -22,14 +22,39 @@ logging.basicConfig(
 )
 
 class BaseBrowser:
-    '''BaseBrowser class to provide utility function and flow for LLMs'''
+    '''
+    BaseBrowser class to provide utility function and flow for LLMs
+
+    Args:
+        client_name (str): A string representing the name of the client.
+        url (str): The URL to be used as an entrypoint.
+        uname_env_var (str): The username variable set by llm classes.
+        pwd_env_var (str): The password variable set by llm classes.
+        username (str, optional): The username to auth. Deprecated. Use environment variables instead.
+        password (str, optional): The password to auth. Deprecated. Use environment variables instead.
+        headless (bool, optional): A boolean to enable/disable headless mode in driver. Default: True.
+        cold_start (bool, optional): If set, it will return after opening the browser. Default: False.
+        incognito (bool, optional): A boolean to set incognito mode. Default: True.
+        driver_executable_path (str, optional): The file path to the driver executable, if applicable. Default: None.
+        driver_arguments (list, optional): A list of additional arguments to be passed to the driver. Default: None.
+        driver_version (int, optional): The version of the chromedriver. Default: None.
+        auto_save (bool, optional): A boolean to enable/disable automatic saving. Default: False.
+        save_path (str, optional): The file path to save chat logs. Default: None.
+        verbose (bool, optional): A boolean to enable/disable logging. Default: False.
+        credential_check (bool, optional): A boolean to enable/disable credential check. Default: True.
+        skip_login (bool, optional): A boolean indicating whether login should be skipped. Default: False.
+        user_data_dir (str, optional): The directory path to user profile. Default: None.
+
+    Returns:
+        BaseBrowser: The base driver object. 
+    '''
 
     def __init__(
         self,
-        client_name : str = None,
-        url : str = None,
-        uname_env_var : str = None,
-        pwd_env_var : str = None,
+        client_name : str,
+        url : str,
+        uname_env_var : str,
+        pwd_env_var : str,
         username: str = '',
         password: str = '',
         headless: bool = True,
@@ -44,8 +69,9 @@ class BaseBrowser:
         credential_check: bool = True,
         skip_login: bool = False,
         user_data_dir: str = None
-    ):
+    ):   
         self.client_name    = client_name
+        self.markers        = markers[client_name]
         self.url            = url
         self.uname_env_var  = uname_env_var
         self.pwd_env_var    = pwd_env_var
@@ -131,17 +157,19 @@ class BaseBrowser:
         self.save_path = save_path or datetime.now().strftime('%Y_%m_%d_%H_%M_%S.csv')
         self.file_type = save_path.split('.')[-1] if save_path else 'csv'
 
-    def save(self):
+    def save(self) -> bool:
         """Saves the conversation."""
         save_func = save_func_map.get(self.file_type, None)
         if save_func:
             save_func = getattr(self.chat_history, save_func)
             save_func(self.save_path)
             logging.info('File saved to %s', self.save_path)
-        else:
-            logging.error('Unsupported file type %s', self.file_type)
+            return True
 
-    def find_or_fail(self, by : By, query : str, return_type : str = 'first', fail_ok : bool = False):
+        logging.error('Unsupported file type %s', self.file_type)
+        return False
+
+    def find_or_fail(self, by: By, query: str, return_type: str = 'first', fail_ok: bool = False):
         """Finds a list of elements given query, if none of the items exists, throws an error
 
         Args:
@@ -176,10 +204,10 @@ class BaseBrowser:
         Returns:
             bool: True if the login page is not present, False otherwise.
         '''
-        login_button = self.browser.find_elements(By.XPATH, self.login_xq)
+        login_button = self.browser.find_elements(By.XPATH, self.markers.login_xq)
         return len(login_button) == 0
 
-    def sleepy_find_element(self, by: By, query : str, attempt_count : int = 20, sleep_duration : int = 1):
+    def sleepy_find_element(self, by: By, query: str, attempt_count: int = 20, sleep_duration: int = 1):
         '''
         Finds the web element using the locator and query.
 
@@ -216,7 +244,7 @@ class BaseBrowser:
         Args:
             by (selenium.webdriver.common.by.By): The method used to locate the element.
             query (str): The query string to locate the element.
-            timeout_duration (int, optional): The total wait time before the timeout exception. Default: 15.
+            timeout_duration (int, optional): Waiting time before the timeout. Default: 15.
 
         Returns:
             None
@@ -234,7 +262,17 @@ class BaseBrowser:
             logging.info('Element %s still here, something is wrong.', query)
         return
 
-    def save_turn(self, question : str, answer : str) -> bool:
+    def log_chat(self, question : str, answer : str) -> bool:
+        """
+        Log a chat interaction in the chat history.
+
+        Parameters:
+        - question (str): The user's question to be logged.
+        - answer (str): The answer to the user's question to be logged.
+
+        Returns:
+        - bool: True if the interaction is logged (based on the auto_save condition), False otherwise.
+        """
         if self.auto_save:
             self.chat_history.loc[len(self.chat_history)] = ['user', False, question]
             self.chat_history.loc[len(self.chat_history)] = [self.client_name, False, answer]
@@ -243,18 +281,26 @@ class BaseBrowser:
 
     def preload_custom_func(self):
         """
-        Implement specific settings for a LLM.
+        A function to implement specific instructions before loading the webpage
         """
         logging.info(
-            'Preload behaviour is not implemented, that may be normal if verification is not necessary')
+            '''
+            The preload behavior is not implemented,
+            which could be considered normal if verification is not required.
+            '''
+        )
         return True
 
     def postload_custom_func(self):
         """
-        Implement specific settings for a LLM.
+        A function to implement specific instructions after loading the webpage
         """
         logging.info(
-            'Postload behaviour is not implemented, that may be normal if verification is not necessary')
+            '''
+            The postload behavior is not implemented,
+            which could be considered normal if verification is not required.
+            '''
+        )
         return True
 
     def pass_verification(self):
@@ -264,7 +310,11 @@ class BaseBrowser:
             None
         '''
         logging.info(
-            'Verification is not implemented, that may be normal if verification is not necessary')
+            '''
+            Pass verification function is not implemented,
+            which could be considered normal if verification is not required.
+            '''
+        )
         return True
 
     def login(self, username: str, password: str):
@@ -278,14 +328,35 @@ class BaseBrowser:
         raise NotImplementedError(
             'If you are creating a custom automation, please implement this method!')
 
-    def reset_thread(self):
-        raise NotImplementedError(
-            'Resetting thread is either not implemented or not available for this LLM')
+    def reset_thread(self) -> bool:
+        '''
+        Abstract function to open a new thread.
 
-    def regenerate_response(self):
+        Returns:
+            bool: True on success
+        '''
         raise NotImplementedError(
-            'Regenerating response is either not implemented or not available for this LLM')
+            'Resetting thread is either not implemented or not available')
+
+    def regenerate_response(self) -> str:
+        '''
+        Abstract function to regenerate the answers.
+
+        Returns:
+            str: The regenerated answer is returned on success.
+        '''
+        raise NotImplementedError(
+            'Regenerating response is either not implemented or not available')
 
     def switch_model(self, model_name : str):
+        '''
+        Abstract function to switch the model.
+
+        Args:
+            model_name: (str) = The name of the model.
+
+        Returns:
+            bool: True on success, False on fail
+        '''
         raise NotImplementedError(
-            'Switching model is either not implemented or not available for this LLM')
+            'Switching model is either not implemented or not available')

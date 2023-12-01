@@ -1,4 +1,18 @@
-# TalkingHeads
+<h1 align="center">TalkingHeads</h1>
+<p align="center">
+  <a href="https://talkingheads.readthedocs.io/">TalkingHeads Documentation</a> 
+  <br> <br>
+  <a target="https://dl.circleci.com/status-badge/redirect/circleci/6F1iwzpLRUhYEqR52tsdpG/KJaFCxH254DNzXFH18fVkE/tree/main">
+    <img src="https://dl.circleci.com/status-badge/img/circleci/6F1iwzpLRUhYEqR52tsdpG/KJaFCxH254DNzXFH18fVkE/tree/main.svg?style=shield&circle-token=54028547cfa4cae520432080c127ca19612f9553" alt="CircleCI Build Status">
+  </a>
+  <a href="https://badge.fury.io/py/talkingheads">
+    <img src="https://badge.fury.io/py/talkingheads.svg" alt="PyPI version" height="18">
+  </a>
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="Licence: MIT" height="18">
+  </a>
+</p>
+
 Welcome to TalkingHeads! 🤖🚀
 
 TalkingHeads is a versatile Python library that serves as an interface for seamless communication with Google Bard, HuggingChat and OpenAI ChatGPT 🤖💬
