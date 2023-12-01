@@ -1,9 +1,10 @@
-'''Class definition for ChatGPT_Client'''
+'''Class definition for BardClient'''
 import logging
+from typing import Union
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from .base_browser import BaseBrowser
+from talkingheads.base_browser import BaseBrowser
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
@@ -13,18 +14,6 @@ logging.basicConfig(
 
 class BardClient(BaseBrowser):
     '''BardClient class to interact with Bard'''
-    textarea_xq = '//div[@role="textbox"]'
-    wait_xq     = '//img[contains(@src, "sparkle_thinking")]'
-    chatbox_tq  = 'message-content'
-    search_xq   = '//div[@aria-label="web search toggle"]'
-
-    model_xq    = '//div[div/div/text()="Current Model"]//button'
-    model_li_xq = '//label'
-    model_a_xq  = '//button[contains(text(), "Apply")]'
-    new_chat_xq = '//span[text()="New chat"]'
-    regen_1_xq  = '//span[text()="View other drafts"]'
-    regen_2_xq  = '//button[@mattooltip="Regenerate drafts"]'
-
     def __init__(self, **kwargs):
         super().__init__(
             client_name='Bard',
@@ -33,7 +22,7 @@ class BardClient(BaseBrowser):
             **kwargs
         )
 
-    def login(self, username :str, password :str):
+    def login(self, username :str, password :str) -> bool:
         '''
         Performs the login process with the provided username and password.
 
@@ -46,30 +35,37 @@ class BardClient(BaseBrowser):
             password (str): The password to be entered.
 
         Returns:
-            None
+            bool : True if login succesful, False otherwise.
         '''
         logging.info(
             'It is not possible to provide login functionality for Google'
             'Please follow the instructions on the repo to connect Bard'
         )
-        text_area = self.find_or_fail(By.XPATH, self.textarea_xq)
-        while not text_area and not self.headless:
-            logging.error('It seems like login was unsuccessful, if you are in headless mode try login manually and press any key, it will continue if it is loaded')
-            input()
-            text_area = self.find_or_fail(By.XPATH, self.textarea_xq)
-        return
+        text_area = self.find_or_fail(By.XPATH, self.markers.textarea_xq)
+        if not text_area and not self.headless:
+            for _ in range(5):
+                logging.error(
+                    '''Prompt area can\'t located, use browser to manually
+                    login your account, navigate to https://bard.google.com/chat
+                    and press any key here.''')
+                input()
+                text_area = self.find_or_fail(By.XPATH, self.markers.textarea_xq)
+                break
+            else:
+                logging.error('Login is unsuccesful')
+                return False
+        return True
 
-    def interact(self, question : str):
+    def interact(self, question : str) -> str:
         '''
         Sends a question and retrieves the answer from the ChatGPT system.
 
-        This function interacts with the ChatGPT.
+        This function interacts with the Bard.
         It takes the question as input and sends it to the system.
-        The question may contain multiple lines separated by '\n'. 
+        The question may contain multiple lines separated by '\\n'. 
         In this case, the function simulates pressing SHIFT+ENTER for each line.
-
-        After sending the question, the function waits for the answer.
-        Once the response is ready, the response is returned.
+        Upon arrival of the interaction, the function waits for the answer.
+        Once the response is ready, the function will return the response.
 
         Args:
             question (str): The interaction text.
@@ -78,7 +74,7 @@ class BardClient(BaseBrowser):
             str: The generated answer.
         '''
 
-        text_area = self.find_or_fail(By.XPATH, self.textarea_xq)
+        text_area = self.find_or_fail(By.XPATH, self.markers.textarea_xq)
         if not text_area:
             return ''
 
@@ -87,58 +83,67 @@ class BardClient(BaseBrowser):
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
         text_area.send_keys(Keys.RETURN)
         logging.info('Message sent, waiting for response')
-        self.wait_until_disappear(By.XPATH, self.wait_xq)
-        answer = self.find_or_fail(By.TAG_NAME, self.chatbox_tq, return_type='last')
+        self.wait_until_disappear(By.XPATH, self.markers.wait_xq)
+        answer = self.find_or_fail(By.TAG_NAME, self.markers.chatbox_tq, return_type='last')
         if not answer:
             logging.info('Answer is not found.')
             return ''
 
         logging.info('Answer is ready')
-        self.save_turn(question=question, answer=answer.text)
+        self.log_chat(question=question, answer=answer.text)
         return answer.text
 
-    def reset_thread(self):
-        '''Function to close the current thread and start new one'''
-        new_chat_button = self.find_or_fail(By.XPATH, self.new_chat_xq)
-        if new_chat_button:
-            new_chat_button.click()
-            logging.info('New chat is ready')
-        return
+    def reset_thread(self) -> bool:
+        '''Function to close the current thread and start new one
 
-    def toggle_search_web(self):
-        """Function to enable/disable web search feature"""
-        search_web_toggle = self.find_or_fail(By.XPATH, self.search_xq)
+        Returns:
+            bool: True new chat button is clicked, false otherwise
+        '''
+        new_chat_button = self.find_or_fail(By.XPATH, self.markers.new_chat_xq)
+        if not new_chat_button:
+            return False
+
+        new_chat_button.click()
+        logging.info('New chat is ready')
+        return True
+
+    def toggle_search_web(self) -> Union[bool, None]:
+        '''Function to enable/disable web search feature
+        
+        Returns:
+            [bool, None] : The status of the web search functionality, None if toggle is not found.
+        '''
+        search_web_toggle = self.find_or_fail(By.XPATH, self.markers.search_xq)
         if not search_web_toggle:
-            return
+            return None
         search_web_toggle.click()
         state = search_web_toggle.get_attribute('aria-checked')
         logging.info(f'Search web is {"enabled" if state == "true" else "disabled"}')
         return
 
-    def regenerate_response(self):
-        '''
-        Closes the current thread and starts a new one.
+    def regenerate_response(self) -> str:
+        '''Closes the current thread and starts a new one.
 
         Args:
             None
 
         Returns:
-            None
+            str: The regenerated answer or empty string in case of failure.
         '''
-        view_drafts = self.find_or_fail(By.XPATH, self.regen_1_xq)
+        view_drafts = self.find_or_fail(By.XPATH, self.markers.regen_1_xq)
         if not view_drafts:
             return
         view_drafts.click()
         logging.info('Clicked View drafts button')
 
-        regen_button = self.find_or_fail(By.XPATH, self.regen_2_xq)
+        regen_button = self.find_or_fail(By.XPATH, self.markers.regen_2_xq)
         if not regen_button:
-            return
+            return ''
 
         regen_button.click()
         logging.info('Clicked regenerate button')
-        self.wait_until_disappear(By.XPATH, self.wait_xq)
-        answer = self.browser.find_elements(By.TAG_NAME, self.chatbox_tq)[-1]
+        self.wait_until_disappear(By.XPATH, self.markers.wait_xq)
+        answer = self.browser.find_elements(By.TAG_NAME, self.markers.chatbox_tq)[-1]
         logging.info('New answer is ready')
 
         if self.auto_save:

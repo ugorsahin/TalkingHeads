@@ -27,3 +27,6 @@ share/python-wheels/
 MANIFEST
 
 *.ipynb
+
+# Sphinx
+_build
