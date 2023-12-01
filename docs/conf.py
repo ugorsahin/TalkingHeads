@@ -18,6 +18,7 @@ author = 'Ugur Sahin'
 
 extensions = [
     'sphinx.ext.autodoc',
+    "sphinx.ext.autosummary",
     'sphinx.ext.doctest',   
     'sphinx.ext.napoleon',
     'myst_parser'
@@ -25,8 +26,6 @@ extensions = [
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
-
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -36,7 +35,7 @@ html_static_path = ['_static']
 
 add_module_names = True
 autodoc_member_order = "groupwise"
-
+autosummary_generate = True
 # Napoleon settings
 napoleon_google_docstring = True
 napoleon_numpy_docstring = True
