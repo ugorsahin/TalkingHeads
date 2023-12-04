@@ -33,7 +33,10 @@ def detect_chrome_version(version_num : int = None):
             return default_version
         return version_num
 
-    out = subprocess.check_output(['google-chrome', '--version'])
+    from undetected_chromedriver import find_chrome_executable
+    chrome_path = find_chrome_executable()
+
+    out = subprocess.check_output([chrome_path, '--version'])
     out = re.search(r'Google\s+Chrome\s+(\d{3})', out.decode())
 
     if not out:
