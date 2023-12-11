@@ -49,8 +49,6 @@ class PiClient(BaseBrowser):
         time.sleep(2)
         self.browser.get(self.url)
         self.is_ready_to_prompt()
-        # Pi is a little bit sophisticated, you need to wait!
-        time.sleep(1)
         return
 
     def is_ready_to_prompt(self) -> bool:
@@ -65,7 +63,8 @@ class PiClient(BaseBrowser):
         Returns:
             bool : return if the system is ready to be prompted.
         '''
-        text_area = self.find_or_fail(By.XPATH, self.markers.textarea_xq)
+
+        text_area = self.wait_until_appear(By.XPATH, self.markers.textarea_xq)
         if not text_area:
             return False
         text_area.send_keys('.')
@@ -102,7 +101,8 @@ class PiClient(BaseBrowser):
         for each_line in question.split('\n'):
             text_area.send_keys(each_line)
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
-        text_area.send_keys(Keys.ENTER)
+
+        self.find_or_fail(By.XPATH, self.markers.sendkeys_xq).click()
         logging.info('Message sent, waiting for response')
 
         if not self.is_ready_to_prompt():

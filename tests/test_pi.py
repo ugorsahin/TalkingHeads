@@ -13,7 +13,8 @@ def test_start():
 
 def test_interaction():
     time.sleep(1)
-    answer = pytest.chathead.interact('Without any explanation or extra information, just repeat the following: book.')
+    answer = pytest.chathead.interact(
+        'Without any explanation or extra information, just repeat the following: book.')
     assert 'book' in answer.lower(), f'Answer is not "book.", instead it returned {answer}'
 
 def test_model_selection():

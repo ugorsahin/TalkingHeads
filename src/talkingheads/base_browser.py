@@ -121,6 +121,7 @@ class BaseBrowser:
             version_main=detect_chrome_version(driver_version),
             **uc_params
         )
+        self.wait_object = WebDriverWait(self.browser, timeout_dur)
         agent = self.browser.execute_script("return navigator.userAgent")
         self.browser.execute_cdp_cmd(
             'Network.setUserAgentOverride',
@@ -146,7 +147,6 @@ class BaseBrowser:
         self.ready = True
         self.chat_history = pd.DataFrame(columns=['role', 'is_regen', 'content'])
         self.set_save_path(save_path)
-        self.wait_object = WebDriverWait(self.browser, timeout_dur)
 
     def __del__(self):
         self.browser.quit()
@@ -237,6 +237,32 @@ class BaseBrowser:
             logging.info('Element %s is not present, attempt: %d', query, _count+1)
             time.sleep(sleep_dur)
         return item
+
+    def wait_until_appear(self, by : By, query : str):
+        '''
+        Waits until the specified web element appears on the page.
+
+        This function continuously checks for the presence of a web element.
+        It waits until the element is present on the page.
+        Once the element has appeared, the function returns.
+
+        Args:
+            by (selenium.webdriver.common.by.By): The method used to locate the element.
+            query (str): The query string to locate the element.
+            timeout_dur (int, optional): Waiting time before the timeout. Default: 15.
+
+        Returns:
+            None
+        '''
+        logging.info('Waiting element %s to appear.', query)
+        try:
+            element = self.wait_object.until(
+                EC.presence_of_element_located((by, query))
+            )
+            logging.info('Element %s appeared.', query)
+        except Exceptions.TimeoutException:
+            logging.info('Element %s is not present, something is wrong.', query)
+        return element
 
     def wait_until_disappear(self, by : By, query : str):
         '''

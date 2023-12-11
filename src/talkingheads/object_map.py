@@ -56,6 +56,7 @@ markers = EasyDict({
 
   'Pi': {
     'textarea_xq' : '//textarea[@role="textbox"]',
+    'sendkeys_xq' : '//button[@aria-label="Submit text"]',
     'wait_xq'     : '//button[@disabled]',
     'chatbox_cq'  : 'break-anywhere',
 
