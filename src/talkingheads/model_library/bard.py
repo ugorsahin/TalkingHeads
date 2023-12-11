@@ -6,12 +6,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from talkingheads.base_browser import BaseBrowser
 
-logging.basicConfig(
-    format='%(asctime)s %(levelname)s %(message)s',
-    datefmt='%Y/%m/%d %H:%M:%S',
-    level=logging.WARNING
-)
-
 class BardClient(BaseBrowser):
     '''BardClient class to interact with Bard'''
     def __init__(self, **kwargs):
@@ -118,8 +112,9 @@ class BardClient(BaseBrowser):
             return None
         search_web_toggle.click()
         state = search_web_toggle.get_attribute('aria-checked')
-        logging.info(f'Search web is {"enabled" if state == "true" else "disabled"}')
-        return
+        state = state == "true"
+        logging.info('Search web is %s', ["disabled", "enabled"][state])
+        return state
 
     def regenerate_response(self) -> str:
         '''Closes the current thread and starts a new one.
@@ -150,13 +145,6 @@ class BardClient(BaseBrowser):
             self.chat_history.loc[len(self.chat_history)] = [self.client_name, True, answer.text]
         return answer.text
 
-if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('username')
-    parser.add_argument('password')
-    args = parser.parse_args()
-
-    bard = BardClient()
-    result = bard.interact('Hello, how are you today')
-    print(result)
+    def switch_model(self, model_name : str) -> bool:
+        logging.info('Bard doesn\'t have a model selection')
+        return False

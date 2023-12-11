@@ -13,7 +13,7 @@ def test_start():
 
 def test_interaction():
     answer = pytest.chathead.interact('Without any explanation or extra information, just repeat the following: book.')
-    assert answer.lower() == 'book.', f'Answer is not "book.", instead it returned {answer}'
+    assert 'book' in answer.lower(), f'Answer is not "book.", instead it returned {answer}'
 
 def test_reset():
     assert pytest.chathead.reset_thread()

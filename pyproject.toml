@@ -12,7 +12,7 @@ name = "talkingheads"
 description = "A Headless Chrome interface to communicate with Google Bard, HuggingChat and OpenAI ChatGPT"
 readme = "README.md"
 requires-python = ">=3.8"
-version = "0.2.3"
+version = "0.3.0"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",

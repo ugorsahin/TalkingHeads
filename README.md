@@ -1,4 +1,4 @@
-<h1 align="center">TalkingHeads</h1>
+<h1 align="center">TalkingHeads 🗪</h1>
 <p align="center">
   <a href="https://talkingheads.readthedocs.io/">TalkingHeads Documentation</a> 
   <br> <br>
@@ -14,11 +14,15 @@
   <a href='https://talkingheads.readthedocs.io/en/latest/?badge=latest'>
     <img src='https://readthedocs.org/projects/talkingheads/badge/?version=latest' alt='Documentation Status' />
   </a>
+  </a>
+  <a href='https://github.com/ugorsahin/TalkingHeads/actions/workflows/codeql.yml'>
+    <img src='https://github.com/ugorsahin/TalkingHeads/actions/workflows/codeql.yml/badge.svg' alt='CodeQL Status' />
+  </a>
 </p>
 
 Welcome to TalkingHeads! 🤖🚀
 
-TalkingHeads is a versatile Python library that serves as an interface for seamless communication with Google Bard, HuggingChat and OpenAI ChatGPT 🤖💬
+TalkingHeads is a versatile Python library that serves as an interface for seamless communication with Google Bard, HuggingChat, OpenAI ChatGPT and Pi  🤖💬
 
 By leveraging the power of browser automation, this library enables users to effortlessly interact with online LLM tools, providing a streamlined and automated approach to generate responses. 🚀✨
 
@@ -52,15 +56,16 @@ print(answer)
 
 ## Features
 
-Features | Google Bard | HuggingChat | OpenAI ChatGPT |
-|----------|----------|----------|----------|
-Login via account | ❌ | ✅ | ✅ |
-Interact | ✅ | ✅ | ✅ |
-New Chat | ✅ | ✅ | ✅ |
-Regenerate Response | ✅ | ❌ | ✅ |
-Set custom interactions | ❌ | ❌ | ✅ |
-Search Web | ❌ | ✅ | ❌ |
-Switch Model | ❌ | ✅ | ✅ |
+Features | Google Bard | HuggingChat | OpenAI ChatGPT | Pi |
+|----------|----------|----------|----------|----------|
+Use without login | ❌ | ❌ | ❌ | ✅ |
+Login via account | ❌ | ✅ | ✅ | ❌ |
+Interact | ✅ | ✅ | ✅ | ✅ |
+New Chat | ✅ | ✅ | ✅ | ✅ |
+Regenerate Response | ✅ | ❌ | ✅ | ❌ |
+Set custom interactions | ❌ | ❌ | ✅ | ❌ |
+Search Web | ❌ | ✅ | ❌ | ❌ |
+Switch Model | ❌ | ✅ | ✅ | ✅ |
 
 ✅ (Auto) Save the conversation as csv, h5, html, json, orc, pkl, xlsx, xml
 

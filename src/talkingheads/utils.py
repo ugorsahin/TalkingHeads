@@ -2,9 +2,11 @@
 import re
 import subprocess
 import logging
-import platform
+from typing import Union
 
-def detect_chrome_version(version_num : int = None):
+from undetected_chromedriver import find_chrome_executable
+
+def detect_chrome_version(version_num : int = None) -> Union[int, None]:
     '''
     Detects the Google Chrome version on Linux and macOS machines.
     
@@ -16,36 +18,26 @@ def detect_chrome_version(version_num : int = None):
 
     Note:
     - If version_num is provided, it will be returned without any detection.
-    - For Windows machines, if version_num is not provided, a warning is logged, and the default version 112 is returned.
     - Uses subprocess to execute the 'google-chrome --version' command for detection.
-    - If the command output doesn't match the expected format, it defaults to the version 112.
+    - If the command output doesn't match the expected format, it returns None.
     - Logs information about the detected or default version using the logging module.
     '''
-    default_version = 112
 
     if version_num:
         logging.debug('Version number is provided: %d', version_num)
         return version_num
 
-    if platform.system() == 'Windows':
-        if not version_num:
-            logging.warning('Windows detected, no version number is provided, default: 112')
-            return default_version
-        return version_num
-
-    from undetected_chromedriver import find_chrome_executable
     chrome_path = find_chrome_executable()
 
     out = subprocess.check_output([chrome_path, '--version'])
     out = re.search(r'Google\s+Chrome\s+(\d{3})', out.decode())
 
     if not out:
-        logging.info('Could\'nt locate chrome version, using default value: 112')
-        version_num = default_version
-    else:
-        version_num = int(out.group(1))
-        logging.info(f'The version is {version_num}')
+        logging.error('There was an error obtaining Chrome version')
+        return None
 
+    version_num = int(out.group(1))
+    logging.info('The version is %d', version_num)
     return version_num
 
 save_func_map = {

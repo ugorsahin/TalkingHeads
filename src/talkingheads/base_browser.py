@@ -1,9 +1,11 @@
 '''Class definition for ChatGPT_Client'''
 
+import abc
 import os
 import logging
 import time
 from datetime import datetime
+
 import undetected_chromedriver as uc
 import pandas as pd
 
@@ -35,15 +37,16 @@ class BaseBrowser:
         headless (bool, optional): A boolean to enable/disable headless mode in driver. Default: True.
         cold_start (bool, optional): If set, it will return after opening the browser. Default: False.
         incognito (bool, optional): A boolean to set incognito mode. Default: True.
-        driver_executable_path (str, optional): The file path to the driver executable, if applicable. Default: None.
         driver_arguments (list, optional): A list of additional arguments to be passed to the driver. Default: None.
         driver_version (int, optional): The version of the chromedriver. Default: None.
         auto_save (bool, optional): A boolean to enable/disable automatic saving. Default: False.
         save_path (str, optional): The file path to save chat logs. Default: None.
         verbose (bool, optional): A boolean to enable/disable logging. Default: False.
         credential_check (bool, optional): A boolean to enable/disable credential check. Default: True.
-        skip_login (bool, optional): A boolean indicating whether login should be skipped. Default: False.
+        skip_login (bool, optional): If True, skips the login procedure. Default: False.
         user_data_dir (str, optional): The directory path to user profile. Default: None.
+        uc_params (dict, optional): Parameters for uc.Chrome().
+            Some examples : driver_executable_path, browser_executable_path
 
     Returns:
         BaseBrowser: The base driver object. 
@@ -60,16 +63,17 @@ class BaseBrowser:
         headless: bool = True,
         cold_start: bool = False,
         incognito: bool = True,
-        driver_executable_path :str =None,
         driver_arguments: list = None,
         driver_version: int = None,
+        timeout_dur: int = 15,
         auto_save: bool = False,
         save_path: str = None,
         verbose: bool = False,
         credential_check: bool = True,
         skip_login: bool = False,
-        user_data_dir: str = None
-    ):   
+        user_data_dir: str = None,
+        uc_params : dict = None,
+    ):
         self.client_name    = client_name
         self.markers        = markers[client_name]
         self.url            = url
@@ -79,7 +83,7 @@ class BaseBrowser:
         self.ready          = False
         self.auto_save = auto_save
 
-        if not skip_login and credential_check:
+        if credential_check:
             if username or password:
                 logging.warning(
                     "The username and password parameters are deprecated and will be removed soon."
@@ -109,13 +113,13 @@ class BaseBrowser:
                 options.add_argument(_arg)
 
         logging.info('Loading undetected Chrome')
+        uc_params = uc_params or {}
         self.browser = uc.Chrome(
             user_data_dir=user_data_dir,
-            driver_executable_path=driver_executable_path,
             options=options,
             headless=headless,
             version_main=detect_chrome_version(driver_version),
-            log_level=10,
+            **uc_params
         )
         agent = self.browser.execute_script("return navigator.userAgent")
         self.browser.execute_cdp_cmd(
@@ -142,6 +146,7 @@ class BaseBrowser:
         self.ready = True
         self.chat_history = pd.DataFrame(columns=['role', 'is_regen', 'content'])
         self.set_save_path(save_path)
+        self.wait_object = WebDriverWait(self.browser, timeout_dur)
 
     def __del__(self):
         self.browser.quit()
@@ -207,7 +212,7 @@ class BaseBrowser:
         login_button = self.browser.find_elements(By.XPATH, self.markers.login_xq)
         return len(login_button) == 0
 
-    def sleepy_find_element(self, by: By, query: str, attempt_count: int = 20, sleep_duration: int = 1):
+    def sleepy_find_element(self, by: By, query: str, attempt_count: int = 20, sleep_dur: int = 1):
         '''
         Finds the web element using the locator and query.
 
@@ -218,7 +223,7 @@ class BaseBrowser:
             by (selenium.webdriver.common.by.By): The method used to locate the element.
             query (str): The query string to locate the element.
             attempt_count (int, optional): The number of attempts to find the element. Default: 20.
-            sleep_duration (int, optional): The duration to sleep between attempts. Default: 1.
+            sleep_dur (int, optional): The duration to sleep between attempts. Default: 1.
 
         Returns:
             selenium.webdriver.remote.webelement.WebElement: Web element or None if not found.
@@ -230,10 +235,10 @@ class BaseBrowser:
                 logging.info('Element %s has found', query)
                 break
             logging.info('Element %s is not present, attempt: %d', query, _count+1)
-            time.sleep(sleep_duration)
+            time.sleep(sleep_dur)
         return item
 
-    def wait_until_disappear(self, by : By, query : str, timeout_duration : int = 15):
+    def wait_until_disappear(self, by : By, query : str):
         '''
         Waits until the specified web element disappears from the page.
 
@@ -244,17 +249,14 @@ class BaseBrowser:
         Args:
             by (selenium.webdriver.common.by.By): The method used to locate the element.
             query (str): The query string to locate the element.
-            timeout_duration (int, optional): Waiting time before the timeout. Default: 15.
+            timeout_dur (int, optional): Waiting time before the timeout. Default: 15.
 
         Returns:
             None
         '''
         logging.info('Waiting element %s to disappear.', query)
         try:
-            WebDriverWait(
-                self.browser,
-                timeout_duration
-            ).until_not(
+            self.wait_object.until_not(
                 EC.presence_of_element_located((by, query))
             )
             logging.info('Element %s disappeared.', query)
@@ -271,7 +273,7 @@ class BaseBrowser:
         - answer (str): The answer to the user's question to be logged.
 
         Returns:
-        - bool: True if the interaction is logged (based on the auto_save condition), False otherwise.
+        - bool: True if the interaction is logged, False otherwise.
         """
         if self.auto_save:
             self.chat_history.loc[len(self.chat_history)] = ['user', False, question]
@@ -279,7 +281,7 @@ class BaseBrowser:
             return True
         return False
 
-    def preload_custom_func(self):
+    def preload_custom_func(self) -> None:
         """
         A function to implement specific instructions before loading the webpage
         """
@@ -289,9 +291,8 @@ class BaseBrowser:
             which could be considered normal if verification is not required.
             '''
         )
-        return True
 
-    def postload_custom_func(self):
+    def postload_custom_func(self) -> None:
         """
         A function to implement specific instructions after loading the webpage
         """
@@ -301,9 +302,8 @@ class BaseBrowser:
             which could be considered normal if verification is not required.
             '''
         )
-        return True
 
-    def pass_verification(self):
+    def pass_verification(self) -> bool:
         '''
         Performs the verification process on the page if challenge is present.
         Returns:
@@ -317,46 +317,40 @@ class BaseBrowser:
         )
         return True
 
-    def login(self, username: str, password: str):
+    @abc.abstractmethod
+    def login(self, username: str, password: str) -> bool:
         '''
         Performs the login process with the provided username and password.
         '''
-        raise NotImplementedError(
-            'If you are creating a custom automation, please implement this method!')
+        logging.warning('If you are creating a custom automation, please implement this method!')
 
-    def interact(self, question : str):
-        raise NotImplementedError(
-            'If you are creating a custom automation, please implement this method!')
+    @abc.abstractmethod
+    def interact(self, question : str) -> str:
+        '''
+        Abstract function to interact with the language model.
+        '''
+        logging.warning('If you are creating a custom automation, please implement this method!')
 
+    @abc.abstractmethod
     def reset_thread(self) -> bool:
         '''
         Abstract function to open a new thread.
-
-        Returns:
-            bool: True on success
         '''
-        raise NotImplementedError(
-            'Resetting thread is either not implemented or not available')
+        logging.warning('Resetting thread is either not implemented or not available')
 
+    @abc.abstractmethod
     def regenerate_response(self) -> str:
         '''
         Abstract function to regenerate the answers.
-
-        Returns:
-            str: The regenerated answer is returned on success.
         '''
-        raise NotImplementedError(
-            'Regenerating response is either not implemented or not available')
+        logging.warning('Regenerating response is either not implemented or not available')
 
-    def switch_model(self, model_name : str):
+    @abc.abstractmethod
+    def switch_model(self, model_name : str) -> bool:
         '''
         Abstract function to switch the model.
 
         Args:
             model_name: (str) = The name of the model.
-
-        Returns:
-            bool: True on success, False on fail
         '''
-        raise NotImplementedError(
-            'Switching model is either not implemented or not available')
+        logging.warning('Switching model is either not implemented or not available')
