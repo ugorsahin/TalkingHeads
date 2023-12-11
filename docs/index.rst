@@ -1,4 +1,4 @@
-Welcome to TalkingHeads's documentation!
+Welcome to TalkingHeads 🗪 documentation!
 ========================================
 Introduction
 ============

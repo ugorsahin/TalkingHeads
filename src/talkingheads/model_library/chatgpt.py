@@ -12,12 +12,6 @@ import selenium.common.exceptions as Exceptions
 
 from talkingheads import BaseBrowser
 
-logging.basicConfig(
-    format='%(asctime)s %(levelname)s %(message)s',
-    datefmt='%Y/%m/%d %H:%M:%S',
-    level=logging.WARNING
-)
-
 class ChatGPTClient(BaseBrowser):
     '''ChatGPTClient class to interact with ChatGPT'''
 
@@ -292,14 +286,3 @@ class ChatGPTClient(BaseBrowser):
         save_button = self.find_or_fail(By.XPATH, self.markers.custom_save_xq)
         save_button.click()
         return True
-
-if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('username')
-    parser.add_argument('password')
-    args = parser.parse_args()
-
-    chatgpt = ChatGPTClient(args.username, args.password)
-    result = chatgpt.interact('Hello, how are you today')
-    print(result)

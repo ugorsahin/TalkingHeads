@@ -3,13 +3,8 @@ import logging
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
 from ..base_browser import BaseBrowser
-
-logging.basicConfig(
-    format='%(asctime)s %(levelname)s %(message)s',
-    datefmt='%Y/%m/%d %H:%M:%S',
-    level=logging.WARNING
-)
 
 class HuggingChatClient(BaseBrowser):
     '''
@@ -25,6 +20,7 @@ class HuggingChatClient(BaseBrowser):
             url='https://huggingface.co/chat/',
             uname_env_var='HUGGINGCHAT_UNAME',
             pwd_env_var='HUGGINGCHAT_PWD',
+            timeout_dur=45,
             **kwargs
         )
 
@@ -91,7 +87,7 @@ class HuggingChatClient(BaseBrowser):
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
         text_area.send_keys(Keys.RETURN)
         logging.info('Message sent, waiting for response')
-        self.wait_until_disappear(By.XPATH, self.markers.stop_gen_xq, timeout_duration=30)
+        self.wait_until_disappear(By.XPATH, self.markers.stop_gen_xq)
         answer = self.find_or_fail(By.XPATH, self.markers.chatbox_xq, return_type='last')
         if not answer:
             return ''
@@ -110,9 +106,10 @@ class HuggingChatClient(BaseBrowser):
         if not search_web_toggle:
             return
         search_web_toggle.click()
-        state = search_web_toggle.get_attribute('aria-checked')
-        logging.info(f'Search web is {"enabled" if state == "true" else "disabled"}')
-        return
+        status = search_web_toggle.get_attribute('aria-checked')
+        status = status == "true"
+        logging.info('Search web is %s', ["disabled", "enabled"][status])
+        return status
 
     def switch_model(self, model_name : str):
         '''
@@ -129,10 +126,13 @@ class HuggingChatClient(BaseBrowser):
             return False
         model_button.click()
 
+        self.wait_object.until(
+            EC.presence_of_element_located((By.XPATH, self.markers.settings_xq))
+        )
         models = self.find_or_fail(By.XPATH, self.markers.model_li_xq, return_type='all')
         if not models:
             return False
-        models = {m.get_attribute('aria-label'):m for m in models}
+        models = {m.text.strip():m for m in models}
 
         model = models.get(model_name, None)
         if model is None:
@@ -150,13 +150,6 @@ class HuggingChatClient(BaseBrowser):
         apply_button.click()
         return True
 
-if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('username')
-    parser.add_argument('password')
-    args = parser.parse_args()
-
-    huggingFace = HuggingChatClient(args.username, args.password)
-    result = huggingFace.interact('Hello, how are you today')
-    print(result)
+    def regenerate_response(self):
+        raise NotImplementedError(
+            'HuggingChat doesn\'t provide response regeneration')

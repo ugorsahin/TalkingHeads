@@ -38,21 +38,30 @@ markers = EasyDict({
     'chatbox_xq'  : '//div[@role="presentation"]',
     'search_xq'   : '//div[@aria-label="web search toggle"]',
 
-    'model_xq'    : '//div[div/div/text()="Current Model"]//button',
-    'model_li_xq' : '//label',
-    'model_a_xq'  : '//button[contains(text(), "Apply")]',
+    'model_xq'    : '//div[div/div/text()="Current Model"]//a',
+    'settings_xq' : '//h2[text()="Settings"]',
+    'model_li_xq' : '//div/a/div[@class="truncate"]',
+    'model_a_xq'  : '//div[h2/text()="Settings"]//button',
   },
 
   'Bard': {
     'textarea_xq' : '//div[@role="textbox"]',
     'wait_xq'     : '//img[contains(@src, "sparkle_thinking")]',
     'chatbox_tq'  : 'message-content',
-    'search_xq'   : '//div[@aria-label="web search toggle"]',
-    'model_xq'    : '//div[div/div/text()="Current Model"]//button',
-    'model_li_xq' : '//label',
-    'model_a_xq'  : '//button[contains(text(), "Apply")]',
+
     'new_chat_xq' : '//span[text()="New chat"]',
     'regen_1_xq'  : '//span[text()="View other drafts"]',
     'regen_2_xq'  : '//button[@mattooltip="Regenerate drafts"]'
+  },
+
+  'Pi': {
+    'textarea_xq' : '//textarea[@role="textbox"]',
+    'sendkeys_xq' : '//button[@aria-label="Submit text"]',
+    'wait_xq'     : '//button[@disabled]',
+    'chatbox_cq'  : 'break-anywhere',
+
+    'model_1_xq'  : '//div[contains(@class, "shadow-input")]//button',
+    'model_2_xq'  : '//button[contains(@class, "t-body-s")]',
+    'model_v_xq'  : '//div[contains(text(), "Switched to")]'
   }
 })
