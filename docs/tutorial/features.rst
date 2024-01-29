@@ -4,36 +4,73 @@ Features
 .. list-table:: Feature List
     :widths: 25 10 10 10
     :header-rows: 1
-
-    * - Features
-      - Google Bard
-      - HuggingChat
-      - OpenAI ChatGPT
-    * - Auto-login
-      - ❌
-      - ✅
-      - ✅ 
-    * - Interact
-      - ✅
-      - ✅
-      - ✅ 
-    * - New Chat
-      - ✅
-      - ✅
-      - ✅ 
-    * - Regenerate Response
-      - ✅
-      - ❌
-      - ✅ 
-    * - Set custom interactions
+    * - Features 
+      - Bard 
+      - Claude 
+      - Copilot 
+      - HuggingChat 
+      - ChatGPT 
+      - Pi
+    * - Use without login 
       - ❌
       - ❌
-      - ✅ 
-    * - Search Web
+      - ✅
       - ❌
+      - ❌
+      - ✅
+    * - Login* 
+      - ➖
+      - ➖\*\*
+      - ➖
+      - ✅
+      - ✅
+      - ➖
+    * - Interact 
+      - ✅
+      - ✅
+      - ✅
+      - ✅
+      - ✅
+      - ✅
+    * - New Chat 
+      - ✅
+      - ✅
+      - ✅
+      - ✅
+      - ✅
+      - ✅
+    * - Regenerate Response 
+      - ✅
       - ✅
       - ❌ 
-    * - Switch Model
       - ❌
       - ✅
-      - ✅ 
+      - ❌
+    * - Set custom interactions 
+      - ❌
+      - ❌
+      - ❌
+      - ❌
+      - ✅
+      - ❌
+    * - Search Web 
+      - ❌
+      - ❌
+      - ✅
+      - ✅
+      - ❌
+      - ❌
+    * - Plugins 
+      - ❌
+      - ❌
+      - ✅
+      - ❌
+      - ❌
+      - ❌
+    * - Switch Model 
+      - ❌
+      - ❌
+      - ✅*** 
+      - ✅
+      - ✅
+      - ✅
