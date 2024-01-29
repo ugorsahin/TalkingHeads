@@ -50,19 +50,19 @@ class BardClient(BaseBrowser):
                 return False
         return True
 
-    def interact(self, question : str) -> str:
+    def interact(self, prompt : str) -> str:
         '''
-        Sends a question and retrieves the answer from the ChatGPT system.
+        Sends a prompt and retrieves the answer from the ChatGPT system.
 
         This function interacts with the Bard.
-        It takes the question as input and sends it to the system.
-        The question may contain multiple lines separated by '\\n'. 
+        It takes the prompt as input and sends it to the system.
+        The prompt may contain multiple lines separated by '\\n'. 
         In this case, the function simulates pressing SHIFT+ENTER for each line.
         Upon arrival of the interaction, the function waits for the answer.
         Once the response is ready, the function will return the response.
 
         Args:
-            question (str): The interaction text.
+            prompt (str): The interaction text.
 
         Returns:
             str: The generated answer.
@@ -72,7 +72,7 @@ class BardClient(BaseBrowser):
         if not text_area:
             return ''
 
-        for each_line in question.split('\n'):
+        for each_line in prompt.split('\n'):
             text_area.send_keys(each_line)
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
         text_area.send_keys(Keys.RETURN)
@@ -84,7 +84,7 @@ class BardClient(BaseBrowser):
             return ''
 
         logging.info('Answer is ready')
-        self.log_chat(question=question, answer=answer.text)
+        self.log_chat(prompt=prompt, answer=answer.text)
         return answer.text
 
     def reset_thread(self) -> bool:

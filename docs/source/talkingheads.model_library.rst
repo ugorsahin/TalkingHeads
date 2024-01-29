@@ -28,6 +28,30 @@ talkingheads.model\_library.huggingchat module
    :undoc-members:
    :show-inheritance:
 
+talkingheads.model\_library.pi module
+-------------------------------------
+
+.. automodule:: talkingheads.model_library.pi
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+talkingheads.model\_library.copilot module
+-------------------------------------
+
+.. automodule:: talkingheads.model_library.copilot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+talkingheads.model\_library.claude module
+-------------------------------------
+
+.. automodule:: talkingheads.model_library.claude
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 
