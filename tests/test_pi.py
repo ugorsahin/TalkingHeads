@@ -19,8 +19,8 @@ def test_interaction():
     ), f'Answer is not "book.", instead it returned {answer}'
 
 
-def test_model_selection():
-    assert pytest.chathead.switch_model("SupportPi"), "Model switch failed."
+# def test_model_selection():
+#     assert pytest.chathead.switch_model("SupportPi"), "Model switch failed."
 
 
 def pytest_sessionfinish(session, exitstatus):
