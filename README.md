@@ -61,14 +61,14 @@ print(answer)
 Features | Bard | Claude | Copilot | HuggingChat | ChatGPT | Pi |
 |--------|------|--------|---------|-------------|---------|----|
 Use without login | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
-Login* | ➖ | ➖** | ➖ | ✅ | ✅ | ➖ |
+Login* | ➖ | ➖ | ➖ | ✅ | ✅ | ➖ |
 Interact | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 New Chat | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 Regenerate Response | ✅ | ✅ | ❌  | ❌ | ✅ | ❌ |
 Set custom interactions | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 Search Web | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
 Plugins | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-Switch Model | ❌ | ❌ | ✅*** | ✅ | ✅ | ✅ |
+Switch Model | ❌ | ❌ | ✅** | ✅ | ✅ | ✅ |
 
 ✅ (Auto) Save the conversation as csv, h5, html, json, orc, pkl, xlsx, xml
 
@@ -76,22 +76,15 @@ Switch Model | ❌ | ❌ | ✅*** | ✅ | ✅ | ✅ |
 - ❌ : Functionality does not exist
 - ➖ : Fuctionality exists but not implemented
 
-\* The first time login is manually done for Bard, Claude and Copilot. Check documentation for first time setup. Please take a look at [FAQ](FAQ.md) to set up.
-\*\*\* The modes of Copilot (Creative, Balanced and Precise) are accessible with model switch. However, it is unclear if they are different models.
-
-
-## Further Features to implement
-
-- [ ] Bard modify response
-- [ ] Bard double check
+- \* The first time login is manually done for Bard, Claude and Copilot. Check documentation for first time setup. Please take a look at [FAQ](FAQ.md) to set up.
+- \*\* The modes of Copilot (Creative, Balanced and Precise) are accessible with model switch. However, it is unclear if they are different models.
 
 ## Issues & Contribution
 
-I would be happy to answer any questions or accept your contributions. Let me know in issues if you need anything.
+Feel free to dive in, share your knowledge, and collaborate. I would be happy to answer any questions or accept your contributions. Let me know in issues if you need anything.
 
-Please indicate your issue with a tag enclosed by square brackets: [FEATURE], [BUG], [DOCUMENTATION], [QUESTION]. If you don't know what to write you can write [MISC].
-
-There are some features I would like to add to this repository. If you would like to help, search in issues and select the one you would like to implement. Let everyone know you are working on it by commenting on the issue and I would be glad to review your pull request.
+Enhancing our documentation would be fantastic and appreciated. Help me improve documentation with your valuable contributions.
+Please indicate your issue with a tag enclosed by square brackets: [FEATURE], [BUG], [DOCUMENTATION], [QUESTION]. If you don't know what to write you can write [MISC]. I will prioritize issues with tags.
 
 ## Where is old ChatGPT_Automation library?
 
