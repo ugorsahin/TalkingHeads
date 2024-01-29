@@ -14,10 +14,12 @@
   <a href='https://talkingheads.readthedocs.io/en/latest/?badge=latest'>
     <img src='https://readthedocs.org/projects/talkingheads/badge/?version=latest' alt='Documentation Status' />
   </a>
+  <a href="https://pepy.tech/project/talkingheads"><img src="https://static.pepy.tech/badge/talkingheads"></a>
   </a>
   <a href='https://github.com/ugorsahin/TalkingHeads/actions/workflows/codeql.yml'>
     <img src='https://github.com/ugorsahin/TalkingHeads/actions/workflows/codeql.yml/badge.svg' alt='CodeQL Status' />
   </a>
+  <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
 Welcome to TalkingHeads! 🤖🚀
@@ -45,9 +47,9 @@ pip install git+https://github.com/ugorsahin/TalkingHeads
 ## Usage
 
 ```python
-from talkingheads import HuggingChatClient
+from talkingheads import PiClient
 
-chathead = HuggingChatClient(YOUR_USERNAME, YOUR_PASSWORD)
+chathead = PiClient()
 
 answer = chathead.interact("Hello, how are you today")
 
@@ -56,20 +58,27 @@ print(answer)
 
 ## Features
 
-Features | Google Bard | HuggingChat | OpenAI ChatGPT | Pi |
-|----------|----------|----------|----------|----------|
-Use without login | ❌ | ❌ | ❌ | ✅ |
-Login via account | ❌ | ✅ | ✅ | ❌ |
-Interact | ✅ | ✅ | ✅ | ✅ |
-New Chat | ✅ | ✅ | ✅ | ✅ |
-Regenerate Response | ✅ | ❌ | ✅ | ❌ |
-Set custom interactions | ❌ | ❌ | ✅ | ❌ |
-Search Web | ❌ | ✅ | ❌ | ❌ |
-Switch Model | ❌ | ✅ | ✅ | ✅ |
+Features | Bard | Claude | Copilot | HuggingChat | ChatGPT | Pi |
+|--------|------|--------|---------|-------------|---------|----|
+Use without login | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
+Login* | ➖ | ➖** | ➖ | ✅ | ✅ | ➖ |
+Interact | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+New Chat | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+Regenerate Response | ✅ | ✅ | ❌  | ❌ | ✅ | ❌ |
+Set custom interactions | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+Search Web | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
+Plugins | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+Switch Model | ❌ | ❌ | ✅*** | ✅ | ✅ | ✅ |
 
 ✅ (Auto) Save the conversation as csv, h5, html, json, orc, pkl, xlsx, xml
 
-Please take a look at [FAQ](FAQ.md) to set up Bard.
+- ✅ : Functionality exists and implemented
+- ❌ : Functionality does not exist
+- ➖ : Fuctionality exists but not implemented
+
+\* The first time login is manually done for Bard, Claude and Copilot. Check documentation for first time setup. Please take a look at [FAQ](FAQ.md) to set up.
+\*\*\* The modes of Copilot (Creative, Balanced and Precise) are accessible with model switch. However, it is unclear if they are different models.
+
 
 ## Further Features to implement
 
@@ -88,11 +97,14 @@ There are some features I would like to add to this repository. If you would lik
 
 You can still run your code to connect ChatGPT, follow the below tutorial
 
-
+```bash
+export OPENAI_UNAME=<your@email>
+export OPENAI_PWD=><password>
+```
 ```python
 from talkingheads import ChatGPTClient
 
-chathead = ChatGPTClient(YOUR_USERNAME, YOUR_PASSWORD)
+chathead = ChatGPTClient()
 
 answer = chathead.interact("Hello, how are you today")
 

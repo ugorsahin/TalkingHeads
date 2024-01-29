@@ -1,8 +1,10 @@
-## Why should we login manually to use Bard?
-In order to use Bard, you need to log in to your Google account first. The login process is straightforward to implement and there may be manual obstacles to pass like 2FA. Therefore, you need to complete a manual login to use Bard.
+## Why should we login manually to use Bard, Claude or Copilot?
+Much like Sisyphos' endless task of rolling a boulder up a hill only to see it to roll back down, it is a similar challenge automating a login page of a service used by millions. These services are constantly updating their login procedures for security, usability and all other reasons, causing automation code to become obsolete faster than ever. Also, the addition of security measures like 2FA is on place, further complicating the automation efforts. It is a never-ending challenge.
 
-## How to set up Bard?
-To set up Bard, you will need to create a user profile on Chrome and then log in to your Google account. To do this, follow these steps:
+\* To login Claude, one needs to enter the verification code (OTP) sent to their email address, makes it impossible to automate.
+
+## How to set up for Bard, Claude or Copilot?
+To access abovementioned services, you need to create a user profile and log in to your account manually. Once you have done this, the login will persist on following usages, much like your own browser! To do this, start the client with following parameters:
 
 ```python
 chathead = BardClient(
@@ -12,12 +14,13 @@ chathead = BardClient(
     user_data_dir='<path/to/user/profile>'
 )
 ```
-Replace <path/to/user/profile> with the path to your user profile directory.
+
+It is headless because you need to login your account in order to use the system. It is incognito to utilize this manual login for the next times. Remember to replace <path/to/user/profile> with the path to your user profile directory.
 
 - Now, you should have a normal functioning Chrome session.
-- Type `https://bard.google.com/chat/` to your address bar and click Sign In
+- Click Sign In
 - Enter your credentials and log in.
-- If this is your first time using Google Bard, agree on the terms and finish the tutorial.
+- If this is your first time using these services, agree on the terms and finish the tutorial.
 
 After this, your setup is complete. You can call your constructor as follows:
 
