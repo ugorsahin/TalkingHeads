@@ -26,6 +26,6 @@ jobs:
       - store_test_results:
           path: talkinghead-results
 workflows:
-  sample:
+  base-tests:
     jobs:
       - build-and-test

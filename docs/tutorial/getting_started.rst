@@ -38,16 +38,16 @@ Usage
 .. toctree::
    :maxdepth: 2
 
-Setup Bard
+Setup Gemini
 **********
 
-In order to use Bard, you need to log in to your Google account first. The login process is not straightforward to implement and there may be obstacles to pass like 2FA. Therefore, you need to complete a manual login to use Bard.
+In order to use Gemini, you need to log in to your Google account first. The login process is not straightforward to implement and there may be obstacles to pass like 2FA. Therefore, you need to complete a manual login to use Gemini.
 
-To set up Bard, you will need to create a user profile on Chrome and then log in to your Google account. To do this, follow these steps:
+To set up Gemini, you will need to create a user profile on Chrome and then log in to your Google account. To do this, follow these steps:
 
 .. code-block:: python
 
-    chathead = BardClient(
+    chathead = GeminiClient(
         cold_start=True,
         incognito=False,
         headless=False,
@@ -57,15 +57,15 @@ To set up Bard, you will need to create a user profile on Chrome and then log in
 Replace `<path/to/user/profile>` with the path to your user profile directory.
 
 #. Now, you should have a normal functioning Chrome session.
-#. Type `https://bard.google.com/chat/` to your address bar and click Sign In
+#. Type `https://Gemini.google.com/chat/` to your address bar and click Sign In
 #. Enter your credentials and log in.
-#. If this is your first time using Google Bard, agree on the terms and finish the tutorial.
+#. If this is your first time using Google Gemini, agree on the terms and finish the tutorial.
 
 After this, your setup is complete. You can call your constructor as follows:
 
 .. code-block:: python
 
-    chathead = BardClient(
+    chathead = GeminiClient(
         incognito=False,
         user_data_dir='<path/to/user/profile>'
     )

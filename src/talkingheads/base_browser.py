@@ -175,17 +175,17 @@ class BaseBrowser:
     def find_or_fail(
         self,
         by: By,
-        query: str,
+        elem_query: str,
         return_type: str = "first",
         return_shadow: bool = False,
         fail_ok: bool = False,
         dom_element: WebElement = None,
     ):
-        """Finds a list of elements given query, if none of the items exists, throws an error
+        """Finds a list of elements given elem_query, if none of the items exists, throws an error
 
         Args:
             by (selenium.webdriver.common.by.By): The method used to locate the element.
-            query (str): The query string to locate the element.
+            elem_query (str): The elem_query string to locate the element.
             return_type (str): first|all|last. Return first element, all elements or the last one.
             fail_ok (bool): Do not produce error if it is ok to fail.
             dom_element (WebElement): If set, finds within that element.
@@ -197,20 +197,20 @@ class BaseBrowser:
             return ValueError("Unrecognized return type")
 
         if dom_element is None:
-            dom_element = self.browser.find_elements(by, query)
+            dom_element = self.browser.find_elements(by, elem_query)
         else:
-            dom_element = dom_element.find_elements(by, query)
+            dom_element = dom_element.find_elements(by, elem_query)
 
         if not dom_element:
             if not fail_ok:
                 logging.error(
-                    "%s is not located. Please raise an issue with verbose=True", query
+                    "%s is not located. Please raise an issue with verbose=True", elem_query
                 )
             else:
-                logging.info("%s is not located.", query)
+                logging.info("%s is not located.", elem_query)
             return None
 
-        logging.info("%s is located.", query)
+        logging.info("%s is located.", elem_query)
 
         element = {
             "first": lambda x: x[0],
@@ -232,7 +232,7 @@ class BaseBrowser:
         login_button = self.browser.find_elements(By.XPATH, self.markers.login_xq)
         return len(login_button) == 0
 
-    def wait_until_appear(self, by: By, query: str) -> Union[WebElement, None]:
+    def wait_until_appear(self, by: By, elem_query: str) -> Union[WebElement, None]:
         """
         Waits until the specified web element appears on the page.
 
@@ -242,25 +242,25 @@ class BaseBrowser:
 
         Args:
             by (selenium.webdriver.common.by.By): The method used to locate the element.
-            query (str): The query string to locate the element.
+            elem_query (str): The elem_query string to locate the element.
             timeout_dur (int, optional): Waiting time before the timeout. Default: 15.
 
         Returns:
             (WebElement | None): If element is appeared, it returns the element. Otherwise,
             it returns None.
         """
-        logging.info("Waiting element %s to appear.", query)
+        logging.info("Waiting element %s to appear.", elem_query)
         element = None
         try:
             element = self.wait_object.until(
-                EC.presence_of_element_located((by, query))
+                EC.presence_of_element_located((by, elem_query))
             )
-            logging.info("Element %s appeared.", query)
+            logging.info("Element %s appeared.", elem_query)
         except Exceptions.TimeoutException:
-            logging.info("Element %s is not present, something is wrong.", query)
+            logging.info("Element %s is not present, something is wrong.", elem_query)
         return element
 
-    def wait_until_disappear(self, by: By, query: str) -> bool:
+    def wait_until_disappear(self, by: By, elem_query: str) -> bool:
         """
         Waits until the specified web element disappears from the page.
 
@@ -270,19 +270,19 @@ class BaseBrowser:
 
         Args:
             by (selenium.webdriver.common.by.By): The method used to locate the element.
-            query (str): The query string to locate the element.
+            elem_query (str): The elem_query string to locate the element.
             timeout_dur (int, optional): Waiting time before the timeout. Default: 15.
 
         Returns:
             (bool) : True if element disappears, false otherwise.
         """
-        logging.info("Waiting element %s to disappear.", query)
+        logging.info("Waiting element %s to disappear.", elem_query)
         try:
-            self.wait_object.until_not(EC.presence_of_element_located((by, query)))
-            logging.info("Element %s disappeared.", query)
+            self.wait_object.until_not(EC.presence_of_element_located((by, elem_query)))
+            logging.info("Element %s disappeared.", elem_query)
             return True
         except Exceptions.TimeoutException:
-            logging.info("Element %s still here, something is wrong.", query)
+            logging.info("Element %s still here, something is wrong.", elem_query)
             return False
 
     def log_chat(
