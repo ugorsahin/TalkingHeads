@@ -2,10 +2,10 @@ Features
 ********
 
 .. list-table:: Feature List
-    :widths: 25 10 10 10
     :header-rows: 1
+
     * - Features 
-      - Bard 
+      - Gemini 
       - Claude 
       - Copilot 
       - HuggingChat 
@@ -74,3 +74,4 @@ Features
       - ✅
       - ✅
       - ✅
+

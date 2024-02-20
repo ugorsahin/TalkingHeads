@@ -170,11 +170,11 @@ class ChatGPTClient(BaseBrowser):
             str
         """
         regen_button = self.find_or_fail(
-            By.XPATH, self.markers.regen_xq, return_type="last"
+            By.XPATH, self.markers.regen_xq, return_type="all"
         )
         if not regen_button:
             return ""
-        regen_button.click()
+        regen_button[2].click()
         logging.info("Clicked regenerate button")
 
         self.wait_until_disappear(By.XPATH, self.markers.wait_xq)

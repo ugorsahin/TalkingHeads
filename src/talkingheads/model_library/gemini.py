@@ -1,4 +1,4 @@
-"""Class definition for BardClient"""
+"""Class definition for GeminiClient"""
 import logging
 from typing import Union
 
@@ -7,13 +7,13 @@ from selenium.webdriver.common.keys import Keys
 from talkingheads.base_browser import BaseBrowser
 
 
-class BardClient(BaseBrowser):
-    """BardClient class to interact with Bard"""
+class GeminiClient(BaseBrowser):
+    """GeminiClient class to interact with Gemini"""
 
     def __init__(self, **kwargs):
         super().__init__(
-            client_name="Bard",
-            url="https://bard.google.com/chat",
+            client_name="Gemini",
+            url="https://gemini.google.com",
             credential_check=False,
             **kwargs,
         )
@@ -35,14 +35,14 @@ class BardClient(BaseBrowser):
         """
         logging.info(
             "It is not possible to provide login functionality for Google"
-            "Please follow the instructions on the repo to connect Bard"
+            "Please follow the instructions on the repo to connect Gemini"
         )
         text_area = self.find_or_fail(By.XPATH, self.markers.textarea_xq)
         if not text_area and not self.headless:
             for _ in range(5):
                 logging.error(
                     """Prompt area can\'t located, use browser to manually
-                    login your account, navigate to https://bard.google.com/chat
+                    login your account, navigate to https://Gemini.google.com/chat
                     and press any key here."""
                 )
                 input()
@@ -57,7 +57,7 @@ class BardClient(BaseBrowser):
         """
         Sends a prompt and retrieves the answer from the ChatGPT system.
 
-        This function interacts with the Bard.
+        This function interacts with the Gemini.
         It takes the prompt as input and sends it to the system.
         The prompt may contain multiple lines separated by '\\n'.
         In this case, the function simulates pressing SHIFT+ENTER for each line.
@@ -155,5 +155,5 @@ class BardClient(BaseBrowser):
         return answer.text
 
     def switch_model(self, model_name: str) -> bool:
-        logging.info("Bard doesn't have a model selection")
+        logging.info("Gemini doesn't have a model selection")
         return False

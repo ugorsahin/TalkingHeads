@@ -24,7 +24,7 @@
 
 Welcome to TalkingHeads! 🤖🚀
 
-TalkingHeads is a versatile Python library that serves as an interface for seamless communication with Google Bard, HuggingChat, OpenAI ChatGPT and Pi  🤖💬
+TalkingHeads is a versatile Python library that serves as an interface for seamless communication with ChatGPT, Claude, Copilot, Gemini, HuggingChat, and Pi  🤖💬
 
 By leveraging the power of browser automation, this library enables users to effortlessly interact with online LLM tools, providing a streamlined and automated approach to generate responses. 🚀✨
 
@@ -58,7 +58,7 @@ print(answer)
 
 ## Features
 
-Features | Bard | Claude | Copilot | HuggingChat | ChatGPT | Pi |
+Features | Gemini | Claude | Copilot | HuggingChat | ChatGPT | Pi |
 |--------|------|--------|---------|-------------|---------|----|
 Use without login | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
 Login* | ➖ | ➖** | ➖ | ✅ | ✅ | ➖ |
@@ -76,14 +76,14 @@ Switch Model | ❌ | ❌ | ✅*** | ✅ | ✅ | ✅ |
 - ❌ : Functionality does not exist
 - ➖ : Fuctionality exists but not implemented
 
-\* The first time login is manually done for Bard, Claude and Copilot. Check documentation for first time setup. Please take a look at [FAQ](FAQ.md) to set up.
+\* The first time login is manually done for Gemini, Claude and Copilot. Check documentation for first time setup. Please take a look at [FAQ](FAQ.md) to set up.
 \*\*\* The modes of Copilot (Creative, Balanced and Precise) are accessible with model switch. However, it is unclear if they are different models.
 
 
 ## Further Features to implement
 
-- [ ] Bard modify response
-- [ ] Bard double check
+- [ ] Gemini modify response
+- [ ] Gemini double check
 
 ## Issues & Contribution
 

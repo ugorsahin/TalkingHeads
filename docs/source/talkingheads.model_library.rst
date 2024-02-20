@@ -4,10 +4,10 @@ talkingheads.model\_library package
 Submodules
 ----------
 
-talkingheads.model\_library.bard module
+talkingheads.model\_library.Gemini module
 ---------------------------------------
 
-.. automodule:: talkingheads.model_library.bard
+.. automodule:: talkingheads.model_library.Gemini
    :members:
    :undoc-members:
    :show-inheritance:

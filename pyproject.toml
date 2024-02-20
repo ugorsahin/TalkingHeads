@@ -9,10 +9,10 @@ authors = [
   { name="Ugur Sahin", email="ugorsahin@tutanota.de"},
 ]
 name = "talkingheads"
-description = "A Headless Chrome interface to communicate with Google Bard, HuggingChat and OpenAI ChatGPT"
+description = "A library to communicate with ChatGPT, Claude, Copilot, Gemini, HuggingChat, and Pi"
 readme = "README.md"
 requires-python = ">=3.8"
-version = "0.4.0"
+version = "0.4.1"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
