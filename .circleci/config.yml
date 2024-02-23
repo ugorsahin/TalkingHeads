@@ -12,7 +12,6 @@ jobs:
       - run:
           command: |
             google-chrome --version
-            chromedriver --version
           name: Check install
       - run:
           name: Install talkingheads and pytest
