@@ -43,7 +43,7 @@ chathead = ChatGPTClient(
     user_data_dir='<path/to/user/profile>'
 )
 ```
-Replace <username>, <password>, and <path/to/user/profile> with your own values.
+Replace `<username>`, `<password>`, and `<path/to/user/profile>` with your own values.
 
 This will create a permanent profile and you can use that profile afterwards. After your first run, pass `skip_login=True` and `incognito=False` to your constructor.
 

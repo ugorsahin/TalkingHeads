@@ -1,4 +1,4 @@
-<h1 align="center">TalkingHeads 🗪</h1>
+<h1 align="center">TalkingHeads 💬</h1>
 <p align="center">
   <a href="https://talkingheads.readthedocs.io/">TalkingHeads Documentation</a> 
   <br> <br>
@@ -77,7 +77,7 @@ Switch Model | ❌ | ❌ | ✅** | ✅ | ✅ | ✅ |
 - ➖ : Fuctionality exists but not implemented
 
 \* The first time login is manually done for Gemini, Claude and Copilot. Check documentation for first time setup. Please take a look at [FAQ](FAQ.md) to set up.
-\*\*\* The modes of Copilot (Creative, Balanced and Precise) are accessible with model switch. However, it is unclear if they are different models.
+\*\* The modes of Copilot (Creative, Balanced and Precise) are accessible with model switch. However, it is unclear if they are different models.
 
 ## Issues & Contribution
 

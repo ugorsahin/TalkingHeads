@@ -4,9 +4,9 @@ orbs:
   browser-tools: circleci/browser-tools@1.4.6
 jobs:
   build-and-test:
-    resource_class: talkingheads/localservers
     docker:
       - image: cimg/python:3.10.4
+    resource_class: talkingheads/localservers
     steps:
       - checkout
       - browser-tools/install-chrome
