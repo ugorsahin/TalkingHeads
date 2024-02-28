@@ -1,11 +1,13 @@
-"""HuggingChat test"""
+"""Pi test"""
 
 import time
+import psutil
 import pytest
 from talkingheads import PiClient
+from utils import get_driver_arguments
 
 def test_start():
-    pytest.chathead = PiClient(headless=True, verbose=True)
+    pytest.chathead = PiClient(**get_driver_arguments('pi'))
     assert pytest.chathead.ready, "The Client is not ready"
 
 
@@ -23,5 +25,8 @@ def test_interaction():
 #     assert pytest.chathead.switch_model("SupportPi"), "Model switch failed."
 
 
-def pytest_sessionfinish(session, exitstatus):
+def test_delete_chathead():
     del pytest.chathead
+    assert not any(
+        "undetected_chromedriver" in p.name() for p in psutil.process_iter()
+    ), "Undetected chromedriver exists"

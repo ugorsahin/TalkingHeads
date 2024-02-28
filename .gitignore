@@ -30,3 +30,6 @@ MANIFEST
 
 # Sphinx
 _build
+
+# CircleCI
+artifacts

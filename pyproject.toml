@@ -12,7 +12,7 @@ name = "talkingheads"
 description = "A library to communicate with ChatGPT, Claude, Copilot, Gemini, HuggingChat, and Pi"
 readme = "README.md"
 requires-python = ">=3.8"
-version = "0.4.1"
+version = "0.4.2"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",

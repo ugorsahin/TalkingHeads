@@ -1,5 +1,6 @@
 """Class definition for Claude client"""
 import logging
+import time
 
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -24,7 +25,7 @@ class ClaudeClient(BaseBrowser):
             **kwargs,
         )
 
-    def login(self, _1: str = None, _2: str = None):
+    def login(self, _1: str = None, _2: str = None) -> bool:
         """
         It is only possible to login Claude manually.
 
@@ -72,7 +73,7 @@ class ClaudeClient(BaseBrowser):
         text_area.send_keys(Keys.CONTROL + "a", Keys.DELETE)
         return True
 
-    def interact(self, prompt: str):
+    def interact(self, prompt: str) -> str:
         """Sends a prompt and retrieves the answer from the ChatGPT system.
 
         This function interacts with the Claude.
@@ -86,7 +87,7 @@ class ClaudeClient(BaseBrowser):
             prompt (str): The interaction text.
 
         Returns:
-            Dict[str]: The generated answer and references.
+            str: The generated answer.
         """
 
         text_area = self.find_or_fail(By.CLASS_NAME, self.markers.textarea_cq)
@@ -126,17 +127,18 @@ class ClaudeClient(BaseBrowser):
         """
         text_area = self.find_or_fail(By.CLASS_NAME, self.markers.textarea_cq)
         text_area.send_keys(Keys.CONTROL + "K")
-        start_button = self.find_or_fail(By.XPATH, self.markers.start_button_xq)
+        time.sleep(0.5)
+        start_button = self.wait_until_appear(By.XPATH, self.markers.start_button_xq)
         if not start_button:
             return False
         start_button.click()
 
         return True
 
-    def switch_model(self, _: str):
+    def switch_model(self, _: str) -> None:
         raise NotImplementedError("Claude only has one model")
 
-    def regenerate_response(self):
+    def regenerate_response(self) -> str:
         regen_button = self.find_or_fail(By.XPATH, self.markers.regen_xq)
         if not regen_button:
             return ""

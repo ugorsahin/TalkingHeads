@@ -1,10 +1,13 @@
 """Storage of the xpath, class and id identifiers"""
+
 from easydict import EasyDict
 
 markers = EasyDict(
     {
         "ChatGPT": {
             "login_xq": '//button[//div[text()="Log in"]]',
+            "email_cq": "email-input",
+            "pwd_iq": "password",
             "continue_xq": '//button[text()="Continue"]',
             "tutorial_xq": '//div[contains(text(), "Okay, let’s go")]',
             "button_tq": "button",
@@ -72,12 +75,13 @@ markers = EasyDict(
             "welcome_tq": "cib-welcome-container",
             "tone_tq": "cib-tone-selector",
             "side_tq": "cib-side-panel",
+            "side_buttons_cq": "pivot",
             "plugin_tq": "cib-plugin-panel",
             "p_control_cq": "plugin-control",
             "new_chat_cq": "button-compose-content",
         },
         "Claude": {
-            "start_button_xq": '//div[text()="Start a new chat"]',
+            "start_button_xq": '//div[text()="Start Chat"]',
             "textarea_cq": "ProseMirror",
             "send_button_xq": '//button[@aria-label="Send Message"]',
             "chatarea_xq": '//div[contains(@class, "grid-cols-1")]/div[@class="contents"]',
