@@ -28,13 +28,13 @@ jobs:
           name: Run tests
           command: |
             mkdir test-results artifacts
-            python -m pytest --junitxml=test-results/junit.xml --cov=talkingheads --cov-report=xml:test-results/coverage.xml
+            python -m pytest --junitxml=test-results/junit.xml --cov=talkingheads --cov-report=xml:artifacts/coverage.xml
       - store_test_results:
           path: test-results
       - store_artifacts:
           path: artifacts
       - codecov/upload:
-          file: test-results/coverage.xml
+          file: artifacts/coverage.xml
           token: CODECOV_TOKEN
 workflows:
   base-tests:
