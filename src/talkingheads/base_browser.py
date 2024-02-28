@@ -28,9 +28,9 @@ class BaseBrowser:
         url (str): The URL to be used as an entrypoint.
         uname_var (str): The username environment variable, to enable multiple agents.
         pwd_var (str): The password environment variable, to enable multiple agents.
-        username (str, optional): The username to auth. Deprecated. Use environment variables instead.
-        password (str, optional): The password to auth. Deprecated. Use environment variables instead.
-        headless (bool, optional): A boolean to enable/disable headless mode in driver. Default: True.
+        username (str, optional): Deprecated. Use environment variables instead.
+        password (str, optional): Deprecated. Use environment variables instead.
+        headless (bool, optional): Enables/disables headless mode. Default: True.
         cold_start (bool, optional): If set, it will return after opening the browser. Default: False.
         incognito (bool, optional): A boolean to set incognito mode. Default: True.
         driver_arguments (list, optional): A list of additional arguments to be passed to the driver. Default: None.
@@ -38,7 +38,7 @@ class BaseBrowser:
         auto_save (bool, optional): A boolean to enable/disable automatic saving. Default: False.
         save_path (str, optional): The file path to save chat logs. Default: None.
         verbose (bool, optional): A boolean to enable/disable logging. Default: False.
-        credential_check (bool, optional): A boolean to enable/disable credential check. Default: True.
+        credential_check (bool, optional): Enables/disables credential check. Default: True.
         skip_login (bool, optional): If True, skips the login procedure. Default: False.
         user_data_dir (str, optional): The directory path to user profile. Default: None.
         uc_params (dict, optional): Parameters for uc.Chrome().
@@ -147,6 +147,7 @@ class BaseBrowser:
         self.set_save_path(save_path)
 
     def __del__(self):
+        self.browser.close()
         self.browser.quit()
         if self.auto_save:
             self.save()
@@ -317,25 +318,15 @@ class BaseBrowser:
 
     def preload_custom_func(self) -> None:
         """
-        A function to implement specific instructions before loading the webpage
+        A function to implement custom instructions before loading the webpage
         """
-        logging.info(
-            """
-            The preload behavior is not implemented,
-            which could be considered normal if verification is not required.
-            """
-        )
+        logging.info("The preload behavior is not implemented")
 
     def postload_custom_func(self) -> None:
         """
-        A function to implement specific instructions after loading the webpage
+        A function to implement custom instructions after loading the webpage
         """
-        logging.info(
-            """
-            The postload behavior is not implemented,
-            which could be considered normal if verification is not required.
-            """
-        )
+        logging.info("The postload behavior is not implemented")
 
     def pass_verification(self) -> bool:
         """
@@ -343,12 +334,7 @@ class BaseBrowser:
         Returns:
             None
         """
-        logging.info(
-            """
-            Pass verification function is not implemented,
-            which could be considered normal if verification is not required.
-            """
-        )
+        logging.info("The pass verification function is not implemented")
         return True
 
     @abc.abstractmethod

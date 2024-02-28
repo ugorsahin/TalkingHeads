@@ -38,15 +38,14 @@ class ChatGPTClient(BaseBrowser):
         Returns: None
         """
         for _ in range(max_trial):
-            if not self.check_login_page():
-                break
             verify_button = self.browser.find_elements(By.ID, "challenge-stage")
-            if len(verify_button):
-                try:
-                    verify_button[0].click()
-                    logging.info("Clicked verification button")
-                except Exceptions.ElementNotInteractableException:
-                    logging.info("Verification button is not present or clickable")
+            if not verify_button:
+                break
+            try:
+                verify_button[0].click()
+                logging.info("Clicked verification button")
+            except Exceptions.ElementNotInteractableException:
+                logging.info("Verification button is not present or clickable")
             time.sleep(wait_time)
         else:
             logging.error("It is not possible to pass verification")
@@ -77,7 +76,7 @@ class ChatGPTClient(BaseBrowser):
         time.sleep(1)
 
         # Find email textbox, enter e-mail
-        email_box = self.wait_until_appear(By.ID, "username")
+        email_box = self.wait_until_appear(By.CLASS_NAME, self.markers.email_cq)
         email_box.send_keys(username)
         logging.info("Filled email box")
 
@@ -88,7 +87,7 @@ class ChatGPTClient(BaseBrowser):
         logging.info("Clicked continue button")
 
         # Find password textbox, enter password
-        pass_box = self.wait_until_appear(By.ID, "password")
+        pass_box = self.wait_until_appear(By.ID, self.markers.pwd_iq)
         pass_box.send_keys(password)
         logging.info("Filled password box")
         # Click continue

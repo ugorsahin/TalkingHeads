@@ -19,12 +19,15 @@
   <a href='https://github.com/ugorsahin/TalkingHeads/actions/workflows/codeql.yml'>
     <img src='https://github.com/ugorsahin/TalkingHeads/actions/workflows/codeql.yml/badge.svg' alt='CodeQL Status' />
   </a>
+  <a href="https://codecov.io/gh/ugorsahin/TalkingHeads" > 
+    <img src="https://codecov.io/gh/ugorsahin/TalkingHeads/graph/badge.svg?token=YPXKNXSZAD"/> 
+  </a>
   <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
-Welcome to TalkingHeads! 🤖🚀
+Welcome to TalkingHeads! 💬
 
-TalkingHeads is a versatile Python library that serves as an interface for seamless communication with ChatGPT, Claude, Copilot, Gemini, HuggingChat, and Pi  🤖💬
+TalkingHeads is a versatile Python library that serves as an interface for seamless communication with ChatGPT, Claude, Copilot, Gemini, HuggingChat, and Pi  🤖
 
 By leveraging the power of browser automation, this library enables users to effortlessly interact with online LLM tools, providing a streamlined and automated approach to generate responses. 🚀✨
 

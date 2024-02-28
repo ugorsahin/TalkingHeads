@@ -1,12 +1,13 @@
 """ChatGPT test"""
 
+import psutil
 import pytest
 from selenium.webdriver.common.by import By
 from talkingheads import ChatGPTClient
-
+from utils import get_driver_arguments
 
 def test_start():
-    pytest.chathead = ChatGPTClient(headless=True, verbose=True)
+    pytest.chathead = ChatGPTClient(**get_driver_arguments('chatgpt'))
     assert pytest.chathead.ready, "The Client is not ready"
 
 
@@ -54,5 +55,8 @@ def test_custom_interactions():
     ), f"Info text is different {applied_extra_text}"
 
 
-def pytest_sessionfinish(session, exitstatus):
+def test_delete_chathead():
     del pytest.chathead
+    assert not any(
+        "undetected_chromedriver" in p.name() for p in psutil.process_iter()
+    ), "Undetected chromedriver exists"

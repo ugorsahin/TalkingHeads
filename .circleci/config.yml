@@ -1,12 +1,17 @@
 version: 2.1
 orbs:
   python: circleci/python@2.0.3
-  browser-tools: circleci/browser-tools@1.4.6
+  browser-tools: circleci/browser-tools@1.4.8
+  codecov: codecov/codecov@4.0.1
 jobs:
   build-and-test:
-    docker:
-      - image: cimg/python:3.10.4
     resource_class: talkingheads/localservers
+    docker:
+      - image: ugorsahin/talkingheads_test:v1
+        auth:
+          username: $DOCKER_UNAME
+          password: $DOCKER_PAT
+    working_directory: ~/project
     steps:
       - checkout
       - browser-tools/install-chrome
@@ -18,13 +23,22 @@ jobs:
           name: Install talkingheads and pytest
           command: |
             python -m pip install .
-            python -m pip install pytest
+            python -m pip install pytest psutil pytest-cov
       - run:
           name: Run tests
-          command: python -m pytest
+          command: |
+            mkdir test-results artifacts
+            python -m pytest --junitxml=test-results/junit.xml --cov=talkingheads --cov-report=xml:artifacts/coverage.xml
       - store_test_results:
-          path: talkinghead-results
+          path: test-results
+      - store_artifacts:
+          path: artifacts
+      - codecov/upload:
+          file: artifacts/coverage.xml
+          token: CODECOV_TOKEN
 workflows:
   base-tests:
     jobs:
-      - build-and-test
+      - build-and-test:
+          context:
+            - docker-hub-creds

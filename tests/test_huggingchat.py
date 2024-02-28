@@ -1,13 +1,14 @@
 """HuggingChat test"""
 
 import time
+import psutil
 import pytest
 from selenium.webdriver.common.by import By
 from talkingheads import HuggingChatClient
-
+from utils import get_driver_arguments
 
 def test_start():
-    pytest.chathead = HuggingChatClient(headless=True, verbose=True)
+    pytest.chathead = HuggingChatClient(**get_driver_arguments('huggingchat'))
     assert pytest.chathead.ready, "The Client is not ready"
 
 
@@ -39,6 +40,8 @@ def test_reset():
     ), "Chat is not empty"
 
 
-def pytest_sessionfinish(_session, _exitstatus):
-    """exits"""
+def test_delete_chathead():
     del pytest.chathead
+    assert not any(
+        "undetected_chromedriver" in p.name() for p in psutil.process_iter()
+    ), "Undetected chromedriver exists"

@@ -1,10 +1,13 @@
 """Class definition for Copilot client"""
+
 import logging
 import re
+from typing import Union, Dict
 
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.remote.webelement import WebElement
 from ..base_browser import BaseBrowser
 
 
@@ -77,52 +80,20 @@ class CopilotClient(BaseBrowser):
         text_area.send_keys(Keys.CONTROL + "a", Keys.DELETE)
         return True
 
-    def interact(self, prompt: str):
-        """Sends a prompt and retrieves the answer from the ChatGPT system.
-
-        This function interacts with the PI.
-        It takes the prompt as input and sends it to the system.
-        The prompt may contain multiple lines separated by '\\n'.
-        In this case, the function simulates pressing SHIFT+ENTER for each line.
-        Upon arrival of the interaction, the function waits for the answer.
-        Once the response is ready, the function will return the response.
+    def get_last_answer(self, check_greeting: bool = False) -> str:
+        """Returns the last response in the chat view.
 
         Args:
-            prompt (str): The interaction text.
+            check_greeting (bool): If set, checks the greeting message, provided after clicking New Topic.
 
         Returns:
-            Dict[str]: The generated answer and references.
+            str: The last generated answer
         """
+
+        # Shadow roots, aren't they amazing!
         main_area = self.find_or_fail(
             By.TAG_NAME, self.markers.main_area_tq, return_shadow=True
         )
-        action_bar = self.find_or_fail(
-            By.ID, self.markers.action_bar_iq, dom_element=main_area, return_shadow=True
-        )
-        input_bar = self.find_or_fail(
-            By.CLASS_NAME, self.markers.input_bar_cq, dom_element=action_bar
-        ).children()[0].shadow_root
-        text_area = self.find_or_fail(
-            By.ID, self.markers.textarea_iq, dom_element=input_bar
-        )
-
-        if not text_area:
-            logging.error("Unable to locate text area, interaction fails.")
-            return ""
-
-        for each_line in prompt.split("\n"):
-            text_area.send_keys(each_line)
-            text_area.send_keys(Keys.SHIFT + Keys.ENTER)
-
-        # Click enter and send the message
-        text_area.send_keys(Keys.ENTER)
-
-        if not self.is_ready_to_prompt(text_area, action_bar):
-            logging.info("Cannot retrieve the answer, something is wrong")
-            return ""
-
-        # Shadow roots, aren't they amazing!
-
         resp = self.find_or_fail(
             By.ID, self.markers.con_main_iq, dom_element=main_area, return_shadow=True
         )
@@ -149,28 +120,70 @@ class CopilotClient(BaseBrowser):
         resp = self.find_or_fail(
             By.CSS_SELECTOR, self.markers.con_ins_sq, dom_element=resp
         )
+        # If New topic button is clicked, the new message will be in different structure,
+        # failing the last check below. If check_greeting is set,
+        # we can return the text of this greeting element, instead of parsing the response.
+        if check_greeting:
+            return resp.text
+
         resp = self.find_or_fail(
-            By.CLASS_NAME, self.markers.con_last_cq, dom_element=resp
+            By.CLASS_NAME, self.markers.con_last_cq, dom_element=resp, fail_ok=check_greeting
         )
-        # TO DO - return text and ref as dictionary instead of just returning text
-        # text_elems = list(
-        #     filter(lambda x: re.search(r"^\d\n", x.text) is None, resp.children())
-        # )
-
-        # refs = []
-        # if len(text_elems) < len(resp.children()):
-        #     refs = resp.children()[-1]
-        #     refs = [
-        #         i.get_attribute("href")
-        #         for i in refs.find_elements(By.CLASS_NAME, self.markers.ref_cq)
-        #     ]
-
         text = "".join([elem.text for elem in resp.children()])
         # Fix citations
         text = re.sub(r"\n(\d{1,2})", r"[\g<1>]", text)
 
-        if not text:
+        return text
+
+    def interact(self, prompt: str) -> str:
+        """Sends a prompt and retrieves the answer from the ChatGPT system.
+
+        This function interacts with the PI.
+        It takes the prompt as input and sends it to the system.
+        The prompt may contain multiple lines separated by '\\n'.
+        In this case, the function simulates pressing SHIFT+ENTER for each line.
+        Upon arrival of the interaction, the function waits for the answer.
+        Once the response is ready, the function will return the response.
+
+        Args:
+            prompt (str): The interaction text.
+
+        Returns:
+            Dict[str]: The generated answer.
+        """
+        main_area = self.find_or_fail(
+            By.TAG_NAME, self.markers.main_area_tq, return_shadow=True
+        )
+        action_bar = self.find_or_fail(
+            By.ID, self.markers.action_bar_iq, dom_element=main_area, return_shadow=True
+        )
+        input_bar = (
+            self.find_or_fail(
+                By.CLASS_NAME, self.markers.input_bar_cq, dom_element=action_bar
+            )
+            .children()[0]
+            .shadow_root
+        )
+        text_area = self.find_or_fail(
+            By.ID, self.markers.textarea_iq, dom_element=input_bar
+        )
+
+        if not text_area:
+            logging.error("Unable to locate text area, interaction fails.")
             return ""
+
+        for each_line in prompt.split("\n"):
+            text_area.send_keys(each_line)
+            text_area.send_keys(Keys.SHIFT + Keys.ENTER)
+
+        # Click enter and send the message
+        text_area.send_keys(Keys.ENTER)
+
+        if not self.is_ready_to_prompt(text_area, action_bar):
+            logging.info("Cannot retrieve the answer, something is wrong")
+            return ""
+
+        text = self.get_last_answer()
         logging.info("Answer is ready")
         self.log_chat(prompt=prompt, answer=text)
         return text
@@ -203,16 +216,15 @@ class CopilotClient(BaseBrowser):
 
         return True
 
-    def switch_model(self, model_name: str):
+    def get_models(self, get_active_model: bool =False) -> Union[Dict[str, WebElement], WebElement]:
         """
-        Switch the model. (style)
-
+        Get the current model. (style)
         Args:
-            model_name: str = The name of the model
-
+            get_active_model: bool = If set, returns the current element
         Returns:
-            bool: True on success, False on fail
+            Dict[str, WebElement]: Dictionary of models and their element.
         """
+
         main_area = self.find_or_fail(
             By.TAG_NAME, self.markers.main_area_tq, return_shadow=True
         )
@@ -243,7 +255,26 @@ class CopilotClient(BaseBrowser):
                 ),
             )
         )
+        if get_active_model:
+            active_model = [
+                m_name for m_name, model in models.items()
+                if model.get_attribute("aria-checked") == "true"
+            ]
+            return active_model[0]
 
+        return models
+
+    def switch_model(self, model_name: str) -> bool:
+        """
+        Switch the model. (style)
+
+        Args:
+            model_name: str = The name of the model
+
+        Returns:
+            bool: True on success, False on fail
+        """
+        models = self.get_models()
         button = models.get(model_name, None)
         if button is None:
             logging.error("Model %s has not found", model_name)
@@ -259,17 +290,15 @@ class CopilotClient(BaseBrowser):
         logging.info("Switched to %s", model_name)
         return True
 
-    def toggle_plugin(self, plugin_name: str):
-        """Toggles the status of the plugin.
-        In order to use plugins, search plugin should be active.
+    def get_plugin(self, plugin_name: str) -> Union[WebElement, None]:
+        """Returns if the plugin is enabled
 
         Args:
             plugin_name (str): The name of the plugin
 
         Returns:
-            _type_: True if toggle operation is successful, False if operation fails.
+            bool | None : True if the plugin is enabled, False if disabled. None if not plugin doesn't exist
         """
-
         main_area = self.find_or_fail(
             By.TAG_NAME, self.markers.main_area_tq, return_shadow=True
         )
@@ -282,7 +311,7 @@ class CopilotClient(BaseBrowser):
         )
 
         self.find_or_fail(
-            By.CSS_SELECTOR, "button", dom_element=side_panel, return_type="last"
+            By.CLASS_NAME, self.markers.side_buttons_cq, dom_element=side_panel, return_type="last"
         ).click()
 
         plugin_panel = self.find_or_fail(
@@ -308,14 +337,35 @@ class CopilotClient(BaseBrowser):
         if plugin_name not in plugin_map:
             logging.error("Plugin %s has not found", plugin_name)
             logging.error("Available plugins are: %s", str(plugin_map.keys()))
-            return
+            return None
 
-        if not plugin_map["Search"].is_selected():
+        return plugin_map[plugin_name]
+
+    def toggle_plugin(self, plugin_name: str) -> bool:
+        """Toggles the status of the plugin.
+        In order to use plugins, search plugin should be active.
+
+        Args:
+            plugin_name (str): The name of the plugin
+
+        Returns:
+            bool: True if toggle action is successful, False if operation fails.
+        """
+
+        search_plugin = self.get_plugin("Search")
+        if not search_plugin:
+            logging.error("Unable to find search plugin")
+            return False
+
+        if not search_plugin.is_selected():
             logging.info("Search is disabled, activating it")
-            plugin_map["Search"].click()
+            search_plugin.click()
             logging.info("Search is enabled")
 
-        p_element = plugin_map[plugin_name]
+        p_element = self.get_plugin(plugin_name)
+        if not p_element:
+            logging.error("Unable to find %s plugin", plugin_name)
+            return False
 
         logging.info(
             "The plugin is currently %s",
