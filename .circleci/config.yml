@@ -28,7 +28,7 @@ jobs:
           name: Run tests
           command: |
             mkdir test-results artifacts
-            python -m pytest --junitxml=test-results/junit.xml --cov app
+            python -m pytest --junitxml=test-results/junit.xml --cov talkingheads
       - store_test_results:
           path: test-results
       - store_artifacts:
