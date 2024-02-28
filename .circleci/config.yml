@@ -2,6 +2,7 @@ version: 2.1
 orbs:
   python: circleci/python@2.0.3
   browser-tools: circleci/browser-tools@1.4.8
+  codecov: codecov/codecov@4.0.1
 jobs:
   build-and-test:
     resource_class: talkingheads/localservers
@@ -32,6 +33,7 @@ jobs:
           path: test-results
       - store_artifacts:
           path: artifacts
+      - codecov/upload
 workflows:
   base-tests:
     jobs:
