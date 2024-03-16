@@ -1,32 +1,61 @@
-from .base_multiagent import BaseMultiAgent
+"""This module implements the Conversation class,
+a special multiagent designed to carry a conversation between two agents.
+"""
 
-class Conversation(BaseMultiAgent):
+from typing import Tuple
+from ..multiagent import MultiAgent
+
+
+class Conversation(MultiAgent):
+    """A special Multiagent setting where two agents carry a conversation"""
+    def __init__(self, configuration):
+        super().__init__(configuration)
+        if len(self.agent_swarm.keys()) != 2:
+            self.logger.error("Only two agents are allowed in a conversation")
+            return
+
+        self.head_1, self.head_2 = self.agent_swarm.keys()
+        self.head_1_response = None
+        self.head_2_response = None
+
+    def start_conversation(
+        self, intro_prompt_1: str, intro_prompt_2: str, use_response_1: bool = True
+    ):
+        """Starts a conversation between two heads
     
-    def __init__(self):
-        pass
+        Args:
+            intro_prompt_1 (str): The instruction of the first head.
+            intro_prompt_2 (str): The instruction of the second head.
+            use_response_1 (bool): If set, the first response returned by the first head
+                will be appended to the end of the instruction of the second head.
 
-    def start_conversation(self, text_1: str, text_2: str, use_response_1: bool= True):
-        """Starts a conversation between two heads"""
+        Returns:
+            Tuple[str]: The responses of the respective chat bots.
+        """
+        self.head_1_response = self.interact(self.head_1, intro_prompt_1)
+        if use_response_1:
+            intro_prompt_2 += f"\n{self.head_1_response}"
+        self.head_2_response = self.interact(self.head_2, intro_prompt_2)
 
-        f_response = self.interact(0, text_1)
-        text_2 = text_2 + f_response if use_response_1 else text_2
-        s_response = self.interact(1, text_2)
+        return self.head_1_response, self.head_2_response
 
-        self.head_responses[0].append(f_response)
-        self.head_responses[1].append(s_response)
-
-        return f_response, s_response
-
-    def continue_conversation(self, text_1: str= None, text_2: str= None):
+    def continue_conversation(self, prompt_1: str = None, prompt_2: str = None) -> Tuple[str]:
         """Make another round of conversation.
-        If text_1 or text_2 is given, the response is not used"""
-        text_1 = text_1 or self.head_responses[1][-1]
+        If prompt_1 or prompt_2 is given, the response is not used
 
-        f_response = self.interact(0, text_1)
-        text_2 = text_2 or f_response
+        Args:
+            prompt_1 (str, optional): If set, this prompt will be used instead of 
+                the last response provided by head 2. Defaults to None.
+            prompt_2 (str, optional): If set, this prompt will be used instead of
+                the last response provided by head 1. Defaults to None.
 
-        s_response = self.interact(1, text_2)
+        Returns:
+            Tuple[str]: The responses of the respective chat bots.
+        """
+        prompt_1 = prompt_1 or self.head_2_response
+        self.head_1_response = self.interact(self.head_1, prompt_1)
 
-        self.head_responses[0].append(f_response)
-        self.head_responses[1].append(s_response)
-        return f_response, s_response
+        prompt_2 = prompt_2 or self.head_1_response
+        self.head_2_response = self.interact(self.head_2, prompt_2)
+
+        return self.head_1_response, self.head_2_response
