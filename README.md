@@ -20,20 +20,23 @@
     <img src='https://github.com/ugorsahin/TalkingHeads/actions/workflows/codeql.yml/badge.svg' alt='CodeQL Status' />
   </a>
   <a href="https://codecov.io/gh/ugorsahin/TalkingHeads" > 
-    <img src="https://codecov.io/gh/ugorsahin/TalkingHeads/graph/badge.svg?token=YPXKNXSZAD"/> 
+    <img src="https://badgen.net/codecov/c/github/ugorsahin/talkingheads"/> 
   </a>
-  <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+  <a href="https://github.com/astral-sh/ruff"><img alt="Code style: black" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json"></a>
 </p>
 
 Welcome to TalkingHeads! 💬
 
-TalkingHeads is a versatile Python library that serves as an interface for seamless communication with ChatGPT, Claude, Copilot, Gemini, HuggingChat, and Pi  🤖
+TalkingHeads is a Python library that serves as an interface for seamless communication with ChatGPT, Claude, Copilot, Gemini, LeChat, HuggingChat, and Pi  🤖
 
-By leveraging the power of browser automation, this library enables users to effortlessly interact with online LLM tools, providing a streamlined and automated approach to generate responses. 🚀✨
+By leveraging the power of browser automation, this library enables users to effortlessly interact with online chat agents 🚀✨
+
+You can utilize more than one agent by using multiagent module, and improve your workflow with an ensemble of models!
 
 # Prerequisites 📋
 
-Before you begin, please ensure that you have Chrome installed on your system. To successfully pass the Cloudflare robot test, it is necessary to have undetected-chrome. 🌐🔒
+- Install Chrome
+- Register to the provider you would like to use (or not, and use Pi!)
 
 ## Installation
 
@@ -54,24 +57,24 @@ from talkingheads import PiClient
 
 chathead = PiClient()
 
-answer = chathead.interact("Hello, how are you today")
+response = chathead.interact("Hello, how are you today")
 
-print(answer)
+print(response)
 ```
 
 ## Features
-
-Features | Gemini | Claude | Copilot | HuggingChat | ChatGPT | Pi |
-|--------|------|--------|---------|-------------|---------|----|
-Use without login | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
-Login* | ➖ | ➖ | ➖ | ✅ | ✅ | ➖ |
-Interact | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-New Chat | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-Regenerate Response | ✅ | ✅ | ❌  | ❌ | ✅ | ❌ |
-Set custom interactions | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-Search Web | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
-Plugins | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-Switch Model | ❌ | ❌ | ✅** | ✅ | ✅ | ✅ |
+Features            | Claude | ChatGPT | Copilot | Gemini | LeChat | HuggingChat | Pi |
+|-------------------|--------|---------|---------|--------|--------|-------------|----|
+Use without login   | ❌     | ❌      | ✅      | ❌     |  ❌    | ❌          | ✅ |
+Login*              | ➖     | ✅      | ➖      | ➖     |  ✅    | ✅          | ➖ |
+Interact            | ✅     | ✅      | ✅      | ✅     |  ✅    | ✅          | ✅ |
+New Chat            | ✅     | ✅      | ✅      | ✅     |  ✅    | ✅          | ✅ |
+Regenerate Response | ✅     | ✅      | ❌      | ✅     |  ❌    | ❌          | ❌ |
+Custom Interactions | ❌     | ✅      | ❌      | ❌     |  ❌    | ❌          | ❌ |
+Search Web          | ❌     | ❌      | ✅      | ❌     |  ❌    | ✅          | ❌ |
+Plugins             | ❌     | ❌      | ✅      | ❌     |  ❌    | ❌          | ❌ |
+Switch Model        | ❌     | ✅      | ✅**    | ❌     |  ✅    | ✅          | ✅ |
+Multimodal (Visual) | ✅     | ➖***   | ✅      | ✅     |  ❌    | ❌          | ❌ |
 
 ✅ (Auto) Save the conversation as csv, h5, html, json, orc, pkl, xlsx, xml
 
@@ -79,8 +82,11 @@ Switch Model | ❌ | ❌ | ✅** | ✅ | ✅ | ✅ |
 - ❌ : Functionality does not exist
 - ➖ : Fuctionality exists but not implemented
 
-\* The first time login is manually done for Gemini, Claude and Copilot. Check documentation for first time setup. Please take a look at [FAQ](FAQ.md) to set up.
+\* You should use a user profile and login manually to use Gemini, Claude and Copilot.Please take a look at documentation and [FAQ](FAQ.md) to set up a user profile.
+
 \*\* The modes of Copilot (Creative, Balanced and Precise) are accessible with model switch. However, it is unclear if they are different models.
+
+\*\*\* ChatGPT has multimodality, but only for premium users, donate me a premium account if you need that to be implemented!
 
 ## Issues & Contribution
 
@@ -94,15 +100,15 @@ Please indicate your issue with a tag enclosed by square brackets: [FEATURE], [B
 You can still run your code to connect ChatGPT, follow the below tutorial
 
 ```bash
-export OPENAI_UNAME=<your@email>
-export OPENAI_PWD=><password>
+export ChatGPT_UNAME=<your@email>
+export ChatGPT_PWD=><password>
 ```
 ```python
 from talkingheads import ChatGPTClient
 
 chathead = ChatGPTClient()
 
-answer = chathead.interact("Hello, how are you today")
+response = chathead.interact("Hello, how are you today")
 
-print(answer)
+print(response)
 ```
