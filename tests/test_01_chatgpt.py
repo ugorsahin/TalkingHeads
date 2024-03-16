@@ -3,21 +3,22 @@
 import psutil
 import pytest
 from selenium.webdriver.common.by import By
-from talkingheads import ChatGPTClient
+from talkingheads.model_library import ChatGPTClient
+
 from utils import get_driver_arguments
 
 def test_start():
-    pytest.chathead = ChatGPTClient(**get_driver_arguments('chatgpt'))
+    pytest.chathead = ChatGPTClient(**get_driver_arguments('chatgpt', incognito=True))
     assert pytest.chathead.ready, "The Client is not ready"
 
 
 def test_interaction():
-    answer = pytest.chathead.interact(
+    response = pytest.chathead.interact(
         "Without any explanation or extra information, just repeat the following: book."
     )
     assert (
-        "book" in answer.lower()
-    ), f'Answer is not "book.", instead it returned {answer}'
+        "book" in response.lower()
+    ), f'response is not "book.", instead it returned {response}'
 
 
 def test_reset():
@@ -33,11 +34,11 @@ def test_reset():
 
 
 def test_regenerate():
-    first_answer = pytest.chathead.interact(
+    first_response = pytest.chathead.interact(
         "Without any explanation or extra information, type three animal names."
     ).lower()
-    second_answer = pytest.chathead.regenerate_response()
-    assert first_answer != second_answer, "The regenerated answer is the same."
+    second_response = pytest.chathead.regenerate_response()
+    assert first_response != second_response, "The regenerated response is the same."
 
 
 def test_custom_interactions():
