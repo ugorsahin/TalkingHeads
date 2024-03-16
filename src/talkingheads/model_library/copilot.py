@@ -1,15 +1,18 @@
 """Class definition for Copilot client"""
 
-import logging
+import time
 import re
+from pathlib import Path
 from typing import Union, Dict
 
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.remote.shadowroot import ShadowRoot
 from ..base_browser import BaseBrowser
-
+from ..utils import check_filetype, is_url
 
 class CopilotClient(BaseBrowser):
     """
@@ -24,7 +27,7 @@ class CopilotClient(BaseBrowser):
             client_name="Copilot",
             url="https://copilot.microsoft.com",
             credential_check=False,
-            timeout_dur=30,
+            timeout_dur=40,
             **kwargs,
         )
 
@@ -44,11 +47,11 @@ class CopilotClient(BaseBrowser):
         Returns:
             bool : True
         """
-        logging.info("Login is not provided for Copilot at the moment.")
+        self.logger.info("Login is not provided for Copilot at the moment.")
         return True
 
     def postload_custom_func(self) -> None:
-        """Copilot requires to accept privacy terms, the cookie below provides the answer."""
+        """Copilot requires to accept privacy terms, the cookie below provides the response."""
         self.browser.add_cookie({"name": "BCP", "value": "AD=0&AL=0&SM=0"})
         self.browser.get(self.url)
         return
@@ -80,14 +83,14 @@ class CopilotClient(BaseBrowser):
         text_area.send_keys(Keys.CONTROL + "a", Keys.DELETE)
         return True
 
-    def get_last_answer(self, check_greeting: bool = False) -> str:
+    def get_last_response(self, check_greeting: bool = False) -> str:
         """Returns the last response in the chat view.
 
         Args:
             check_greeting (bool): If set, checks the greeting message, provided after clicking New Topic.
 
         Returns:
-            str: The last generated answer
+            str: The last generated response
         """
 
         # Shadow roots, aren't they amazing!
@@ -135,27 +138,110 @@ class CopilotClient(BaseBrowser):
 
         return text
 
-    def interact(self, prompt: str) -> str:
-        """Sends a prompt and retrieves the answer from the ChatGPT system.
-
-        This function interacts with the PI.
-        It takes the prompt as input and sends it to the system.
-        The prompt may contain multiple lines separated by '\\n'.
-        In this case, the function simulates pressing SHIFT+ENTER for each line.
-        Upon arrival of the interaction, the function waits for the answer.
-        Once the response is ready, the function will return the response.
+    def upload_image(self, action_bar: ShadowRoot, image_path: Union[str, Path]) -> bool:
+        """Upload an image or a url and wait until it is uploaded,
+        then returns.
 
         Args:
-            prompt (str): The interaction text.
+            action_bar (ShadowRoot): Action bar shadow root to find sub elements.
+            image_path (str): the file path to image or the url.
 
         Returns:
-            Dict[str]: The generated answer.
+            bool: True if the image loaded properly, False otherwise
+        """
+        if isinstance(image_path, Path):
+            image_path = str(image_path)
+        url = is_url(image_path)
+        file = Path(image_path).exists() and check_filetype(image_path, self.markers.file_types)
+
+        if not (url or file):
+            self.logger.warning("Given path is neither an image path nor a url")
+            return False
+        if url:
+            camera_button = self.find_or_fail(
+                By.ID,
+                self.markers.cam_btn_iq,
+                dom_element=action_bar
+            )
+            camera_button.click()
+            vs = self.find_or_fail(
+                By.CLASS_NAME,
+                self.markers.vis_srch_cq,
+                dom_element=action_bar
+            )
+            url_bar = self.find_or_fail(
+                By.ID,
+                self.markers.url_iq,
+                dom_element=vs.children()[0].shadow_root
+            )
+            url_bar.send_keys(image_path)
+            url_bar.send_keys(Keys.ENTER)
+        elif file:
+            im_input_element = self.find_or_fail(
+                By.ID,
+                self.markers.img_upload_iq,
+                dom_element=action_bar,
+            )
+            im_input_element.send_keys(image_path)
+
+        at_list = self.find_or_fail(
+            By.CSS_SELECTOR, self.markers.at_list_cq, dom_element=action_bar, return_shadow=True
+        )
+        file_item = self.find_or_fail(
+            By.CSS_SELECTOR, self.markers.file_item_cq, dom_element=at_list, return_shadow=True
+        )
+        condition = EC.presence_of_element_located((By.CLASS_NAME, self.markers.thumbnail_cq))
+        WebDriverWait(file_item, 10).until(condition)
+        return True
+
+    def remove_attached_image(self) -> bool:
+        """Removes the attached image from prompt
+
+        Returns:
+            bool: True if the action is valid
         """
         main_area = self.find_or_fail(
             By.TAG_NAME, self.markers.main_area_tq, return_shadow=True
         )
         action_bar = self.find_or_fail(
-            By.ID, self.markers.action_bar_iq, dom_element=main_area, return_shadow=True
+            By.ID, self.markers.act_bar_iq, dom_element=main_area, return_shadow=True
+        )
+        at_list = self.find_or_fail(
+            By.CSS_SELECTOR, self.markers.at_list_cq, dom_element=action_bar, return_shadow=True
+        )
+        file_item = self.find_or_fail(
+            By.CSS_SELECTOR, self.markers.file_item_cq, dom_element=at_list, return_shadow=True
+        )
+        discard_button = self.find_or_fail(
+            By.CLASS_NAME,
+            self.markers.dismiss_cq,
+            dom_element=file_item
+        )
+        discard_button.click()
+        return True
+
+    def interact(self, prompt: str, image_path: Union[str, Path] = None) -> str:
+        """Sends a prompt and retrieves the response from the Copilot system.
+
+        This function interacts with the Copilot.
+        It takes the prompt as input and sends it to the system.
+        The prompt may contain multiple lines separated by '\\n'.
+        In this case, the function simulates pressing SHIFT+ENTER for each line.
+        Upon arrival of the interaction, the function waits for the response.
+        Once the response is ready, the function will return the response.
+
+        Args:
+            prompt (str): The interaction text.
+            image_path (str, Optional): The path to image from local, or the url of the image.
+
+        Returns:
+            Dict[str]: The generated response.
+        """
+        main_area = self.find_or_fail(
+            By.TAG_NAME, self.markers.main_area_tq, return_shadow=True
+        )
+        action_bar = self.find_or_fail(
+            By.ID, self.markers.act_bar_iq, dom_element=main_area, return_shadow=True
         )
         input_bar = (
             self.find_or_fail(
@@ -169,8 +255,10 @@ class CopilotClient(BaseBrowser):
         )
 
         if not text_area:
-            logging.error("Unable to locate text area, interaction fails.")
+            self.logger.error("Unable to locate text area, interaction fails.")
             return ""
+        if image_path:
+            self.upload_image(action_bar, image_path)
 
         for each_line in prompt.split("\n"):
             text_area.send_keys(each_line)
@@ -180,12 +268,12 @@ class CopilotClient(BaseBrowser):
         text_area.send_keys(Keys.ENTER)
 
         if not self.is_ready_to_prompt(text_area, action_bar):
-            logging.info("Cannot retrieve the answer, something is wrong")
+            self.logger.info("Cannot retrieve the response, something is wrong")
             return ""
 
-        text = self.get_last_answer()
-        logging.info("Answer is ready")
-        self.log_chat(prompt=prompt, answer=text)
+        text = self.get_last_response()
+        self.logger.info("response is ready")
+        self.log_chat(prompt=prompt, response=text)
         return text
 
     def reset_thread(self) -> bool:
@@ -202,7 +290,7 @@ class CopilotClient(BaseBrowser):
             return False
 
         action_bar = self.find_or_fail(
-            By.ID, self.markers.action_bar_iq, dom_element=main_area, return_shadow=True
+            By.ID, self.markers.act_bar_iq, dom_element=main_area, return_shadow=True
         )
         if not action_bar:
             return False
@@ -277,17 +365,18 @@ class CopilotClient(BaseBrowser):
         models = self.get_models()
         button = models.get(model_name, None)
         if button is None:
-            logging.error("Model %s has not found", model_name)
-            logging.error("Available models are: %s", str(models.keys()))
+            self.logger.error("Model %s has not found", model_name)
+            self.logger.error("Available models are: %s", str(models.keys()))
             return False
         button.click()
+        time.sleep(0.1)
 
         verification = button.get_attribute("aria-checked")
         if verification != "true":
-            logging.error("Model switch to %s is unsuccessful", model_name)
+            self.logger.error("Model switch to %s is unsuccessful", model_name)
             return False
 
-        logging.info("Switched to %s", model_name)
+        self.logger.info("Switched to %s", model_name)
         return True
 
     def get_plugin(self, plugin_name: str) -> Union[WebElement, None]:
@@ -311,7 +400,7 @@ class CopilotClient(BaseBrowser):
         )
 
         self.find_or_fail(
-            By.CLASS_NAME, self.markers.side_buttons_cq, dom_element=side_panel, return_type="last"
+            By.CLASS_NAME, self.markers.side_btns_cq, dom_element=side_panel, return_type="last"
         ).click()
 
         plugin_panel = self.find_or_fail(
@@ -320,7 +409,7 @@ class CopilotClient(BaseBrowser):
             dom_element=side_panel,
             return_shadow=True,
         )
-
+        time.sleep(0.5)
         plugins = self.find_or_fail(
             By.CLASS_NAME,
             self.markers.p_control_cq,
@@ -335,8 +424,8 @@ class CopilotClient(BaseBrowser):
         plugin_map = dict(map(lambda x: (x[0].text, x[1]), zip(plugins, inputs)))
 
         if plugin_name not in plugin_map:
-            logging.error("Plugin %s has not found", plugin_name)
-            logging.error("Available plugins are: %s", str(plugin_map.keys()))
+            self.logger.error("Plugin %s has not found", plugin_name)
+            self.logger.error("Available plugins are: %s", str(plugin_map.keys()))
             return None
 
         return plugin_map[plugin_name]
@@ -354,25 +443,26 @@ class CopilotClient(BaseBrowser):
 
         search_plugin = self.get_plugin("Search")
         if not search_plugin:
-            logging.error("Unable to find search plugin")
+            self.logger.error("Unable to find search plugin")
             return False
 
         if not search_plugin.is_selected():
-            logging.info("Search is disabled, activating it")
+            self.logger.info("Search is disabled, activating it")
             search_plugin.click()
-            logging.info("Search is enabled")
+            self.logger.info("Search is enabled")
 
         p_element = self.get_plugin(plugin_name)
         if not p_element:
-            logging.error("Unable to find %s plugin", plugin_name)
+            self.logger.error("Unable to find %s plugin", plugin_name)
             return False
 
-        logging.info(
+        self.logger.info(
             "The plugin is currently %s",
             ["disabled", "enabled"][p_element.is_selected()],
         )
         p_element.click()
-        logging.info(
+        time.sleep(0.5)
+        self.logger.info(
             "The plugin is now %s", ["disabled", "enabled"][p_element.is_selected()]
         )
         return True
