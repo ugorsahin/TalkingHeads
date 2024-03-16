@@ -1,5 +1,4 @@
 """Class definition for HuggingChat client"""
-import logging
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -42,39 +41,41 @@ class HuggingChatClient(BaseBrowser):
         # Find login button, click it
         login_button = self.wait_until_appear(By.XPATH, self.markers.login_xq)
         login_button.submit()
-        logging.info("Clicked login button")
+        self.logger.info("Clicked login button")
 
         # Find email textbox, enter e-mail
         email_box = self.wait_until_appear(By.XPATH, self.markers.username_xq)
         email_box.send_keys(username)
-        logging.info("Filled username/email")
+        self.logger.info("Filled username/email")
 
         # Find password textbox, enter password
         pass_box = self.wait_until_appear(By.XPATH, self.markers.password_xq)
         pass_box.send_keys(password)
-        logging.info("Filled password box")
+        self.logger.info("Filled password box")
+
+        pass_box.send_keys(Keys.ENTER)
 
         # Click continue
-        a_login_button = self.wait_until_appear(By.XPATH, self.markers.a_login_xq)
-        a_login_button.click()
-        logging.info("Clicked login button")
+        # a_login_button = self.wait_until_appear(By.XPATH, self.markers.a_login_xq)
+        # a_login_button.click()
+        # self.logger.info("Clicked login button")
         return True
 
     def interact(self, prompt: str):
-        """Sends a prompt and retrieves the answer from the ChatGPT system.
+        """Sends a prompt and retrieves the response from the ChatGPT system.
 
         This function interacts with the HuggingChat.
         It takes the prompt as input and sends it to the system.
         The prompt may contain multiple lines seperated by '\\n'.
         In this case, the function simulates pressing SHIFT+ENTER for each line.
-        Upon arrival of the interaction, the function waits for the answer.
+        Upon arrival of the interaction, the function waits for the response.
         Once the response is ready, the function will return the response.
 
         Args:
             prompt (str): The interaction text.
 
         Returns:
-            str: The generated answer.
+            str: The generated response.
         """
 
         text_area = self.find_or_fail(By.XPATH, self.markers.textarea_xq)
@@ -85,16 +86,16 @@ class HuggingChatClient(BaseBrowser):
             text_area.send_keys(each_line)
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
         text_area.send_keys(Keys.RETURN)
-        logging.info("Message sent, waiting for response")
+        self.logger.info("Message sent, waiting for response")
         self.wait_until_disappear(By.XPATH, self.markers.stop_gen_xq)
-        answer = self.find_or_fail(
+        response = self.find_or_fail(
             By.XPATH, self.markers.chatbox_xq, return_type="last"
         )
-        if not answer:
+        if not response:
             return ""
-        logging.info("Answer is ready")
-        self.log_chat(prompt=prompt, answer=answer.text)
-        return answer.text
+        self.logger.info("response is ready")
+        self.log_chat(prompt=prompt, response=response.text)
+        return response.text
 
     def reset_thread(self):
         """Function to close the current thread and start new one"""
@@ -109,7 +110,7 @@ class HuggingChatClient(BaseBrowser):
         search_web_toggle.click()
         status = search_web_toggle.get_attribute("aria-checked")
         status = status == "true"
-        logging.info("Search web is %s", ["disabled", "enabled"][status])
+        self.logger.info("Search web is %s", ["disabled", "enabled"][status])
         return status
 
     def switch_model(self, model_name: str):
@@ -139,19 +140,20 @@ class HuggingChatClient(BaseBrowser):
 
         model = models.get(model_name, None)
         if model is None:
-            logging.error("Model %s has not found", model_name)
-            logging.error("Available models are: %s", str(models.keys()))
-            return False
-
-        model.click()
-        logging.info("Switched to %s", model_name)
+            self.logger.error("Model %s has not found", model_name)
+            self.logger.error("Available models are: %s", str(models.keys()))
+            result = False
+        else:
+            model.click()
+            self.logger.info("Switched to %s", model_name)
+            result = True
 
         apply_button = self.find_or_fail(By.XPATH, self.markers.model_a_xq)
         if not apply_button:
-            return False
+            result = False
 
         apply_button.click()
-        return True
+        return result
 
     def regenerate_response(self):
         raise NotImplementedError("HuggingChat doesn't provide response regeneration")
