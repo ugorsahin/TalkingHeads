@@ -1,6 +1,4 @@
 """Class definition for PI client"""
-import logging
-import re
 import time
 
 from selenium.webdriver.common.by import By
@@ -37,7 +35,7 @@ class PiClient(BaseBrowser):
         Returns:
             bool : True
         """
-        logging.info("Login is not provided for Pi at the moment.")
+        self.logger.info("Login is not provided for Pi at the moment.")
         return True
 
     def postload_custom_func(self) -> None:
@@ -74,20 +72,20 @@ class PiClient(BaseBrowser):
         return True
 
     def interact(self, prompt: str):
-        """Sends a prompt and retrieves the answer from the ChatGPT system.
+        """Sends a prompt and retrieves the response from the ChatGPT system.
 
         This function interacts with the PI.
         It takes the prompt as input and sends it to the system.
         The prompt may contain multiple lines separated by '\\n'.
         In this case, the function simulates pressing SHIFT+ENTER for each line.
-        Upon arrival of the interaction, the function waits for the answer.
+        Upon arrival of the interaction, the function waits for the response.
         Once the response is ready, the function will return the response.
 
         Args:
             prompt (str): The interaction text.
 
         Returns:
-            str: The generated answer.
+            str: The generated response.
         """
 
         text_area = self.find_or_fail(By.XPATH, self.markers.textarea_xq)
@@ -99,18 +97,18 @@ class PiClient(BaseBrowser):
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
 
         self.find_or_fail(By.XPATH, self.markers.sendkeys_xq).click()
-        logging.info("Message sent, waiting for response")
+        self.logger.info("Message sent, waiting for response")
 
         if not self.is_ready_to_prompt():
             return False
 
-        answer = self.find_or_fail(
-            By.CLASS_NAME, self.markers.chatbox_cq, return_type="last"
+        response = self.find_or_fail(
+            By.XPATH, self.markers.chatbox_xq, return_type="last"
         )
-        if not answer:
+        if not response:
             return ""
-        logging.info("Answer is ready")
-        return answer.text
+        self.logger.info("response is ready")
+        return response.text
 
     def reset_thread(self) -> bool:
         """
@@ -119,45 +117,49 @@ class PiClient(BaseBrowser):
         Returns:
             bool: False always, it is not possible to reset in Pi.
         """
-        logging.info("Pi doesn't provide a way to reset the thread")
-        return False
-
-    def switch_model(self, model_name: str):
-        """
-        Switch the model.
-
-        Args:
-            model_name: str = The name of the model
-
-        Returns:
-            bool: True on success, False on fail
-        """
-        model_button = self.find_or_fail(By.XPATH, self.markers.model_1_xq)
-        if not model_button:
-            return False
-        model_button.click()
-        time.sleep(1)
-
-        models = self.find_or_fail(By.XPATH, self.markers.model_2_xq, return_type="all")
-        if not models:
-            return False
-        models = {model.text or "Pi": model for model in models}
-        logging.info(models.keys())
-
-        model = models.get(model_name, None)
-        if model is None:
-            logging.error("Model %s has not found", model_name)
-            logging.error("Available models are: %s", str(models.keys()))
-            return False
-        model.click()
-
-        verification = self.find_or_fail(By.XPATH, self.markers.model_v_xq)
-        if not re.search(rf"Switched to( just)? {model_name}", verification.text):
-            logging.error("Model switch to %s is unsuccessful", model_name)
-            return False
-
-        logging.info("Switched to %s", model_name)
+        self.browser.delete_all_cookies()
+        self.browser.get(self.url)
+        self.postload_custom_func()
         return True
+
+    # It is not possible to reach models through web for a while.
+    # Therefore, this function is not usable anymore.
+    # def switch_model(self, model_name: str):
+    #     """
+    #     Switch the model.
+
+    #     Args:
+    #         model_name: str = The name of the model
+
+    #     Returns:
+    #         bool: True on success, False on fail
+    #     """
+    #     model_button = self.find_or_fail(By.XPATH, self.markers.model_1_xq)
+    #     if not model_button:
+    #         return False
+    #     model_button.click()
+    #     time.sleep(1)
+
+    #     models = self.find_or_fail(By.XPATH, self.markers.model_2_xq, return_type="all")
+    #     if not models:
+    #         return False
+    #     models = {model.text or "Pi": model for model in models}
+    #     self.logger.info(models.keys())
+
+    #     model = models.get(model_name, None)
+    #     if model is None:
+    #         self.logger.error("Model %s has not found", model_name)
+    #         self.logger.error("Available models are: %s", str(models.keys()))
+    #         return False
+    #     model.click()
+
+    #     verification = self.find_or_fail(By.XPATH, self.markers.model_v_xq)
+    #     if not re.search(rf"Switched to( just)? {model_name}", verification.text):
+    #         self.logger.error("Model switch to %s is unsuccessful", model_name)
+    #         return False
+
+    #     self.logger.info("Switched to %s", model_name)
+    #     return True
 
     def regenerate_response(self):
         raise NotImplementedError("Pi doesn't provide response regeneration")
