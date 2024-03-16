@@ -4,7 +4,7 @@ import abc
 import os
 import logging
 from datetime import datetime
-from typing import Union
+from typing import Union, Dict, List
 
 import undetected_chromedriver as uc
 import pandas as pd
@@ -18,7 +18,6 @@ import selenium.common.exceptions as Exceptions
 from .object_map import markers
 from .utils import detect_chrome_version, save_func_map
 
-
 class BaseBrowser:
     """
     BaseBrowser class to provide utility function and flow for LLMs
@@ -31,9 +30,9 @@ class BaseBrowser:
         username (str, optional): Deprecated. Use environment variables instead.
         password (str, optional): Deprecated. Use environment variables instead.
         headless (bool, optional): Enables/disables headless mode. Default: True.
-        cold_start (bool, optional): If set, it will return after opening the browser. Default: False.
+        cold_start (bool, optional): If set, loads the chat endpoints and returns. Default: False.
         incognito (bool, optional): A boolean to set incognito mode. Default: True.
-        driver_arguments (list, optional): A list of additional arguments to be passed to the driver. Default: None.
+        driver_arguments (list, optional): A list of arguments for the driver. Default: None.
         driver_version (int, optional): The version of the chromedriver. Default: None.
         auto_save (bool, optional): A boolean to enable/disable automatic saving. Default: False.
         save_path (str, optional): The file path to save chat logs. Default: None.
@@ -59,9 +58,9 @@ class BaseBrowser:
         headless: bool = True,
         cold_start: bool = False,
         incognito: bool = True,
-        driver_arguments: list = None,
+        driver_arguments: Union[List, Dict] = None,
         driver_version: int = None,
-        timeout_dur: int = 15,
+        timeout_dur: int = 90,
         auto_save: bool = False,
         save_path: str = None,
         verbose: bool = False,
@@ -69,6 +68,7 @@ class BaseBrowser:
         skip_login: bool = False,
         user_data_dir: str = None,
         uc_params: dict = None,
+        tag: str = None
     ):
         self.client_name = client_name
         self.markers = markers[client_name]
@@ -78,6 +78,8 @@ class BaseBrowser:
         self.headless = headless
         self.ready = False
         self.auto_save = auto_save
+        self.last_prompt = ""
+        self.tag = tag or self.client_name
 
         if credential_check:
             if username or password:
@@ -99,18 +101,35 @@ class BaseBrowser:
                     f"Either provide password or set the environment variable {self.pwd_var}"
                 )
 
-        if verbose:
-            logging.getLogger().setLevel(logging.INFO)
-            logging.info("Verbose mode active")
+        # Create a new of the logger
+        r_level = logging.getLogger().getEffectiveLevel()
+
+        self.logger = logging.getLogger(self.tag)
+        self.logger.setLevel(r_level)
+        # If verbose is provided and the current log level is higher
+        # than info, it will decrease logging level.
+        if verbose and not self.logger.isEnabledFor(logging.INFO):
+            self.logger.setLevel(logging.INFO)
+            self.logger.info("Verbose mode active")
         options = uc.ChromeOptions()
         options.headless = self.headless
         if incognito:
             options.add_argument("--incognito")
         if driver_arguments:
-            for _arg in driver_arguments:
-                options.add_argument(_arg)
+            if isinstance(driver_arguments, dict):
+                driver_arguments = list(map(
+                    lambda kv: f"--{kv[0]}={kv[1]}",
+                    driver_arguments.items()
+                ))
 
-        logging.info("Loading undetected Chrome")
+            _ = list(map(
+                options.add_argument,
+                driver_arguments
+            ))
+            # for _arg in driver_arguments:
+            #     options.add_argument(_arg)
+
+        self.logger.info("Loading undetected Chrome")
         uc_params = uc_params or {}
         self.browser = uc.Chrome(
             user_data_dir=user_data_dir,
@@ -119,15 +138,15 @@ class BaseBrowser:
             version_main=detect_chrome_version(driver_version),
             **uc_params,
         )
+        self.browser.set_page_load_timeout(timeout_dur)
         self.wait_object = WebDriverWait(self.browser, timeout_dur)
         agent = self.browser.execute_script("return navigator.userAgent")
         self.browser.execute_cdp_cmd(
             "Network.setUserAgentOverride", {"userAgent": agent.replace("Headless", "")}
         )
-        self.browser.set_page_load_timeout(15)
 
-        logging.info("Loaded undetected Chrome")
-        logging.info("Opening %s", self.client_name)
+        self.logger.info("Loaded undetected Chrome")
+        self.logger.info("Opening %s", self.client_name)
 
         self.preload_custom_func()
         self.browser.get(self.url)
@@ -141,7 +160,7 @@ class BaseBrowser:
         if not skip_login:
             self.login(username, password)
 
-        logging.info("%s is ready to interact", self.client_name)
+        self.logger.info("%s is ready to interact", self.client_name)
         self.ready = True
         self.chat_history = pd.DataFrame(columns=["role", "is_regen", "content"])
         self.set_save_path(save_path)
@@ -158,7 +177,7 @@ class BaseBrowser:
         Args:
             save_path (str): The saving path
         """
-        self.save_path = save_path or datetime.now().strftime("%Y_%m_%d_%H_%M_%S.csv")
+        self.save_path = save_path or f"{self.tag}_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S.csv')}"
         self.file_type = save_path.split(".")[-1] if save_path else "csv"
 
     def save(self) -> bool:
@@ -167,10 +186,10 @@ class BaseBrowser:
         if save_func:
             save_func = getattr(self.chat_history, save_func)
             save_func(self.save_path)
-            logging.info("File saved to %s", self.save_path)
+            self.logger.info("File saved to %s", self.save_path)
             return True
 
-        logging.error("Unsupported file type %s", self.file_type)
+        self.logger.error("Unsupported file type %s", self.file_type)
         return False
 
     def find_or_fail(
@@ -204,14 +223,14 @@ class BaseBrowser:
 
         if not dom_element:
             if not fail_ok:
-                logging.error(
-                    "%s is not located. Please raise an issue with verbose=True", elem_query
+                self.logger.error(
+                    " %s is not located. Please raise an issue with verbose=True", elem_query
                 )
             else:
-                logging.info("%s is not located.", elem_query)
+                self.logger.info(" %s is not located.", elem_query)
             return None
 
-        logging.info("%s is located.", elem_query)
+        self.logger.info(" %s is located.", elem_query)
 
         element = {
             "first": lambda x: x[0],
@@ -250,15 +269,15 @@ class BaseBrowser:
             (WebElement | None): If element is appeared, it returns the element. Otherwise,
             it returns None.
         """
-        logging.info("Waiting element %s to appear.", elem_query)
+        self.logger.info("Waiting element %s to appear.", elem_query)
         element = None
         try:
             element = self.wait_object.until(
                 EC.presence_of_element_located((by, elem_query))
             )
-            logging.info("Element %s appeared.", elem_query)
+            self.logger.info("Element %s appeared.", elem_query)
         except Exceptions.TimeoutException:
-            logging.info("Element %s is not present, something is wrong.", elem_query)
+            self.logger.error("Element %s is not present, something is wrong.", elem_query)
         return element
 
     def wait_until_disappear(self, by: By, elem_query: str) -> bool:
@@ -277,24 +296,24 @@ class BaseBrowser:
         Returns:
             (bool) : True if element disappears, false otherwise.
         """
-        logging.info("Waiting element %s to disappear.", elem_query)
+        self.logger.info("Waiting element %s to disappear.", elem_query)
         try:
             self.wait_object.until_not(EC.presence_of_element_located((by, elem_query)))
-            logging.info("Element %s disappeared.", elem_query)
+            self.logger.info("Element %s disappeared.", elem_query)
             return True
         except Exceptions.TimeoutException:
-            logging.info("Element %s still here, something is wrong.", elem_query)
+            self.logger.info("Element %s still here, something is wrong.", elem_query)
             return False
 
     def log_chat(
-        self, prompt: str = None, answer: str = None, regenerated: bool = False
+        self, prompt: str = None, response: str = None, regenerated: bool = False
     ) -> bool:
         """
         Log a chat interaction in the chat history.
 
         Parameters:
         - prompt (str): The user's prompt to be logged.
-        - answer (str): The answer to the user's prompt to be logged.
+        - response (str): The response to the user's prompt to be logged.
 
         Returns:
         - bool: True if the interaction is logged, False otherwise.
@@ -308,11 +327,12 @@ class BaseBrowser:
                 regenerated,
                 prompt,
             ]
-        if answer:
+
+        if response:
             self.chat_history.loc[len(self.chat_history)] = [
                 self.client_name,
                 regenerated,
-                answer,
+                response,
             ]
         return True
 
@@ -320,13 +340,13 @@ class BaseBrowser:
         """
         A function to implement custom instructions before loading the webpage
         """
-        logging.info("The preload behavior is not implemented")
+        self.logger.info("The preload behavior is not implemented")
 
     def postload_custom_func(self) -> None:
         """
         A function to implement custom instructions after loading the webpage
         """
-        logging.info("The postload behavior is not implemented")
+        self.logger.info("The postload behavior is not implemented")
 
     def pass_verification(self) -> bool:
         """
@@ -334,7 +354,7 @@ class BaseBrowser:
         Returns:
             None
         """
-        logging.info("The pass verification function is not implemented")
+        self.logger.info("The pass verification function is not implemented")
         return True
 
     @abc.abstractmethod
@@ -342,7 +362,7 @@ class BaseBrowser:
         """
         Performs the login process with the provided username and password.
         """
-        logging.warning(
+        self.logger.warning(
             "If you are creating a custom automation, please implement this method!"
         )
 
@@ -351,7 +371,7 @@ class BaseBrowser:
         """
         Abstract function to interact with the language model.
         """
-        logging.warning(
+        self.logger.warning(
             "If you are creating a custom automation, please implement this method!"
         )
 
@@ -360,14 +380,14 @@ class BaseBrowser:
         """
         Abstract function to open a new thread.
         """
-        logging.warning("Resetting thread is either not implemented or not available")
+        self.logger.warning("Resetting thread is either not implemented or not available")
 
     @abc.abstractmethod
     def regenerate_response(self) -> str:
         """
-        Abstract function to regenerate the answers.
+        Abstract function to regenerate the responses.
         """
-        logging.warning(
+        self.logger.warning(
             "Regenerating response is either not implemented or not available"
         )
 
@@ -379,4 +399,4 @@ class BaseBrowser:
         Args:
             model_name: (str) = The name of the model.
         """
-        logging.warning("Switching model is either not implemented or not available")
+        self.logger.warning("Switching model is either not implemented or not available")
