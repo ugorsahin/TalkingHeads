@@ -1,6 +1,5 @@
 """Init file for multiagent subpackage"""
 
-from .multiagent import MultiAgent
-from .conversation import Conversation
+from .multiagent import MultiAgent, Conversation
 
 __all__ = ['MultiAgent', 'Conversation']
