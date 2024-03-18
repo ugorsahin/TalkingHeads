@@ -28,7 +28,7 @@ def test_start_conversation():
     candidate = (
         "You accepted participating in a research study "
         "and you will follow the instructions of the researchers."
-        "Answer with proper sentences."
+        "Respond to the questions with full and grammatically correct sentences."
     )
 
     response = pytest.multihead.start_conversation(
