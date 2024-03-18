@@ -177,7 +177,7 @@ class BaseBrowser:
         Args:
             save_path (str): The saving path
         """
-        self.save_path = save_path or f"{self.tag}_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S.csv')}"
+        self.save_path = save_path or datetime.now().strftime(f"{self.tag}_%Y_%m_%d_%H_%M_%S.csv")
         self.file_type = save_path.split(".")[-1] if save_path else "csv"
 
     def save(self) -> bool:
@@ -311,12 +311,12 @@ class BaseBrowser:
         """
         Log a chat interaction in the chat history.
 
-        Parameters:
-        - prompt (str): The user's prompt to be logged.
-        - response (str): The response to the user's prompt to be logged.
+        Args:
+            prompt (str): The user's prompt to be logged.
+            response (str): The response to the user's prompt to be logged.
 
         Returns:
-        - bool: True if the interaction is logged, False otherwise.
+            bool: True if the interaction is logged, False otherwise.
         """
         if not self.auto_save:
             return False

@@ -3,7 +3,7 @@ from .base_browser import BaseBrowser
 from .utils import is_url, check_filetype, detect_chrome_version
 from .model_library import ChatGPTClient, ClaudeClient, CopilotClient, \
     GeminiClient, HuggingChatClient, LeChatClient, PiClient
-from .multiagent import MultiAgent, Conversation
+from .multiagent.multiagent import MultiAgent, Conversation
 
 __all__ = [
     "is_url",
@@ -19,5 +19,6 @@ __all__ = [
     "PiClient",
     "MultiAgent",
     "Conversation",
-    "model_library"
+    "model_library",
+    "multiagent"
 ]
