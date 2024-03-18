@@ -4,7 +4,6 @@ from pathlib import Path
 import psutil
 
 import pytest
-from selenium.webdriver.common.by import By
 
 from talkingheads.multiagent import Conversation
 
@@ -17,18 +16,17 @@ def test_start():
 
 def test_start_conversation():
     # How to check if given answers are correct?
-    interviewer = """Assume that you are a researcher and you will conduct a human cognition test.
-    Instruct the subject with following instructions, one by one. Only ask one instruction at a time.
+    interviewer = """Assume you are a researcher and will conduct a human cognition test.
+    Instruct the subject with the following instructions, one by one. Only ask for one instruction at a time.
     Here are the instructions
-    1) Without further ado, just write the following: "Book".
+    1) Without further ado, just write the following: "Book."
     2) Calculate 4x10.
-    3) Name three countries with largest total area in North America.
+    3) Name three countries with the largest total area in North America.
 
-    Start by greeting the subject
-    """
+    Start by greeting the subject."""
 
     candidate = (
-        "You accepted participating a research study "
+        "You accepted participating in a research study "
         "and you will follow the instructions of the researchers."
         "Answer with proper sentences."
     )

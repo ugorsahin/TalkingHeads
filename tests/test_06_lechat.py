@@ -7,18 +7,12 @@ from selenium.webdriver.common.by import By
 from talkingheads import LeChatClient
 from utils import get_driver_arguments
 
+
 def test_start():
-    pytest.chathead = LeChatClient(**{**get_driver_arguments('lechat', incognito=True)})
+    pytest.chathead = LeChatClient(
+        **get_driver_arguments("lechat", incognito=True)
+    )
     assert pytest.chathead.ready, "The Client is not ready"
-
-
-def test_model_selection():
-    assert pytest.chathead.switch_model(
-        "Next"
-    ), "Model switch failed."
-    assert not pytest.chathead.switch_model(
-        "dream-model"
-    ), "Unexpected model switch"
 
 
 def test_interaction():
@@ -49,6 +43,11 @@ def test_regenerate():
     ).lower()
     second_response = pytest.chathead.regenerate_response()
     assert first_response != second_response, "The regenerated response is the same."
+
+
+def test_model_selection():
+    assert pytest.chathead.switch_model("Next"), "Model switch failed."
+    assert not pytest.chathead.switch_model("dream-model"), "Unexpected model switch"
 
 
 def test_delete_chathead():
