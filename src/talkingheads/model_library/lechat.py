@@ -48,8 +48,13 @@ class LeChatClient(BaseBrowser):
         pass_box.send_keys(Keys.ENTER)
 
         return True
-    
+
     def get_last_response(self) -> str:
+        """Retrieves the last response given by ChatGPT
+
+        Returns:
+            str: The last response
+        """
         self.wait_until_appear(By.XPATH, self.markers.stop_gen_xq)
         self.wait_until_disappear(By.XPATH, self.markers.stop_gen_xq)
         response = self.find_or_fail(
@@ -116,12 +121,13 @@ class LeChatClient(BaseBrowser):
         )
         if not models:
             return False
-        models = {m.text.split('\n')[0]: m for m in models}
+        models = {m.text.split("\n")[0]: m for m in models}
 
         model = models.get(model_name, None)
         if model is None:
             self.logger.error("Model %s has not found", model_name)
             self.logger.error("Available models are: %s", str(models.keys()))
+            list(models.values())[0].send_keys(Keys.ESCAPE)
             return False
 
         model.click()
@@ -140,4 +146,3 @@ class LeChatClient(BaseBrowser):
             return ""
         self.log_chat(response=response, regenerated=True)
         return response
-        

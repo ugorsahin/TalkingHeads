@@ -43,7 +43,6 @@ class PiClient(BaseBrowser):
         time.sleep(2)
         self.browser.get(self.url)
         self.is_ready_to_prompt()
-        return
 
     def is_ready_to_prompt(self) -> bool:
         """

@@ -54,7 +54,6 @@ class CopilotClient(BaseBrowser):
         """Copilot requires to accept privacy terms, the cookie below provides the response."""
         self.browser.add_cookie({"name": "BCP", "value": "AD=0&AL=0&SM=0"})
         self.browser.get(self.url)
-        return
 
     def is_ready_to_prompt(self, text_area, shadow_element) -> bool:
         """
@@ -386,7 +385,8 @@ class CopilotClient(BaseBrowser):
             plugin_name (str): The name of the plugin
 
         Returns:
-            bool | None : True if the plugin is enabled, False if disabled. None if not plugin doesn't exist
+            Union[WebElement, None] : True if the plugin is enabled, False if disabled.
+            None if not plugin doesn't exist
         """
         main_area = self.find_or_fail(
             By.TAG_NAME, self.markers.main_area_tq, return_shadow=True

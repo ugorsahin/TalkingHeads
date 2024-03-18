@@ -3,7 +3,7 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
-from ..base_browser import BaseBrowser
+from .. import BaseBrowser
 
 
 class HuggingChatClient(BaseBrowser):
@@ -18,7 +18,7 @@ class HuggingChatClient(BaseBrowser):
         super().__init__(
             client_name="HuggingChat",
             url="https://huggingface.co/chat/",
-            timeout_dur=45,
+            timeout_dur=90, # Searching web takes time
             **kwargs,
         )
 
@@ -62,7 +62,7 @@ class HuggingChatClient(BaseBrowser):
         return True
 
     def interact(self, prompt: str):
-        """Sends a prompt and retrieves the response from the ChatGPT system.
+        """Sends a prompt and retrieves the response from the HuggingChat system.
 
         This function interacts with the HuggingChat.
         It takes the prompt as input and sends it to the system.
@@ -97,23 +97,23 @@ class HuggingChatClient(BaseBrowser):
         self.log_chat(prompt=prompt, response=response.text)
         return response.text
 
-    def reset_thread(self):
+    def reset_thread(self) -> bool:
         """Function to close the current thread and start new one"""
         self.browser.get(self.url)
         return True
 
-    def toggle_search_web(self):
+    def toggle_search_web(self) -> bool:
         """Function to enable/disable web search feature"""
         search_web_toggle = self.find_or_fail(By.XPATH, self.markers.search_xq)
         if not search_web_toggle:
-            return
+            return False
         search_web_toggle.click()
         status = search_web_toggle.get_attribute("aria-checked")
         status = status == "true"
         self.logger.info("Search web is %s", ["disabled", "enabled"][status])
         return status
 
-    def switch_model(self, model_name: str):
+    def switch_model(self, model_name: str) -> bool:
         """
         Switch the model.
 

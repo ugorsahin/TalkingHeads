@@ -145,9 +145,8 @@ class GeminiClient(BaseBrowser):
         """
         if image_path:
             uploaded = self.upload_image(image_path)
-
             if not uploaded:
-                return
+                return ""
 
         text_area = self.find_or_fail(By.XPATH, self.markers.textarea_xq)
         if not text_area:

@@ -39,14 +39,14 @@ class ClaudeClient(BaseBrowser):
         logging.info("Login is not provided for Claude at the moment.")
         return True
 
-    def postload_custom_func(self) -> None:
+    def postload_custom_func(self) -> bool:
         """In order to continue chat screen, a click on start button is required"""
         start_button = self.wait_until_appear(By.XPATH, self.markers.start_btn_xq)
         if not start_button:
             logging.error("Post-load has failed.")
             return False
         start_button.click()
-        return
+        return True
 
     def is_ready_to_prompt(self) -> bool:
         """

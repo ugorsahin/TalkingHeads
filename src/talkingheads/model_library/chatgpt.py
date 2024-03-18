@@ -1,6 +1,5 @@
 """Class definition for ChatGPTClient"""
 
-import logging
 import time
 from datetime import datetime
 
@@ -10,7 +9,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions as Exceptions
 
-from talkingheads import BaseBrowser
+from .. import BaseBrowser
 
 
 class ChatGPTClient(BaseBrowser):
@@ -108,6 +107,11 @@ class ChatGPTClient(BaseBrowser):
             self.logger.error("Something unexpected: %s", err)
 
     def get_last_response(self) -> str:
+        """Retrieves the last response given by ChatGPT
+
+        Returns:
+            str: The last response
+        """
         self.logger.info("Message sent, waiting for response")
         self.wait_until_disappear(By.XPATH, self.markers.wait_xq)
         self.wait_until_appear(By.XPATH, self.markers.send_btn_xq)
