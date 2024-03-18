@@ -11,8 +11,10 @@ By leveraging the power of browser automation, this library enables users to int
    :maxdepth: 2
    :caption: Contents:
 
-   tutorial/features
-   tutorial/getting_started.md
+   tutorial/features.md
+   tutorial/getting_started
+   tutorial/multiagent
+   tutorial/conversation
    source/talkingheads
 
 Indices and tables

@@ -1,8 +1,9 @@
 Getting Started 📋
 ==================
-Before you begin, please ensure that you have Chrome installed on your system. 
-To successfully pass the Cloudflare robot test, it is necessary to have undetected-chrome. 🌐🔒
-Here is a script to install chrome
+
+Before you begin, please ensure that Chrome is installed on your system. 
+
+Here is a script to install Chrome
 
 .. code-block:: bash
 
@@ -31,19 +32,45 @@ Usage
 
     chathead = HuggingChatClient(YOUR_USERNAME, YOUR_PASSWORD)
 
-    answer = chathead.interact("Hello, how are you today")
+    response = chathead.interact("Hello, how are you today")
 
-    print(answer)
+    print(response)
 
 .. toctree::
    :maxdepth: 2
 
-Setup Gemini
-**********
+Setup User Data Directory
+*************************
 
-In order to use Gemini, you need to log in to your Google account first. The login process is not straightforward to implement and there may be obstacles to pass like 2FA. Therefore, you need to complete a manual login to use Gemini.
+Setting up a user profile is required to use Claude, Copilot, or Gemini. The login pages of these chatbots are not automated because:
 
-To set up Gemini, you will need to create a user profile on Chrome and then log in to your Google account. To do this, follow these steps:
+* Claude sends you a verification code to log into your account
+* Copilot (Microsoft) and Gemini (Google) log you in through their SSO. Automating the login pages of two of the biggest customer and business service providers opens a window for malicious use, and their login pages change every now and then, which will be a never-ending effort.
+
+However, it is possible to set up a user profile and log in to the account in this profile, just like your regular browser, and then using this browser to connect chatbots is much more convenient. Since your login will last a while, you will not be forced to log in every time.
+
+Setting up a user profile can be done with or without using talkingheads. Here, you will find both approaches.
+
+Using CLI
+
+Open a terminal and type the following command:
+
+.. code-block:: bash
+
+google-chrome --user-data-dir=path/to/user/profile
+
+Chrome will welcome you. From here, navigate to the Claude, Copilot, or Gemini webpage and log in. After that, you are ready to use your user profile with talkingheads. Take a look at the below example:
+
+.. code-block:: python
+
+    chathead = GeminiClient(
+        incognito=False,
+        user_data_dir="path/to/user/profile"
+    )
+
+The important thing here is that you set the `incognito=False`. As you may already noticed, you can't use your regular login in incognito mode. Replace `<path/to/user/profile>` with the path to your user profile directory.
+
+If you want to log in without using the CLI, create an instance as provided below.
 
 .. code-block:: python
 
@@ -51,15 +78,13 @@ To set up Gemini, you will need to create a user profile on Chrome and then log 
         cold_start=True,
         incognito=False,
         headless=False,
-        user_data_dir='<path/to/user/profile>'
+        user_data_dir="path/to/user/profile"
     )
 
-Replace `<path/to/user/profile>` with the path to your user profile directory.
-
 #. Now, you should have a normal functioning Chrome session.
-#. Type `https://Gemini.google.com/chat/` to your address bar and click Sign In
+#. If you are not at the webpage, type the webpage address (e.g. `https://gemini.google.com/chat/`)
 #. Enter your credentials and log in.
-#. If this is your first time using Google Gemini, agree on the terms and finish the tutorial.
+#. If this is your first time using the account, agree to the terms and finish the tutorial.
 
 After this, your setup is complete. You can call your constructor as follows:
 
@@ -73,12 +98,12 @@ After this, your setup is complete. You can call your constructor as follows:
 Login without using environment variables
 *****************************************
 
-If you don't want to keep your username-password as environment variable or put them in the code, you can create a user profile as described above and login manually. This will create a permanent profile and you can use that profile afterwards, keep in my mind to check `Remember me` button! Please take into account that the login caches may expire so you may need to login every once in a while. 
+If you don't want to keep your username-password as an environment variable or put them in the code, you can manually create a user profile as described above and log in. This will create a permanent profile, which you can use afterward. Keep it in mind to check the `Remember me` button! Please consider that the login caches may expire, so you may need to log in occasionally. 
 
-Too use a profile with manual login, please
+To use a profile with a manual login, please
 
-#. disable `credential_check=False` to avoid controlling existence of variables
-#. enable `skip_login=True` to avoid login procedure.
+#. set `credential_check=False` to turn off controlling the existence of variables
+#. set `skip_login=True` to turn off the login procedure.
 
 .. code-block:: python
 
@@ -89,4 +114,4 @@ Too use a profile with manual login, please
         skip_login=True
     )
 
-Replace <path/to/user/profile> with the path to user profile.
+Replace `<path/to/user/profile>` with the path to user profile.

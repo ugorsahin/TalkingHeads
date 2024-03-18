@@ -1,61 +1,51 @@
-talkingheads.model\_library package
+talkingheads.model\_library
 ===================================
 
-Submodules
-----------
-
-talkingheads.model\_library.Gemini module
----------------------------------------
-
-.. automodule:: talkingheads.model_library.Gemini
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-talkingheads.model\_library.chatgpt module
+talkingheads.model\_library.chatgpt
 ------------------------------------------
 
 .. automodule:: talkingheads.model_library.chatgpt
    :members:
-   :undoc-members:
    :show-inheritance:
 
-talkingheads.model\_library.huggingchat module
+talkingheads.model\_library.claude
+-----------------------------------------
+
+.. automodule:: talkingheads.model_library.claude
+   :members:
+   :show-inheritance:
+
+talkingheads.model\_library.copilot
+------------------------------------------
+
+.. automodule:: talkingheads.model_library.copilot
+   :members:
+   :show-inheritance:
+
+talkingheads.model\_library.gemini
+-----------------------------------------
+
+.. automodule:: talkingheads.model_library.gemini
+   :members:
+   :show-inheritance:
+
+talkingheads.model\_library.huggingchat
 ----------------------------------------------
 
 .. automodule:: talkingheads.model_library.huggingchat
    :members:
-   :undoc-members:
    :show-inheritance:
 
-talkingheads.model\_library.pi module
+talkingheads.model\_library.lechat
+-----------------------------------------
+
+.. automodule:: talkingheads.model_library.lechat
+   :members:
+   :show-inheritance:
+
+talkingheads.model\_library.pi
 -------------------------------------
 
 .. automodule:: talkingheads.model_library.pi
    :members:
-   :undoc-members:
-   :show-inheritance:
-
-talkingheads.model\_library.copilot module
--------------------------------------
-
-.. automodule:: talkingheads.model_library.copilot
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-talkingheads.model\_library.claude module
--------------------------------------
-
-.. automodule:: talkingheads.model_library.claude
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: talkingheads.model_library
-   :members:
-   :undoc-members:
    :show-inheritance:
