@@ -33,3 +33,6 @@ _build
 
 # CircleCI
 artifacts
+
+# Testing
+talkingheads_userprofile
