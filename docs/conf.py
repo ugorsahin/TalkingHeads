@@ -11,28 +11,37 @@ import sys
 sys.path.insert(0, os.path.abspath("../src/"))
 
 project = "TalkingHeads"
-copyright = "2023, Ugur Sahin"
+copyright = "2024, Ugur Sahin"
 author = "Ugur Sahin"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "sphinx_markdown_tables",
+    "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
-    "sphinx.ext.napoleon",
     "myst_parser",
 ]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+# Markdown support
+source_parsers = {
+    '.md': 'recommonmark.parser.CommonMarkParser',
+}
+
+source_suffix = ['.rst', '.md']
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
+html_css_files = ['custom_style.css']
 
 add_module_names = True
 autodoc_member_order = "groupwise"
