@@ -118,7 +118,7 @@ class BaseBrowser:
         if driver_arguments:
             if isinstance(driver_arguments, dict):
                 driver_arguments = list(map(
-                    lambda kv: f"--{kv[0]}={kv[1]}",
+                    lambda kv: f"--{kv[0]}" + ("" if kv[1] is True else f"={kv[1]}"),
                     driver_arguments.items()
                 ))
 

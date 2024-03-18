@@ -5,9 +5,12 @@ driver_settings:
     shared:
         verbose: true
         headless : true
-        incognito : false
+        incognito : true
         driver_arguments:
           remote-debugging-port: 20222
+          disable-gpu: true
+          disable-dev-shm-usage: true
+          password-store: basic
     nodes:
         ChatGPT: {}
         Pi: {}
