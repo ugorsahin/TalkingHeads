@@ -1,0 +1,17 @@
+multiagent_settings:
+    auto_save: true
+    save_path: 'artifacts/multihead.csv'
+driver_settings:
+    shared:
+        verbose: true
+        headless : true
+        incognito : true
+        driver_arguments:
+          remote-debugging-port: 20222
+          disable-gpu: true
+          disable-dev-shm-usage: true
+          password-store: basic
+    nodes:
+        ChatGPT: {}
+        Pi: {}
+        LeChat: {}

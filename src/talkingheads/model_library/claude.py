@@ -39,14 +39,14 @@ class ClaudeClient(BaseBrowser):
         logging.info("Login is not provided for Claude at the moment.")
         return True
 
-    def postload_custom_func(self) -> None:
+    def postload_custom_func(self) -> bool:
         """In order to continue chat screen, a click on start button is required"""
-        start_button = self.wait_until_appear(By.XPATH, self.markers.start_button_xq)
+        start_button = self.wait_until_appear(By.XPATH, self.markers.start_btn_xq)
         if not start_button:
             logging.error("Post-load has failed.")
             return False
         start_button.click()
-        return
+        return True
 
     def is_ready_to_prompt(self) -> bool:
         """
@@ -74,20 +74,20 @@ class ClaudeClient(BaseBrowser):
         return True
 
     def interact(self, prompt: str) -> str:
-        """Sends a prompt and retrieves the answer from the ChatGPT system.
+        """Sends a prompt and retrieves the response from the ChatGPT system.
 
         This function interacts with the Claude.
         It takes the prompt as input and sends it to the system.
         The prompt may contain multiple lines separated by '\\n'.
         In this case, the function simulates pressing SHIFT+ENTER for each line.
-        Upon arrival of the interaction, the function waits for the answer.
+        Upon arrival of the interaction, the function waits for the response.
         Once the response is ready, the function will return the response.
 
         Args:
             prompt (str): The interaction text.
 
         Returns:
-            str: The generated answer.
+            str: The generated response.
         """
 
         text_area = self.find_or_fail(By.CLASS_NAME, self.markers.textarea_cq)
@@ -104,19 +104,19 @@ class ClaudeClient(BaseBrowser):
         text_area.send_keys(Keys.ENTER)
 
         if not self.is_ready_to_prompt():
-            logging.info("Cannot retrieve the answer, something is wrong")
+            logging.info("Cannot retrieve the response, something is wrong")
             return ""
 
-        answer = self.find_or_fail(
+        response = self.find_or_fail(
             By.XPATH,
             self.markers.chatarea_xq,
             return_type="last",
         )
-        if not answer:
+        if not response:
             return ""
-        logging.info("Answer is ready")
-        self.log_chat(prompt=prompt, answer=answer.text)
-        return answer.text
+        logging.info("response is ready")
+        self.log_chat(prompt=prompt, response=response.text)
+        return response.text
 
     def reset_thread(self) -> bool:
         """
@@ -128,7 +128,7 @@ class ClaudeClient(BaseBrowser):
         text_area = self.find_or_fail(By.CLASS_NAME, self.markers.textarea_cq)
         text_area.send_keys(Keys.CONTROL + "K")
         time.sleep(0.5)
-        start_button = self.wait_until_appear(By.XPATH, self.markers.start_button_xq)
+        start_button = self.wait_until_appear(By.XPATH, self.markers.start_btn_xq)
         if not start_button:
             return False
         start_button.click()
@@ -145,17 +145,17 @@ class ClaudeClient(BaseBrowser):
         regen_button.click()
 
         if not self.is_ready_to_prompt():
-            logging.info("Cannot retrieve the answer, something is wrong")
+            logging.info("Cannot retrieve the response, something is wrong")
             return ""
 
-        answer = self.find_or_fail(
+        response = self.find_or_fail(
             By.XPATH,
             self.markers.chatarea_xq,
             return_type="last",
         )
-        if not answer:
+        if not response:
             return ""
 
-        logging.info("Answer is ready")
-        self.log_chat(answer=answer.text, regenerated=True)
-        return answer.text
+        logging.info("response is ready")
+        self.log_chat(response=response.text, regenerated=True)
+        return response.text

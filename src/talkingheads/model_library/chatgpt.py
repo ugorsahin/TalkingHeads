@@ -1,6 +1,5 @@
 """Class definition for ChatGPTClient"""
 
-import logging
 import time
 from datetime import datetime
 
@@ -10,7 +9,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions as Exceptions
 
-from talkingheads import BaseBrowser
+from .. import BaseBrowser
 
 
 class ChatGPTClient(BaseBrowser):
@@ -43,12 +42,12 @@ class ChatGPTClient(BaseBrowser):
                 break
             try:
                 verify_button[0].click()
-                logging.info("Clicked verification button")
+                self.logger.info("Clicked verification button")
             except Exceptions.ElementNotInteractableException:
-                logging.info("Verification button is not present or clickable")
+                self.logger.info("Verification button is not present or clickable")
             time.sleep(wait_time)
         else:
-            logging.error("It is not possible to pass verification")
+            self.logger.error("It is not possible to pass verification")
             return False
 
         return True
@@ -72,28 +71,28 @@ class ChatGPTClient(BaseBrowser):
         # Find login button, click it
         login_button = self.wait_until_appear(By.XPATH, self.markers.login_xq)
         login_button.click()
-        logging.info("Clicked login button")
+        self.logger.info("Clicked login button")
         time.sleep(1)
 
         # Find email textbox, enter e-mail
-        email_box = self.wait_until_appear(By.CLASS_NAME, self.markers.email_cq)
+        email_box = self.wait_until_appear(By.XPATH, self.markers.email_xq)
         email_box.send_keys(username)
-        logging.info("Filled email box")
+        self.logger.info("Filled email box")
 
         # Click continue
         continue_button = self.wait_until_appear(By.XPATH, self.markers.continue_xq)
         continue_button.click()
         time.sleep(1)
-        logging.info("Clicked continue button")
+        self.logger.info("Clicked continue button")
 
         # Find password textbox, enter password
         pass_box = self.wait_until_appear(By.ID, self.markers.pwd_iq)
         pass_box.send_keys(password)
-        logging.info("Filled password box")
+        self.logger.info("Filled password box")
         # Click continue
         pass_box.send_keys(Keys.ENTER)
         time.sleep(1)
-        logging.info("Logged in")
+        self.logger.info("Logged in")
 
         try:
             # Pass introduction
@@ -101,32 +100,59 @@ class ChatGPTClient(BaseBrowser):
                 EC.presence_of_element_located((By.XPATH, self.markers.tutorial_xq))
             ).click()
 
-            logging.info("Info screen passed")
+            self.logger.info("Info screen passed")
         except Exceptions.TimeoutException:
-            logging.info("Info screen skipped")
+            self.logger.info("Info screen skipped")
         except Exception as err:
-            logging.error("Something unexpected: %s", err)
+            self.logger.error("Something unexpected: %s", err)
+
+    def get_last_response(self) -> str:
+        """Retrieves the last response given by ChatGPT
+
+        Returns:
+            str: The last response
+        """
+        self.logger.info("Message sent, waiting for response")
+        self.wait_until_disappear(By.XPATH, self.markers.wait_xq)
+        self.wait_until_appear(By.XPATH, self.markers.send_btn_xq)
+
+        response = None
+        for _ in range(5):
+            time.sleep(1)
+            l_response = self.find_or_fail(
+                By.XPATH, self.markers.chatbox_xq, return_type="last"
+            )
+            if l_response.text and l_response.text == response:
+                break
+            response = l_response.text
+
+        if not response:
+            self.logger.error("There is no response, something is wrong")
+            return ""
+
+        self.logger.info("response is ready")
+        return response
 
     def interact(self, prompt: str) -> str:
-        """Sends a prompt and retrieves the answer from the ChatGPT system.
+        """Sends a prompt and retrieves the response from the ChatGPT system.
 
         This function interacts with the ChatGPT.
         It takes the prompt as input and sends it to the system.
         The prompt may contain multiple lines separated by '\\n'.
         In this case, the function simulates pressing SHIFT+ENTER for each line.
-        Upon arrival of the interaction, the function waits for the answer.
+        Upon arrival of the interaction, the function waits for the response.
         Once the response is ready, the function will return the response.
 
         Args:
             prompt (str): The interaction text.
 
         Returns:
-            str: The generated answer.
+            str: The generated response.
         """
 
         text_area = self.browser.find_elements(By.TAG_NAME, self.markers.textarea_tq)
         if not text_area:
-            logging.info("Unable to locate text area tag. Switching to ID search")
+            self.logger.info("Unable to locate text area tag. Switching to ID search")
             text_area = self.browser.find_elements(By.ID, self.markers.textarea_iq)
         if not text_area:
             raise RuntimeError(
@@ -139,28 +165,27 @@ class ChatGPTClient(BaseBrowser):
             text_area.send_keys(each_line)
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
         text_area.send_keys(Keys.RETURN)
-        logging.info("Message sent, waiting for response")
-        self.wait_until_disappear(By.XPATH, self.markers.wait_xq)
-        answer = self.find_or_fail(
-            By.XPATH, self.markers.chatbox_xq, return_type="last"
-        )
-        if not answer:
-            logging.error("There is no answer, something is wrong")
-            return ""
 
-        logging.info("Answer is ready")
-        self.log_chat(prompt=prompt, answer=answer.text)
+        response = self.get_last_response()
 
-        return answer.text
+        self.log_chat(prompt=prompt, response=response)
+        return response
 
     def reset_thread(self) -> bool:
         """Function to close the current thread and start new one"""
         self.browser.get(self.url)
-        return True
+        time.sleep(0.5)
+        text_area = self.wait_until_appear(By.TAG_NAME, self.markers.textarea_tq)
+        if text_area:
+            return True
+        self.logger.error(
+            "Couldn't reset the conversation. Please raise an issue with verbose=True"
+        )
+        return False
 
     def regenerate_response(self) -> str:
         """
-        Clicks the response to generate a new one and returns the new answer.
+        Clicks the response to generate a new one and returns the new response.
 
         Args:
             None
@@ -173,19 +198,16 @@ class ChatGPTClient(BaseBrowser):
         )
         if not regen_button:
             return ""
-        regen_button[2].click()
-        logging.info("Clicked regenerate button")
+        regen_button[-2].click()
+        self.logger.info("Clicked regenerate button")
 
-        self.wait_until_disappear(By.XPATH, self.markers.wait_xq)
-        answer = self.find_or_fail(
-            By.XPATH, self.markers.chatbox_xq, return_type="last"
-        )
-        if not answer:
+        response = self.get_last_response()
+        if not response:
+            self.logger.error("Regeneration failed")
             return ""
 
-        logging.info("New answer is ready")
-        self.log_chat(answer=answer.text, regenerated=True)
-        return answer.text
+        self.log_chat(response=response, regenerated=True)
+        return response
 
     def switch_model(self, model_name: str) -> bool:
         """
@@ -198,16 +220,16 @@ class ChatGPTClient(BaseBrowser):
             bool: True on success, False on fail
         """
         if model_name in ["GPT-3.5", "GPT-4"]:
-            logging.info("Switching model to %s", model_name)
+            self.logger.info("Switching model to %s", model_name)
             try:
                 self.browser.find_element(
                     By.XPATH, self.markers.gpt_xq.format(model_name)
                 ).click()
                 return True
             except Exceptions.NoSuchElementException:
-                logging.error("Button is not present")
+                self.logger.error("Button is not present")
         else:
-            logging.error("Model name is not ")
+            self.logger.error("Model name is not ")
         return False
 
     def open_custom_instruction_tab(self) -> bool:
@@ -222,18 +244,18 @@ class ChatGPTClient(BaseBrowser):
         custom_button = self.find_or_fail(By.XPATH, self.markers.custom_xq)
         custom_button.click()
         custom_tutorial = self.find_or_fail(
-            By.XPATH, self.markers.custom_tutorial_xq, fail_ok=True
+            By.XPATH, self.markers.cust_tut_xq, fail_ok=True
         )
         if custom_tutorial:
             custom_tutorial.click()
 
-        custom_switch = self.find_or_fail(By.XPATH, self.markers.custom_toggle_xq)
+        custom_switch = self.find_or_fail(By.XPATH, self.markers.cust_toggle_xq)
         if not custom_switch:
             return False
 
         # If disabled, enable custom interactions
         if custom_switch.get_attribute("data-state") == "checked":
-            logging.info("Custom instructions is enabled")
+            self.logger.info("Custom instructions is enabled")
         else:
             custom_switch.click()
         time.sleep(0.2)
@@ -247,19 +269,19 @@ class ChatGPTClient(BaseBrowser):
             mode (str): Either 'extra_information' or 'modulation'. Check OpenAI help pages.
         """
         if mode not in ["extra_information", "modulation"]:
-            logging.error(
+            self.logger.error(
                 "Given mode is unrecognized. Either provide extra_information or modulation"
             )
             return ""
         if not self.open_custom_instruction_tab():
             return ""
         text_areas = self.find_or_fail(
-            By.XPATH, self.markers.custom_textarea_xq, return_type="all"
+            By.XPATH, self.markers.cust_txt_xq, return_type="all"
         )
         text = text_areas[{"extra_information": 0, "modulation": 1}[mode]].text
-        logging.info("Custom instruction is obtained: %s", text)
+        self.logger.info("Custom instruction is obtained: %s", text)
 
-        save_button = self.find_or_fail(By.XPATH, self.markers.custom_cancel_xq)
+        save_button = self.find_or_fail(By.XPATH, self.markers.cust_cancel_xq)
         save_button.click()
         return text
 
@@ -274,10 +296,10 @@ class ChatGPTClient(BaseBrowser):
             return False
 
         WebDriverWait(self.browser, 5).until(
-            EC.presence_of_element_located((By.XPATH, self.markers.custom_textarea_xq))
+            EC.presence_of_element_located((By.XPATH, self.markers.cust_txt_xq))
         )
         text_areas = self.find_or_fail(
-            By.XPATH, self.markers.custom_textarea_xq, return_type="all"
+            By.XPATH, self.markers.cust_txt_xq, return_type="all"
         )
         text_area = text_areas[{"extra_information": 0, "modulation": 1}[mode]]
 
@@ -288,8 +310,8 @@ class ChatGPTClient(BaseBrowser):
         text_area.send_keys(instruction)
         time.sleep(0.1)
         text_area.send_keys(" ")
-        logging.info("Custom instruction-%s has provided", mode)
+        self.logger.info("Custom instruction-%s has provided", mode)
 
-        save_button = self.find_or_fail(By.XPATH, self.markers.custom_save_xq)
+        save_button = self.find_or_fail(By.XPATH, self.markers.cust_save_xq)
         save_button.click()
         return True

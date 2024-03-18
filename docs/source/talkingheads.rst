@@ -1,5 +1,5 @@
-talkingheads package
-====================
+talkingheads API documentation
+==============================
 
 Subpackages
 -----------
@@ -8,38 +8,25 @@ Subpackages
    :maxdepth: 4
 
    talkingheads.model_library
+   talkingheads.multiagent
 
-Submodules
-----------
-
-talkingheads.base\_browser module
+talkingheads.base\_browser
 ---------------------------------
 
 .. automodule:: talkingheads.base_browser
    :members:
-   :undoc-members:
    :show-inheritance:
 
-talkingheads.object\_map module
+talkingheads.object\_map
 -------------------------------
 
 .. automodule:: talkingheads.object_map
    :members:
-   :undoc-members:
    :show-inheritance:
 
-talkingheads.utils module
+talkingheads.utils
 -------------------------
 
 .. automodule:: talkingheads.utils
    :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: talkingheads
-   :members:
-   :undoc-members:
    :show-inheritance:
