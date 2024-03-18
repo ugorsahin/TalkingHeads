@@ -12,7 +12,7 @@ name = "talkingheads"
 description = "A library to communicate with ChatGPT, Claude, Copilot, Gemini, HuggingChat, and Pi"
 readme = "README.md"
 requires-python = ">=3.8"
-version = "0.4.2"
+version = "0.5.0"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
@@ -27,3 +27,10 @@ dependencies = [
 
 [project.urls]
 Source = "https://github.com/ugorsahin/TalkingHeads"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_scheme = "pep440"
+version_provider = "pep621"
+update_changelog_on_bump = true

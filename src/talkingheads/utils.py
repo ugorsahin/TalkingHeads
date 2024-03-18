@@ -30,7 +30,7 @@ def detect_chrome_version(version_num: int = None) -> Union[int, None]:
     """
     Detects the Google Chrome version on Linux and macOS machines.
 
-    Parameters:
+    Args
         version_num (int, optional): The chromedriver version number. Default: None.
 
     Returns:
@@ -38,8 +38,11 @@ def detect_chrome_version(version_num: int = None) -> Union[int, None]:
 
     Note:
     - If version_num is provided, it will be returned without any detection.
+
     - Uses subprocess to execute the 'google-chrome --version' command for detection.
+
     - If the command output doesn't match the expected format, it returns None.
+
     - Logs information about the detected or default version using the logging module.
     """
 
