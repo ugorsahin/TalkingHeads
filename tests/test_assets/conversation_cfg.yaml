@@ -13,4 +13,4 @@ driver_settings:
           password-store: basic
     nodes:
         ChatGPT: {}
-        Pi: {}
+        LeChat: {}
