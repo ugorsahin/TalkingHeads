@@ -25,7 +25,8 @@ dependencies = [
    'easydict',
    'validators>=0.22.0',
    'filetype>=1.2.0',
-   'emoji>=2.10.1'
+   'emoji>=2.10.1',
+   'PyYAML>6.0'
 ]
 
 [project.urls]
