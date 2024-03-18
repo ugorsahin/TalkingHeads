@@ -4,7 +4,7 @@ import time
 import logging
 from datetime import datetime
 from collections import OrderedDict
-from typing import Dict, List, Union, Callable
+from typing import Any, Callable, Dict, List, Tuple, Union
 from concurrent.futures.thread import ThreadPoolExecutor
 from random import random, randint
 
@@ -12,11 +12,27 @@ import yaml
 import pandas as pd
 from mergedeep import merge
 import emoji
-from talkingheads import model_library, BaseBrowser
+from .. import (
+    ChatGPTClient, ClaudeClient, CopilotClient, GeminiClient,
+    HuggingChatClient, LeChatClient, PiClient
+)
+from ..base_browser import BaseBrowser
 from ..utils import save_func_map
 
+def get_client(client_name):
+    """Returns the client by their tag name"""
+    return {
+        "ChatGPT": ChatGPTClient,
+        "Claude": ClaudeClient,
+        "Copilot": CopilotClient,
+        "Gemini": GeminiClient,
+        "HuggingChat": HuggingChatClient,
+        "LeChat": LeChatClient,
+        "Pi": PiClient,
+    }.get(client_name, None)
+
 class MultiAgent:
-    """An interface for talking heads"""
+    """An interface to use multiple instances together."""
 
     def __init__(self, configuration_path: str):
         with open(configuration_path) as fd:
@@ -65,7 +81,7 @@ class MultiAgent:
             self.save()
 
     @staticmethod
-    def dictmap(lambda_func: Callable, dictionary: Dict) -> Dict:
+    def dictmap(lambda_func: Callable, dictionary: Dict) -> Dict[str, Any]:
         """Takes a lambda function which accepts two parameters,
         and returns a dictionary based on this lambda function
 
@@ -75,7 +91,7 @@ class MultiAgent:
             dictionary (Dict): the dictionary of the the application.
 
         Returns:
-            _type_: _description_
+            Dict[str, Any]: A dictionary in the form defined by lambda_func
         """
         with ThreadPoolExecutor() as executor:
             result = OrderedDict(executor.map(lambda_func, *zip(*dictionary.items())))
@@ -92,7 +108,7 @@ class MultiAgent:
             BaseBrowser: The agent object
         """
         time.sleep(random() * randint(1, 4))
-        client_constructor = model_library.get_client(client_name)
+        client_constructor = get_client(client_name)
         return client_constructor(**config)
 
     def set_save_path(self, save_path: str):
@@ -108,7 +124,7 @@ class MultiAgent:
         """interact with the given head"""
         client = self.agent_swarm[head_name]
         response = client.interact(prompt)
-        self.log_chat(client.client_name, prompt=prompt, response=response)
+        self.log_chat(client_name=client.client_name, response=response)
         return response
 
     def broadcast(self, prompt: str, exclude: List[str] = None) -> Dict[str, str]:
@@ -127,6 +143,7 @@ class MultiAgent:
         if exclude is not None:
             agents = dict(filter(lambda kv: kv[0] not in exclude, agents.items()))
 
+        self.log_chat(prompt=prompt)
         responses = self.dictmap(
             lambda agent_name, _: (
                 agent_name,
@@ -145,18 +162,25 @@ class MultiAgent:
     ):
         """This function
         - Feeds all the responses into the selected agent(s) to aggregation,
+
         - Returns the response(s)
 
         Some examples of the aggregation are:
         - Composing a new message
+
         - Selecting the best message
+
         - Selecting the worst message
+
         - Find the most reoccuring number
+
         - Check if all the responses are the semantically similar
 
         Not all chat models can read lengthy inputs, remind your chat models to keep it short!
+
         By default, it resets the conversation of aggregation agents,
-            set reset_before_agg=False to disable this.
+        set reset_before_agg=False to disable this.
+
         It is possible to select one agent or multiple agents for aggregation.
 
         Args:
@@ -192,19 +216,14 @@ class MultiAgent:
     ) -> Dict[str, str]:
         """This function
         - Broadcasts the prompt into the agent swarm,
-        - Feeds all the responses into the selected agent(s) to aggregation,
-        - Returns the response(s)
 
-        Some examples of the aggregation are:
-        - Composing a new message
-        - Selecting the best message
-        - Selecting the worst message
-        - Find the most reoccuring number
-        - Check if all the responses are the semantically similar
+        - Feeds all the responses into the selected agent(s) to aggregation,
+
+        - Returns the response(s)
 
         Not all chat models can read lengthy inputs, remind your chat models to keep it short!
         By default, it resets the conversation of aggregation agents,
-            set reset_before_agg=False to disable this.
+        set reset_before_agg=False to disable this.
         By default, it excludes the aggregation agent from agent swarm to respond,
         set exclude_agg_agents=False if you want the aggregator to respond too.
         It is possible to select one agent for aggregation, or select more than one agent.
@@ -216,9 +235,10 @@ class MultiAgent:
             exclude_agg_agents (bool, optional): If set, aggregation agents will only utilized in
                 the aggregation step.
             reset_before_agg (bool, optional): If set, resets the chathead. Defaults to True.
+
         Returns:
-            Tuple(Dict[str, str], Dict[str, str]): The responses of the broadcasting
-                and aggregation steps.
+            Tuple(Dict[str, str], Dict[str, str]): The responses of the
+            broadcasting and aggregation steps.
         """
 
         agg_agents = [agg_agents] if isinstance(agg_agents, str) else agg_agents
@@ -235,10 +255,13 @@ class MultiAgent:
         return responses, final_responses
 
     def broadcast_and_vote(self, prompt: str, voting_prompt: str) -> Dict[str, str]:
-        """This function
+        """
+        This function
         - Broadcasts the prompt to all agents.
-        - Combines all responses and broadcast voting objective
-            appended with the responses received from agents to select the best option.
+
+        - Combines all responses and broadcast voting objective appended with the
+            responses received from agents to select the best option.
+
         - Returns the results.
 
         Args:
@@ -247,7 +270,7 @@ class MultiAgent:
 
         Returns:
             Tuple(Dict[str, str], Dict[str, str]): The responses of the broadcasting
-                and voting steps.
+            and voting steps.
         """
 
         return self.broadcast_and_aggregate(
@@ -284,7 +307,7 @@ class MultiAgent:
 
     def log_chat(
         self,
-        client_name: str,
+        client_name: str = None,
         prompt: str = None,
         response: str = None,
         regenerated: bool = False,
@@ -292,12 +315,12 @@ class MultiAgent:
         """
         Log a chat interaction in the chat history.
 
-        Parameters:
-        - prompt (str): The user's prompt to be logged.
-        - response (str): The response to the user's prompt to be logged.
+        Args:
+            prompt (str): The user's prompt to be logged.
+            response (str): The response to the user's prompt to be logged.
 
         Returns:
-        - bool: True if the interaction is logged, False otherwise.
+            bool: True if the interaction is logged, False otherwise.
         """
         if not self.auto_save:
             return False
@@ -328,3 +351,57 @@ class MultiAgent:
 
         self.logger.error("Unsupported file type %s", self.file_type)
         return False
+
+class Conversation(MultiAgent):
+    """A special Multiagent setting where two agents carry a conversation"""
+    def __init__(self, configuration):
+        super().__init__(configuration)
+        if len(self.agent_swarm.keys()) != 2:
+            self.logger.error("Only two agents are allowed in a conversation")
+            return
+
+        self.head_1, self.head_2 = self.agent_swarm.keys()
+        self.head_1_response = None
+        self.head_2_response = None
+
+    def start_conversation(
+        self, intro_prompt_1: str, intro_prompt_2: str, use_response_1: bool = True
+    ):
+        """Starts a conversation between two heads
+
+        Args:
+            intro_prompt_1 (str): The instruction of the first head.
+            intro_prompt_2 (str): The instruction of the second head.
+            use_response_1 (bool): If set, the first response returned by the first head
+                will be appended to the end of the instruction of the second head.
+
+        Returns:
+            Tuple[str]: The responses of the respective chat bots.
+        """
+        self.head_1_response = self.interact(self.head_1, intro_prompt_1)
+        if use_response_1:
+            intro_prompt_2 += f"\n{self.head_1_response}"
+        self.head_2_response = self.interact(self.head_2, intro_prompt_2)
+
+        return self.head_1_response, self.head_2_response
+
+    def continue_conversation(self, prompt_1: str = None, prompt_2: str = None) -> Tuple[str]:
+        """Make another round of conversation.
+        If prompt_1 or prompt_2 is given, the response is not used
+
+        Args:
+            prompt_1 (str, optional): If set, this prompt will be used instead of 
+                the last response provided by head 2. Defaults to None.
+            prompt_2 (str, optional): If set, this prompt will be used instead of
+                the last response provided by head 1. Defaults to None.
+
+        Returns:
+            Tuple[str]: The responses of the respective chat bots.
+        """
+        prompt_1 = prompt_1 or self.head_2_response
+        self.head_1_response = self.interact(self.head_1, prompt_1)
+
+        prompt_2 = prompt_2 or self.head_1_response
+        self.head_2_response = self.interact(self.head_2, prompt_2)
+
+        return self.head_1_response, self.head_2_response
