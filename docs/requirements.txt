@@ -7,9 +7,11 @@ sphinxcontrib-jquery
 sphinxcontrib-jsmath
 sphinxcontrib-qthelp
 sphinxcontrib-serializinghtml
+sphinx_markdown_tables
 myst_parser
 
 selenium>=4.10.0
 undetected-chromedriver>=3.5.3
 pandas>=2.0.0
 easydict
+recommonmark
