@@ -46,7 +46,6 @@ class BaseBrowser:
     Returns:
         BaseBrowser: The base driver object.
     """
-
     def __init__(
         self,
         client_name: str,
@@ -80,7 +79,7 @@ class BaseBrowser:
         self.auto_save = auto_save
         self.last_prompt = ""
         self.tag = tag or self.client_name
-
+        
         if credential_check:
             if username or password:
                 logging.warning(
@@ -103,9 +102,9 @@ class BaseBrowser:
 
         # Create a new of the logger
         r_level = logging.getLogger().getEffectiveLevel()
-
         self.logger = logging.getLogger(self.tag)
         self.logger.setLevel(r_level)
+
         # If verbose is provided and the current log level is higher
         # than info, it will decrease logging level.
         if verbose and not self.logger.isEnabledFor(logging.INFO):
@@ -165,11 +164,11 @@ class BaseBrowser:
         self.chat_history = pd.DataFrame(columns=["role", "is_regen", "content"])
         self.set_save_path(save_path)
 
-    def __del__(self):
-        self.browser.close()
-        self.browser.quit()
-        if self.auto_save:
-            self.save()
+    # def __del__(self):
+    #     self.browser.close()
+    #     self.browser.quit()
+    #     if self.auto_save:
+    #         self.save()
 
     def set_save_path(self, save_path: str):
         """Sets the path to save the file

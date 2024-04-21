@@ -25,9 +25,10 @@ markers = EasyDict(
             "reset_cq"      : "truncate",
             "regen_xq"      : "//button[contains(@class, 'group-[.final-completion]:visible')]",
             "textarea_tq"   : "textarea",
-            "send_btn_xq"   : "//button[@data-testid='send-button']",
+            "send_btn_xq"   : "//*[@width='24' and @class='text-white dark:text-black']",
             "textarea_iq"   : "prompt-textarea",
-            "gpt_xq"        : "//span[text()='{}']"
+            "gpt_xq_button" : "//*[@class='text-token-text-tertiary']",
+            "gpt_xq"        : "//div[contains(text(), '{}')]"
         },
         "Claude": {
             "file_types"    : [
