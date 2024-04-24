@@ -55,7 +55,7 @@ def detect_chrome_version(version_num: int = None) -> Union[int, None]:
     if platform.system() == 'Windows':
         command = ['powershell', '-command', "(Get-Command '{}').Version.ToString()".format(chrome_path)]
         out = subprocess.check_output(command)
-        version_num = out.decode().strip().split('.')[0]
+        version_num = int(out.decode().strip().split('.')[0])
     else:
         command = [chrome_path, '--version']
         out = subprocess.check_output(command)
