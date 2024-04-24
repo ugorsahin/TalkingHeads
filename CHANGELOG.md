@@ -2,6 +2,7 @@
 ### Feat
 
 - **ChatGPTClient**: Now can use ChatGPT 3.5 without login or credential provided.
+- **ChatGPTClient**: Now ChatGPT 4.0 model works well.
   
 ### Fix
 
