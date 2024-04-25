@@ -4,7 +4,7 @@
 
 - **BaseBrowser**: remove self.browser.close() that case error in Macos
 
-- 
+
 ## 0.6.0 (2024-04-24)
 ### Feat
 
