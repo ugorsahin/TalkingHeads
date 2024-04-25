@@ -164,11 +164,10 @@ class BaseBrowser:
         self.chat_history = pd.DataFrame(columns=["role", "is_regen", "content"])
         self.set_save_path(save_path)
 
-    # def __del__(self):
-    #     self.browser.close()
-    #     self.browser.quit()
-    #     if self.auto_save:
-    #         self.save()
+    def __del__(self):
+        self.browser.quit()
+        if self.auto_save:
+            self.save()
 
     def set_save_path(self, save_path: str):
         """Sets the path to save the file
