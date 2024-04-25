@@ -1,3 +1,24 @@
+## 0.6.1 (2024-04-25)
+
+### Fix
+
+- **BaseBrowser**: remove self.browser.close() that case error in Macos
+
+
+## 0.6.0 (2024-04-24)
+### Feat
+
+- **ChatGPTClient**: Now can use ChatGPT 3.5 without login or credential provided.
+- **ChatGPTClient**: Now ChatGPT 4.0 model works well.
+  
+### Fix
+
+- **ChatGPTClient**: adapt to the new ChatGPT website UI
+- **ChatGPTClient**: Deprecated login method, added manual pass verification page and login to get profile like gemini
+- **ChatGPTClient**: Fix switch_model xpath bugs
+- **GeminiClient**: Fix xpath bugs now can get respond correctly
+
+
 ## 0.5.0 (2024-03-18)
 
 ### Feat

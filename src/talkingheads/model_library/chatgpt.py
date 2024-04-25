@@ -16,7 +16,13 @@ class ChatGPTClient(BaseBrowser):
     """ChatGPTClient class to interact with ChatGPT"""
 
     def __init__(self, **kwargs):
-        super().__init__(client_name="ChatGPT", url="https://chat.openai.com", **kwargs)
+        super().__init__(
+            client_name="ChatGPT", 
+            url="https://chat.openai.com",
+            credential_check=False,
+            skip_login=True,
+              **kwargs
+            )
 
     def postload_custom_func(self):
         today_str = datetime.today().strftime("%Y-%m-%d")
@@ -113,12 +119,11 @@ class ChatGPTClient(BaseBrowser):
             str: The last response
         """
         self.logger.info("Message sent, waiting for response")
-        self.wait_until_disappear(By.XPATH, self.markers.wait_xq)
+        # self.wait_until_disappear(By.XPATH, self.markers.wait_xq)
         self.wait_until_appear(By.XPATH, self.markers.send_btn_xq)
-
         response = None
         for _ in range(5):
-            time.sleep(1)
+            time.sleep(4)
             l_response = self.find_or_fail(
                 By.XPATH, self.markers.chatbox_xq, return_type="last"
             )
@@ -149,7 +154,6 @@ class ChatGPTClient(BaseBrowser):
         Returns:
             str: The generated response.
         """
-
         text_area = self.browser.find_elements(By.TAG_NAME, self.markers.textarea_tq)
         if not text_area:
             self.logger.info("Unable to locate text area tag. Switching to ID search")
@@ -209,19 +213,29 @@ class ChatGPTClient(BaseBrowser):
         self.log_chat(response=response, regenerated=True)
         return response
 
-    def switch_model(self, model_name: str) -> bool:
+    def switch_model(self, model_name: str = "") -> bool:
         """
         Switch the model for ChatGPT+ users.
 
         Args:
-            model_name: str = The name of the model, either GPT-3.5 or GPT-4
+            model_name: str = The name of the model, either GPT-3.5 or GPT-4, or empty string for default model.
 
         Returns:
             bool: True on success, False on fail
         """
+        if model_name == "":
+            time.sleep(3) # wait for default model to load
+            self.logger.info("No model name provided, use default model")
+            return True
         if model_name in ["GPT-3.5", "GPT-4"]:
             self.logger.info("Switching model to %s", model_name)
             try:
+                self.wait_until_appear(By.XPATH, self.markers.gpt_xq_button)
+                time.sleep(1)
+                self.browser.find_element(
+                    By.XPATH, self.markers.gpt_xq_button
+                ).click()
+                time.sleep(0.5)
                 self.browser.find_element(
                     By.XPATH, self.markers.gpt_xq.format(model_name)
                 ).click()

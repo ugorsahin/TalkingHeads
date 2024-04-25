@@ -36,3 +36,5 @@ artifacts
 
 # Testing
 talkingheads_userprofile
+
+.DS_Store

@@ -2,6 +2,8 @@
 import re
 import subprocess
 import logging
+import platform
+
 from typing import List, Union
 
 import filetype
@@ -45,21 +47,24 @@ def detect_chrome_version(version_num: int = None) -> Union[int, None]:
 
     - Logs information about the detected or default version using the logging module.
     """
-
     if version_num:
         logging.debug("Version number is provided: %d", version_num)
         return version_num
 
     chrome_path = find_chrome_executable()
+    if platform.system() == 'Windows':
+        command = ['powershell', '-command', "(Get-Command '{}').Version.ToString()".format(chrome_path)]
+        out = subprocess.check_output(command)
+        version_num = int(out.decode().strip().split('.')[0])
+    else:
+        command = [chrome_path, '--version']
+        out = subprocess.check_output(command)
+        out = re.search(r"Google\s+Chrome\s+(\d{3})", out.decode())
+        version_num = int(out.group(1))
 
-    out = subprocess.check_output([chrome_path, "--version"])
-    out = re.search(r"Google\s+Chrome\s+(\d{3})", out.decode())
-
-    if not out:
+    if not version_num:
         logging.error("There was an error obtaining Chrome version")
         return None
-
-    version_num = int(out.group(1))
     logging.info("The version is %d", version_num)
     return version_num
 
