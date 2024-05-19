@@ -27,7 +27,6 @@ class CopilotClient(BaseBrowser):
             client_name="Copilot",
             url="https://copilot.microsoft.com",
             credential_check=False,
-            timeout_dur=40,
             **kwargs,
         )
 

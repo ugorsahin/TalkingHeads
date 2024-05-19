@@ -16,7 +16,11 @@ class ChatGPTClient(BaseBrowser):
     """ChatGPTClient class to interact with ChatGPT"""
 
     def __init__(self, **kwargs):
-        super().__init__(client_name="ChatGPT", url="https://chat.openai.com", **kwargs)
+        super().__init__(
+            client_name="ChatGPT",
+            url="https://chat.openai.com",
+            **kwargs
+        )
 
     def postload_custom_func(self):
         today_str = datetime.today().strftime("%Y-%m-%d")

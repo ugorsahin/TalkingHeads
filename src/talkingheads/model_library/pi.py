@@ -16,7 +16,10 @@ class PiClient(BaseBrowser):
 
     def __init__(self, **kwargs):
         super().__init__(
-            client_name="Pi", url="https://pi.ai/talk", credential_check=False, **kwargs
+            client_name="Pi",
+            url="https://pi.ai/talk",
+            credential_check=False,
+            **kwargs
         )
 
     def login(self, username: str = None, password: str = None):

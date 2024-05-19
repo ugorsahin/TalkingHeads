@@ -18,7 +18,6 @@ class HuggingChatClient(BaseBrowser):
         super().__init__(
             client_name="HuggingChat",
             url="https://huggingface.co/chat/",
-            timeout_dur=90, # Searching web takes time
             **kwargs,
         )
 
