@@ -3,6 +3,7 @@
 import abc
 import os
 import logging
+import time
 from datetime import datetime
 from typing import Union, Dict, List
 
@@ -68,7 +69,8 @@ class BaseBrowser:
         skip_login: bool = False,
         user_data_dir: str = None,
         uc_params: dict = None,
-        tag: str = None
+        tag: str = None,
+        multihead = False
     ):
         self.client_name = client_name
         self.markers = markers[client_name]
@@ -80,6 +82,8 @@ class BaseBrowser:
         self.auto_save = auto_save
         self.last_prompt = ""
         self.tag = tag or self.client_name
+        self.timeout_dur = timeout_dur
+        self.multihead = multihead
 
         if credential_check:
             if username or password:
@@ -126,8 +130,6 @@ class BaseBrowser:
                 options.add_argument,
                 driver_arguments
             ))
-            # for _arg in driver_arguments:
-            #     options.add_argument(_arg)
 
         self.logger.info("Loading undetected Chrome")
         uc_params = uc_params or {}
@@ -140,6 +142,7 @@ class BaseBrowser:
         )
         self.browser.set_page_load_timeout(timeout_dur)
         self.wait_object = WebDriverWait(self.browser, timeout_dur)
+
         agent = self.browser.execute_script("return navigator.userAgent")
         self.browser.execute_cdp_cmd(
             "Network.setUserAgentOverride", {"userAgent": agent.replace("Headless", "")}
@@ -166,10 +169,25 @@ class BaseBrowser:
         self.set_save_path(save_path)
 
     def __del__(self):
-        self.browser.close()
-        self.browser.quit()
+        # If there is an error in the initialisation,
+        # the browser attribute is not assigned,
+        # so we first check if the object has the browser attribute.
+        if hasattr(self, 'browser'):
+            self.browser.close()
+            self.browser.quit()
+
         if self.auto_save:
             self.save()
+
+    def set_timeout_dur(self, timeout_dur : int):
+        """Sets the timeout duration.
+
+        Args:
+            timeout_dur (int): The timeout duration (seconds).
+        """
+
+        self.browser.set_page_load_timeout(timeout_dur)
+        self.wait_object = WebDriverWait(self.browser, timeout_dur)
 
     def set_save_path(self, save_path: str):
         """Sets the path to save the file
@@ -296,14 +314,44 @@ class BaseBrowser:
         Returns:
             (bool) : True if element disappears, false otherwise.
         """
+        if self.multihead:
+            return self._multihead_wait(by, elem_query)
+
         self.logger.info("Waiting element %s to disappear.", elem_query)
         try:
-            self.wait_object.until_not(EC.presence_of_element_located((by, elem_query)))
+            self.wait_object.until(EC.invisibility_of_element_located((by, elem_query)))
             self.logger.info("Element %s disappeared.", elem_query)
             return True
         except Exceptions.TimeoutException:
             self.logger.info("Element %s still here, something is wrong.", elem_query)
             return False
+
+    def _multihead_wait(self, by: By, elem_query: str, pool_time : float = 0.5) -> bool:
+        """
+        This is a temporary function to wait until the element disappears.
+
+        A bug causes WebDriverWait to fail in conditions and this function mitigates the
+        problem while a permanent solution is found.
+
+        Args:
+            by (selenium.webdriver.common.by.By): The method used to locate the element.
+            elem_query (str): The elem_query string to locate the element.
+            timeout_dur (int, optional): Waiting time before the timeout. Default: 15.
+
+        Returns:
+            (bool) : True if element disappears, false otherwise.
+        """
+        self.logger.info("Waiting element %s to disappear.", elem_query)
+
+        for _ in range(int(self.timeout_dur / pool_time)):
+            item = self.find_or_fail(by, elem_query, fail_ok=True)
+            if not item:
+                self.logger.debug("The item %s %s is not located", by, elem_query)
+                return True
+            logging.debug('The item is still present, waiting')
+            time.sleep(pool_time)
+        logging.error("Item is still present")
+        return False
 
     def log_chat(
         self, prompt: str = None, response: str = None, regenerated: bool = False
