@@ -137,22 +137,28 @@ class HuggingChatClient(BaseBrowser):
             return False
         models = {m.text.strip(): m for m in models}
 
+        successful_switch = True
         model = models.get(model_name, None)
         if model is None:
             self.logger.error("Model %s has not found", model_name)
             self.logger.error("Available models are: %s", str(models.keys()))
-            result = False
+            successful_switch = False
         else:
             model.click()
-            self.logger.info("Switched to %s", model_name)
-            result = True
+            self.logger.info("Clicked model card %s", model_name)
 
-        apply_button = self.find_or_fail(By.XPATH, self.markers.model_a_xq)
-        if not apply_button:
-            result = False
+            activate_button = self.find_or_fail(By.XPATH, self.markers.model_act_xq)
+            if not activate_button:
+                successful_switch = False
+            else:
+                activate_button.click()
 
-        apply_button.click()
-        return result
+        close_button = self.find_or_fail(By.XPATH, self.markers.model_a_xq)
+        if not close_button:
+            successful_switch = False
+        close_button.click()
+
+        return successful_switch
 
     def regenerate_response(self):
         raise NotImplementedError("HuggingChat doesn't provide response regeneration")
