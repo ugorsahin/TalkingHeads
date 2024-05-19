@@ -118,7 +118,7 @@ class ChatGPTClient(BaseBrowser):
         """
         self.logger.info("Message sent, waiting for response")
         self.wait_until_disappear(By.XPATH, self.markers.wait_xq)
-        self.wait_until_appear(By.XPATH, self.markers.send_btn_xq)
+        # self.wait_until_appear(By.XPATH, self.markers.send_btn_xq)
 
         response = None
         for _ in range(5):
