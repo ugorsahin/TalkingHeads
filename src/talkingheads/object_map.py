@@ -12,8 +12,8 @@ markers = EasyDict(
             "tutorial_xq"   : "//div[contains(text(), 'Okay, let’s go')]",
             "button_tq"     : "button",
             "done_xq"       : "//button[//div[text()='Done']]",
-            "menu_xq"       : "//button[contains(@id, 'headlessui-menu-button')]",
-            "custom_xq"     : "//a[contains(text(), 'Custom')]",
+            "menu_xq"       : "//img[@alt='User']",
+            "custom_xq"     : "//div[contains(text(), 'Custom')]",
             "cust_toggle_xq": "//button[@role='switch']",
             "cust_txt_xq"   : "//textarea[@type='button']",
             "cust_save_xq"  : "//div[contains(text(), 'Save')]",
@@ -92,7 +92,8 @@ markers = EasyDict(
             "img_upload_xq" : "//input[@name='Filedata']",
             "img_btn_xq"    : "//mat-icon[contains(text(), 'add_photo_alternate')]",
             # "send_btn_xq"   : "//button[@aria-label='Send message']",
-            "img_loaded_xq" : "//img[@aria-label='Image preview']"
+            "img_loaded_xq" : "//img[@aria-label='Image preview']",
+            "got_it_xq"     : "//button[@data-test-id='got-it-button']"
         },
         "LeChat" : {
             "username_xq"   : "//div[@data-testid='node/input/identifier']//input",
@@ -116,7 +117,8 @@ markers = EasyDict(
             "model_xq"      : "//div[div/div/text()='Current Model']//a",
             "settings_xq"   : "//h2[text()='Settings']",
             "model_li_xq"   : "//div/a/div[@class='truncate']",
-            "model_a_xq"    : "//div[h2/text()='Settings']//button"
+            "model_a_xq"    : "//div[h2/text()='Settings']//button",
+            "model_act_xq"  : "//button[@name='Activate model']"
         },
         "Pi": {
             "textarea_xq"   : "//textarea[@role='textbox']",
