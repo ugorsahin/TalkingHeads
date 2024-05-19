@@ -7,10 +7,9 @@ driver_settings:
         headless : true
         incognito : true
         driver_arguments:
-          remote-debugging-port: 20222
           disable-gpu: true
           disable-dev-shm-usage: true
           password-store: basic
     nodes:
         ChatGPT: {}
-        LeChat: {}
+        Pi: {}
