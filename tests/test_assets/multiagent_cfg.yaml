@@ -14,4 +14,4 @@ driver_settings:
     nodes:
         ChatGPT: {}
         Pi: {}
-        LeChat: {}
+        Gemini: {}
