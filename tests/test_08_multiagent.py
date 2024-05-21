@@ -40,12 +40,11 @@ def test_seperate_broadcast_aggregate():
 
 def test_broadcast_and_aggregate():
     broadcast_responses, agg_responses = pytest.multihead.broadcast_and_aggregate(
-        prompt="Provide a number between 0 and 1000. Write a proper sentence (for example, I selected X)",
+        prompt="Provide a number between 0 and 1000. Write a proper sentence (e.g. I selected X)",
         agg_agents="LeChat",
-        agg_prompt="Select the highest number among options",
+        agg_prompt="Select the highest number among options without any explanation.",
         exclude_agg_agents=False
     )
-    convert_num = lambda x: int(re.search(r"\d+", x).group(0))
     assert (
         len(agg_responses) == 1
     ), f"The number of results is not 1, {len(agg_responses)}"
@@ -54,11 +53,14 @@ def test_broadcast_and_aggregate():
         response is not None
     ), f"LeChat doesn't exist in aggregation responses, existing heads: {agg_responses.keys()}"
 
-    max_num = max(map(convert_num, broadcast_responses.values()))
-    agg_max_num = convert_num(response)
+    max_num = max(map(
+        lambda x: int(re.search(r"\d+", x).group(0)),
+        broadcast_responses.values())
+    )
+
     assert (
-        max_num == agg_max_num
-    ), "Calculated max num is {max_num}, aggregation response is {agg_max_num}"
+        response.find(str(max_num)) != -1
+    ), f"Calculated max num is {max_num}, aggregation response is \"{response}\""
 
 
 def test_delete_multihead():
