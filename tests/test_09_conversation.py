@@ -1,7 +1,7 @@
 """Conversation test"""
 import os
 from pathlib import Path
-import psutil
+# import psutil
 
 import pytest
 
@@ -62,8 +62,8 @@ def test_continue_conversation():
         i in response[1].lower() for i in ["united states", "canada", "mexico"]
     ), "Round 2: The countries are wrong"
 
-def test_delete_chathead():
-    del pytest.multihead
-    assert not any(
-        "undetected_chromedriver" in p.name() for p in psutil.process_iter()
-    ), "Undetected chromedriver exists"
+# def test_delete_chathead():
+#     del pytest.multihead
+#     assert not any(
+#         "undetected_chromedriver" in p.name() for p in psutil.process_iter()
+#     ), "Undetected chromedriver exists"

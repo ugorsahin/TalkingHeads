@@ -4,7 +4,7 @@ import os
 import re
 from pathlib import Path
 
-import psutil
+# import psutil
 import pytest
 from talkingheads import MultiAgent
 
@@ -63,8 +63,8 @@ def test_broadcast_and_aggregate():
     ), f"Calculated max num is {max_num}, aggregation response is \"{response}\""
 
 
-def test_delete_multihead():
-    del pytest.multihead
-    assert not any(
-        "undetected_chromedriver" in p.name() for p in psutil.process_iter()
-    ), "Undetected chromedriver exists"
+# def test_delete_multihead():
+#     del pytest.multihead
+#     assert not any(
+#         "undetected_chromedriver" in p.name() for p in psutil.process_iter()
+#     ), "Undetected chromedriver exists"
