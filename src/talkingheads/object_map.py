@@ -100,7 +100,7 @@ markers = EasyDict(
             "password_xq"   : "//div[@data-testid='node/input/password']//input",
             "textarea_xq"   : "//div/textarea",
             "stop_gen_xq"   : "//button[@aria-label='Stop generation']",
-            "chatbox_cq"    : "prose",
+            "chatbox_xq"    : "//*[contains(@class,'prose')]",
             "regen_xq"      : "//button[@aria-label='Rewrite']",
             "model_xq"      : "//button[@aria-label='select model']",
             "model_op_xq"   : "//div[@role='option']"
