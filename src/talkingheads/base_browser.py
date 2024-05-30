@@ -84,6 +84,7 @@ class BaseBrowser:
         self.tag = tag or self.client_name
         self.timeout_dur = timeout_dur
         self.multihead = multihead
+        self.interim_response = None
 
         if credential_check:
             if username or password:
@@ -388,13 +389,13 @@ class BaseBrowser:
         """
         A function to implement custom instructions before loading the webpage
         """
-        self.logger.info("The preload behavior is not implemented")
+        self.logger.debug("No custom preload function is implemented")
 
     def postload_custom_func(self) -> None:
         """
         A function to implement custom instructions after loading the webpage
         """
-        self.logger.info("The postload behavior is not implemented")
+        self.logger.debug("No custom postload function is implemented")
 
     def pass_verification(self) -> bool:
         """
