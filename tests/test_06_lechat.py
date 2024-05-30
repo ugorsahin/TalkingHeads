@@ -30,7 +30,7 @@ def test_reset():
     assert (
         len(
             pytest.chathead.browser.find_elements(
-                By.XPATH, pytest.chathead.markers.chatbox_cq
+                By.XPATH, pytest.chathead.markers.chatbox_xq
             )
         )
         == 0
