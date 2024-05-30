@@ -53,6 +53,7 @@ class CopilotClient(BaseBrowser):
         """Copilot requires to accept privacy terms, the cookie below provides the response."""
         self.browser.add_cookie({"name": "BCP", "value": "AD=0&AL=0&SM=0"})
         self.browser.get(self.url)
+        time.sleep(1)
 
     def is_ready_to_prompt(self, text_area, shadow_element) -> bool:
         """
@@ -398,9 +399,13 @@ class CopilotClient(BaseBrowser):
             return_shadow=True,
         )
 
-        self.find_or_fail(
+        side_button = self.find_or_fail(
             By.CLASS_NAME, self.markers.side_btns_cq, dom_element=side_panel, return_type="last"
-        ).click()
+        )
+        if not side_button:
+            return False
+
+        side_button.click()
 
         plugin_panel = self.find_or_fail(
             By.CSS_SELECTOR,
