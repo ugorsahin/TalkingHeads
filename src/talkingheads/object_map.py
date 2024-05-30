@@ -5,7 +5,7 @@ from easydict import EasyDict
 markers = EasyDict(
     {
         "ChatGPT": {
-            "login_xq"      : "//button[//div[text()='Log in']]",
+            "login_xq"      : "//button[//*[text()='Log in']]",
             "email_xq"     : "//input[@class='email-input' or @id='username']",
             "pwd_iq"        : "password",
             "continue_xq"   : "//button[text()='Continue']",
@@ -20,10 +20,10 @@ markers = EasyDict(
             "cust_cancel_xq": "//div[contains(text(), 'Cancel')]",
             "cust_tut_xq"   : "//div[text()='OK']",
             "chatbox_xq"    : "//div[@data-message-author-role='assistant']",
-            "wait_xq"       : "//button[@aria-label='Stop generating']",
+            "wait_xq"       : "//button[contains(@data-testid, 'stop-button')]",
             "reset_xq"      : "//a[//span[text()='New chat']]",
             "reset_cq"      : "truncate",
-            "regen_xq"      : "//button[contains(@class, 'group-[.final-completion]:visible')]",
+            "regen_xq"      : "//div[contains(@class, 'flex items-center')]//button",
             "textarea_tq"   : "textarea",
             "send_btn_xq"   : "//button[@data-testid='send-button']",
             "textarea_iq"   : "prompt-textarea",

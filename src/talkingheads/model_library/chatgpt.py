@@ -16,11 +16,7 @@ class ChatGPTClient(BaseBrowser):
     """ChatGPTClient class to interact with ChatGPT"""
 
     def __init__(self, **kwargs):
-        super().__init__(
-            client_name="ChatGPT",
-            url="https://chat.openai.com",
-            **kwargs
-        )
+        super().__init__(client_name="ChatGPT", url="https://chat.openai.com", **kwargs)
 
     def postload_custom_func(self):
         today_str = datetime.today().strftime("%Y-%m-%d")
@@ -56,7 +52,7 @@ class ChatGPTClient(BaseBrowser):
 
         return True
 
-    def login(self, username: str, password: str):
+    def login(self, username: str, password: str) -> bool:
         """
         Performs the login process with the provided username and password.
 
@@ -73,8 +69,23 @@ class ChatGPTClient(BaseBrowser):
         """
 
         # Find login button, click it
+
         login_button = self.wait_until_appear(By.XPATH, self.markers.login_xq)
         login_button.click()
+
+        for _ in range(5):
+            login_button = self.find_or_fail(
+                By.XPATH, self.markers.login_xq, fail_ok=True
+            )
+            if not login_button:
+                break
+            login_button.click()
+            time.sleep(1)
+            self.logger.info("Trying to click login button once more")
+        else:
+            self.logger.error("Can't pass loging page")
+            return False
+
         self.logger.info("Clicked login button")
         time.sleep(1)
 
@@ -100,7 +111,7 @@ class ChatGPTClient(BaseBrowser):
 
         try:
             # Pass introduction
-            WebDriverWait(self.browser, 5).until(
+            WebDriverWait(self.browser, 2).until(
                 EC.presence_of_element_located((By.XPATH, self.markers.tutorial_xq))
             ).click()
 
@@ -108,34 +119,36 @@ class ChatGPTClient(BaseBrowser):
         except Exceptions.TimeoutException:
             self.logger.info("Info screen skipped")
         except Exception as err:
-            self.logger.error("Something unexpected: %s", err)
+            self.logger.error("Something unexpected happened: %s", err)
+            return False
+        return True
 
-    def get_last_response(self) -> str:
+    def get_last_response(self, tick_time: int = 200, tick_period: float = 0.5) -> str:
         """Retrieves the last response given by ChatGPT
 
         Returns:
             str: The last response
         """
-        self.logger.info("Message sent, waiting for response")
-        self.wait_until_disappear(By.XPATH, self.markers.wait_xq)
+        self.logger.info("Checking the response")
+        # self.wait_until_disappear(By.XPATH, self.markers.wait_xq)
         # self.wait_until_appear(By.XPATH, self.markers.send_btn_xq)
 
-        response = None
-        for _ in range(5):
-            time.sleep(1)
+        self.interim_response = None
+        for _ in range(tick_time):
+            time.sleep(tick_period)
             l_response = self.find_or_fail(
                 By.XPATH, self.markers.chatbox_xq, return_type="last"
-            )
-            if l_response.text and l_response.text == response:
+            ).text
+            if l_response and l_response == self.interim_response:
                 break
-            response = l_response.text
+            self.interim_response = l_response
 
-        if not response:
+        if not self.interim_response:
             self.logger.error("There is no response, something is wrong")
             return ""
 
         self.logger.info("response is ready")
-        return response
+        return self.interim_response
 
     def interact(self, prompt: str) -> str:
         """Sends a prompt and retrieves the response from the ChatGPT system.
@@ -202,7 +215,7 @@ class ChatGPTClient(BaseBrowser):
         )
         if not regen_button:
             return ""
-        regen_button[-2].click()
+        regen_button[-3].click()
         self.logger.info("Clicked regenerate button")
 
         response = self.get_last_response()
