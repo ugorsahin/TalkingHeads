@@ -16,7 +16,7 @@ class ChatGPTClient(BaseBrowser):
     """ChatGPTClient class to interact with ChatGPT"""
 
     def __init__(self, **kwargs):
-        super().__init__(client_name="ChatGPT", url="https://chat.openai.com", **kwargs)
+        super().__init__(client_name="ChatGPT", url="https://chatgpt.com", **kwargs)
 
     def postload_custom_func(self):
         today_str = datetime.today().strftime("%Y-%m-%d")
@@ -73,24 +73,27 @@ class ChatGPTClient(BaseBrowser):
         login_button = self.wait_until_appear(By.XPATH, self.markers.login_xq)
         login_button.click()
 
+        login_button = self.find_or_fail(
+            By.XPATH, self.markers.login_xq, fail_ok=True
+        )
+        login_button.click()
+        self.logger.info("Clicked login button for the first time.")
+
         for _ in range(5):
+            email_box = self.wait_until_appear(By.XPATH, self.markers.email_xq, 5, fail_ok=True)
+            if email_box:
+                self.logger.info("Username area has found")
+                break
             login_button = self.find_or_fail(
                 By.XPATH, self.markers.login_xq, fail_ok=True
             )
-            if not login_button:
-                break
-            login_button.click()
-            time.sleep(1)
-            self.logger.info("Trying to click login button once more")
+            if login_button:
+                login_button.click()
+                self.logger.info("Trying to click login button once more")
         else:
-            self.logger.error("Can't pass loging page")
+            self.logger.error("Can't reach email page")
             return False
 
-        self.logger.info("Clicked login button")
-        time.sleep(1)
-
-        # Find email textbox, enter e-mail
-        email_box = self.wait_until_appear(By.XPATH, self.markers.email_xq)
         email_box.send_keys(username)
         self.logger.info("Filled email box")
 
@@ -123,7 +126,7 @@ class ChatGPTClient(BaseBrowser):
             return False
         return True
 
-    def get_last_response(self, tick_time: int = 200, tick_period: float = 0.5) -> str:
+    def get_last_response(self, tick_step: int = 200, tick_period: float = 0.5, max_same_ans=3) -> str:
         """Retrieves the last response given by ChatGPT
 
         Returns:
@@ -134,12 +137,16 @@ class ChatGPTClient(BaseBrowser):
         # self.wait_until_appear(By.XPATH, self.markers.send_btn_xq)
 
         self.interim_response = None
-        for _ in range(tick_time):
+        self.wait_until_appear(By.XPATH, self.markers.chatbox_xq)
+        counter = 0
+        for _ in range(tick_step):
             time.sleep(tick_period)
             l_response = self.find_or_fail(
                 By.XPATH, self.markers.chatbox_xq, return_type="last"
             ).text
             if l_response and l_response == self.interim_response:
+                counter += 1
+            if counter > max_same_ans:
                 break
             self.interim_response = l_response
 

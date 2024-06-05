@@ -20,38 +20,38 @@ def test_seperate_broadcast_aggregate():
     responses = pytest.multihead.broadcast(
         "Without any explanation or extra information, just repeat the following: book."
     )
-    assert all(head_name in responses for head_name in ["ChatGPT", "LeChat", "Pi"])
+    assert all(head_name in responses for head_name in ["ChatGPT", "Gemini", "Pi"])
     assert all("book" in response.lower() for response in responses.values())
 
     agg_response = pytest.multihead.aggregate(
-        agents="ChatGPT",
+        agents="Gemini",
         prompt="Write 'indeed' if all the options below has the word 'book'",
         responses=responses,
     )
     assert (
         len(agg_response) == 1
     ), f"The number of results is not 1, {len(agg_response)}"
-    response = agg_response.get("ChatGPT")
+    response = agg_response.get("Gemini")
     assert (
         response is not None
-    ), f"ChatGPT doesn't exist in aggregation responses, existing heads: {agg_response.keys()}"
+    ), f"Gemini doesn't exist in aggregation responses, existing heads: {agg_response.keys()}"
     assert f"The word indeed doesn't exist in the response, instead it responded {response}"
 
 
 def test_broadcast_and_aggregate():
     broadcast_responses, agg_responses = pytest.multihead.broadcast_and_aggregate(
         prompt="Provide a number between 0 and 1000. Write a proper sentence (e.g. I selected X)",
-        agg_agents="LeChat",
+        agg_agents="Gemini",
         agg_prompt="Select the highest number among options without any explanation.",
         exclude_agg_agents=False
     )
     assert (
         len(agg_responses) == 1
     ), f"The number of results is not 1, {len(agg_responses)}"
-    response = agg_responses.get("LeChat")
+    response = agg_responses.get("Gemini")
     assert (
         response is not None
-    ), f"LeChat doesn't exist in aggregation responses, existing heads: {agg_responses.keys()}"
+    ), f"Gemini doesn't exist in aggregation responses, existing heads: {agg_responses.keys()}"
 
     max_num = max(map(
         lambda x: int(re.search(r"\d+", x).group(0)),

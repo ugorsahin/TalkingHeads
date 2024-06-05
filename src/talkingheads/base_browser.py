@@ -141,7 +141,7 @@ class BaseBrowser:
             version_main=detect_chrome_version(driver_version),
             **uc_params,
         )
-        self.browser.set_page_load_timeout(timeout_dur)
+        # self.browser.set_page_load_timeout(timeout_dur)
         self.wait_object = WebDriverWait(self.browser, timeout_dur)
 
         agent = self.browser.execute_script("return navigator.userAgent")
@@ -271,7 +271,7 @@ class BaseBrowser:
         login_button = self.browser.find_elements(By.XPATH, self.markers.login_xq)
         return len(login_button) == 0
 
-    def wait_until_appear(self, by: By, elem_query: str) -> Union[WebElement, None]:
+    def wait_until_appear(self, by: By, elem_query: str, timeout_dur: int = None, fail_ok=False) -> Union[WebElement, None]:
         """
         Waits until the specified web element appears on the page.
 
@@ -291,12 +291,13 @@ class BaseBrowser:
         self.logger.info("Waiting element %s to appear.", elem_query)
         element = None
         try:
-            element = self.wait_object.until(
+            element = WebDriverWait(self.browser, timeout_dur or self.timeout_dur).until(
                 EC.presence_of_element_located((by, elem_query))
             )
             self.logger.info("Element %s appeared.", elem_query)
         except Exceptions.TimeoutException:
-            self.logger.error("Element %s is not present, something is wrong.", elem_query)
+            if not fail_ok:
+                self.logger.error("Element %s is not present, something is wrong.", elem_query)
         return element
 
     def wait_until_disappear(self, by: By, elem_query: str) -> bool:

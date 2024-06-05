@@ -4,14 +4,16 @@ multiagent_settings:
 driver_settings:
     shared:
         verbose: true
-        headless : true
+        headless : false
         incognito : true
         driver_arguments:
-          remote-debugging-port: 20222
-          disable-gpu: true
-          disable-dev-shm-usage: true
-          password-store: basic
+            remote-debugging-port: 20222
+            disable-gpu: true
+            disable-dev-shm-usage: true
+            password-store: basic
     nodes:
-        ChatGPT: {}
+        Copilot: {}
         Pi: {}
-        LeChat: {}
+        Gemini:
+            user_data_dir : /home/bigsmiley/Desktop/misc_coding/talkingheads_docker/talkingheads_userprofile
+            incognito : false
