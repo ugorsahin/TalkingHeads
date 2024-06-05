@@ -1,4 +1,4 @@
-## 0.5.1 (2024-05-19)
+## 0.5.1 (2024-06-05)
 
 ### Fix
 - XPATH elements updated for ChatGPT, Gemini, and HuggingChat
