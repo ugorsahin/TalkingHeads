@@ -21,7 +21,6 @@ class ClaudeClient(BaseBrowser):
             client_name="Claude",
             url="https://claude.ai",
             credential_check=False,
-            timeout_dur=30,
             **kwargs,
         )
 

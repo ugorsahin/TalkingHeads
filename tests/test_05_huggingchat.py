@@ -14,11 +14,11 @@ def test_start():
 
 def test_model_selection():
     assert pytest.chathead.switch_model(
-        "meta-llama/Llama-2-70b-chat-hf"
+        "google/gemma-1.1-7b-it"
     ), "Model switch failed."
     assert not pytest.chathead.switch_model(
         "dream-company/dream-model"
-    ), "Model switch failed."
+    ), "Unexpected model switch."
 
 
 def test_interaction():

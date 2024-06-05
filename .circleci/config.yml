@@ -1,7 +1,6 @@
 version: 2.1
 orbs:
   python: circleci/python@2.0.3
-  browser-tools: circleci/browser-tools@1.4.8
   codecov: codecov/codecov@4.0.1
 jobs:
   build-and-test:
@@ -14,7 +13,6 @@ jobs:
     working_directory: ~/project
     steps:
       - checkout
-      - browser-tools/install-chrome
       - run:
           command: |
             google-chrome --version
@@ -23,7 +21,6 @@ jobs:
           name: Install talkingheads and pytest
           command: |
             python -m pip install .
-            python -m pip install pytest psutil pytest-cov
       - run:
           name: Run tests
           command: |

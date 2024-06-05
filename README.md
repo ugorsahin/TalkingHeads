@@ -20,7 +20,7 @@
     <img src='https://github.com/ugorsahin/TalkingHeads/actions/workflows/codeql.yml/badge.svg' alt='CodeQL Status' />
   </a>
   <a href="https://codecov.io/gh/ugorsahin/TalkingHeads" > 
-    <img src="https://badgen.net/codecov/c/github/ugorsahin/talkingheads"/> 
+    <img src="https://img.shields.io/codecov/c/github/ugorsahin/talkingheads"/> 
   </a>
   <a href="https://github.com/astral-sh/ruff"><img alt="Code style: black" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json"></a>
 </p>

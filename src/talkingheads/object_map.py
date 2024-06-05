@@ -5,25 +5,25 @@ from easydict import EasyDict
 markers = EasyDict(
     {
         "ChatGPT": {
-            "login_xq"      : "//button[//div[text()='Log in']]",
-            "email_xq"     : "//input[@class='email-input' or @id='username']",
+            "login_xq"      : "//button[//*[text()='Log in']]",
+            "email_xq"     : "//input[contains(@class, 'email-input') or @id='username']",
             "pwd_iq"        : "password",
             "continue_xq"   : "//button[text()='Continue']",
             "tutorial_xq"   : "//div[contains(text(), 'Okay, let’s go')]",
             "button_tq"     : "button",
             "done_xq"       : "//button[//div[text()='Done']]",
-            "menu_xq"       : "//button[contains(@id, 'headlessui-menu-button')]",
-            "custom_xq"     : "//a[contains(text(), 'Custom')]",
+            "menu_xq"       : "//img[@alt='User']",
+            "custom_xq"     : "//div[contains(text(), 'Custom')]",
             "cust_toggle_xq": "//button[@role='switch']",
             "cust_txt_xq"   : "//textarea[@type='button']",
             "cust_save_xq"  : "//div[contains(text(), 'Save')]",
             "cust_cancel_xq": "//div[contains(text(), 'Cancel')]",
             "cust_tut_xq"   : "//div[text()='OK']",
             "chatbox_xq"    : "//div[@data-message-author-role='assistant']",
-            "wait_xq"       : "//button[@aria-label='Stop generating']",
+            "wait_xq"       : "//button[contains(@data-testid, 'stop-button')]",
             "reset_xq"      : "//a[//span[text()='New chat']]",
             "reset_cq"      : "truncate",
-            "regen_xq"      : "//button[contains(@class, 'group-[.final-completion]:visible')]",
+            "regen_xq"      : "//div[contains(@class, 'flex items-center')]//button",
             "textarea_tq"   : "textarea",
             "send_btn_xq"   : "//button[@data-testid='send-button']",
             "textarea_iq"   : "prompt-textarea",
@@ -92,14 +92,15 @@ markers = EasyDict(
             "img_upload_xq" : "//input[@name='Filedata']",
             "img_btn_xq"    : "//mat-icon[contains(text(), 'add_photo_alternate')]",
             # "send_btn_xq"   : "//button[@aria-label='Send message']",
-            "img_loaded_xq" : "//img[@aria-label='Image preview']"
+            "img_loaded_xq" : "//img[@aria-label='Image preview']",
+            "got_it_xq"     : "//button[@data-test-id='got-it-button']"
         },
         "LeChat" : {
             "username_xq"   : "//div[@data-testid='node/input/identifier']//input",
             "password_xq"   : "//div[@data-testid='node/input/password']//input",
             "textarea_xq"   : "//div/textarea",
             "stop_gen_xq"   : "//button[@aria-label='Stop generation']",
-            "chatbox_cq"    : "prose",
+            "chatbox_xq"    : "//*[contains(@class,'prose')]",
             "regen_xq"      : "//button[@aria-label='Rewrite']",
             "model_xq"      : "//button[@aria-label='select model']",
             "model_op_xq"   : "//div[@role='option']"
@@ -116,7 +117,8 @@ markers = EasyDict(
             "model_xq"      : "//div[div/div/text()='Current Model']//a",
             "settings_xq"   : "//h2[text()='Settings']",
             "model_li_xq"   : "//div/a/div[@class='truncate']",
-            "model_a_xq"    : "//div[h2/text()='Settings']//button"
+            "model_a_xq"    : "//div[h2/text()='Settings']//button",
+            "model_act_xq"  : "//button[@name='Activate model']"
         },
         "Pi": {
             "textarea_xq"   : "//textarea[@role='textbox']",

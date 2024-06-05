@@ -1,4 +1,5 @@
 """Class definition for LeChat client"""
+import time
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -49,18 +50,32 @@ class LeChatClient(BaseBrowser):
 
         return True
 
-    def get_last_response(self) -> str:
+    def get_last_response(self, tick_time : int = 200, tick_period : float = 0.5) -> str:
         """Retrieves the last response given by ChatGPT
 
         Returns:
             str: The last response
         """
-        self.wait_until_appear(By.XPATH, self.markers.stop_gen_xq)
-        self.wait_until_disappear(By.XPATH, self.markers.stop_gen_xq)
-        response = self.find_or_fail(
-            By.CLASS_NAME, self.markers.chatbox_cq, return_type="last"
-        )
-        return response.text
+        self.logger.info("Checking the response")
+        self.wait_until_appear(By.XPATH, self.markers.chatbox_xq)
+        # self.wait_until_disappear(By.XPATH, self.markers.stop_gen_xq)
+
+        for _ in range(tick_time):
+            time.sleep(tick_period)
+            l_response = self.find_or_fail(
+                By.XPATH, self.markers.chatbox_xq, return_type="last"
+            ).text
+            if l_response and l_response == self.interim_response:
+                break
+            self.interim_response = l_response
+
+        if not self.interim_response:
+            self.logger.error("There is no response, something is wrong")
+            return ""
+
+        self.logger.info("response is ready")
+        return self.interim_response
+
 
     def interact(self, prompt: str):
         """Sends a prompt and retrieves the response.

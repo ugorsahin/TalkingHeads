@@ -1,6 +1,17 @@
+## 0.5.1 (2024-06-05)
+
+### Fix
+- XPATH elements updated for ChatGPT, Gemini, and HuggingChat
+- timeout_dur removed from super class initialization
+- **base_browser**: Explicit timeout_dur setting, multihead waiting procedure
+- **chatgpt**: Removed unnecessary waiting for send button
+- **huggingface**: Model switch modal closes if fails
+- **gemini**: Clicks the data privacy "Got it" button if pops up
+- **multiagent**: Instead of launching browsers concurrently, launch them one after another, in sequence.
+
 ## 0.5.0 (2024-03-18)
 
-### Feat
+### Features
 
 - **is_url_check_filetype**: new functions to check filetype and if the string is url
 - **lechat**: Mistral Le Chat is automated

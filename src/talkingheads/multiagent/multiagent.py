@@ -58,20 +58,13 @@ class MultiAgent:
         shared_config = driver_settings.get("shared")
         nodes = driver_settings.get("nodes")
 
-        self.agent_swarm = self.dictmap(
-            lambda key, vals: (
-                vals.get("tag", key),
-                self.open_agent(
-                    key,
-                    merge(
-                        shared_config,
-                        vals,
-                        {"auto_save": False},
-                    ),
-                ),
-            ),
-            nodes,
-        )
+        self.agent_swarm = {
+            vals.get("tag", key) : self.open_agent(
+                key,
+                merge(shared_config, vals, {"auto_save": False, "multihead": True}),
+            )
+            for key, vals in nodes.items()
+        }
         self.ready = True
         self.logger.info("All models are successfully loaded")
 

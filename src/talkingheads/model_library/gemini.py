@@ -113,7 +113,15 @@ class GeminiClient(BaseBrowser):
             if not im_button:
                 return False
             im_button.click()
-            im_input_element = self.find_or_fail(By.XPATH, self.markers.img_upload_xq)
+
+            # Check if there is a modal, click True if there is
+            got_it_button = self.find_or_fail(By.XPATH, self.markers.got_it_xq, fail_ok=True)
+            if got_it_button:
+                got_it_button.click()
+                time.sleep(0.3)
+                im_button.click()
+
+            im_input_element = self.wait_until_appear(By.XPATH, self.markers.img_upload_xq)
             if not im_input_element:
                 return False
 
