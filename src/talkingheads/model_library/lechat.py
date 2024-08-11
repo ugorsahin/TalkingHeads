@@ -142,7 +142,7 @@ class LeChatClient(BaseBrowser):
         if model is None:
             self.logger.error("Model %s has not found", model_name)
             self.logger.error("Available models are: %s", str(models.keys()))
-            list(models.values())[0].send_keys(Keys.ESCAPE)
+            model_button.click()
             return False
 
         model.click()
