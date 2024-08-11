@@ -29,6 +29,7 @@ def test_reset():
 
 def test_delete_chathead():
     del pytest.chathead
+    time.sleep(1)
     assert not any(
         "undetected_chromedriver" in p.name() for p in psutil.process_iter()
     ), "Undetected chromedriver exists"

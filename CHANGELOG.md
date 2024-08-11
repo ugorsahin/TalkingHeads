@@ -1,3 +1,12 @@
+## 0.5.2 (2024-08-11)
+
+### Fix
+- XPATH elements updated for ChatGPT, Gemini, and LeChat
+- **gemini**: The response is retrieved repeatedly and is returned once the streaming has finished.
+- **lechat**: Fixed the model button click.
+- **chatgpt**: Removed unnecessary waiting for send button
+- **test**: New model name for LeChat, different order in Gemini, 
+
 ## 0.5.1 (2024-06-05)
 
 ### Fix

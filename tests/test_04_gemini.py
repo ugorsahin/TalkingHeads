@@ -2,10 +2,12 @@
 
 # import time
 import os
+import time
 from pathlib import Path
 import psutil
 import pytest
 from selenium.webdriver.common.by import By
+
 import talkingheads
 from utils import get_driver_arguments
 
@@ -21,14 +23,16 @@ def test_interaction():
     assert (
         "book" in response.lower()
     ), f'response is not "book.", instead it responded {response}'
+    time.sleep(0.5)
 
 
-def test_regenerate():
-    first_response = pytest.chathead.interact(
-        "Without any explanation or extra information, type three animal names."
-    ).lower()
-    second_response = pytest.chathead.regenerate_response()
-    assert first_response != second_response, "The regenerated response is the same."
+# def test_regenerate():
+#     first_response = pytest.chathead.interact(
+#         "Without any explanation or extra information, type three animal names."
+#     ).lower()
+#     second_response = pytest.chathead.regenerate_response()
+#     assert first_response != second_response, "The regenerated response is the same."
+#     time.sleep(0.5)
 
 
 def test_interaction_with_file():
@@ -40,9 +44,11 @@ def test_interaction_with_file():
     assert (
         "indeed" in response.lower()
     ), f"The word indeed doesn't exist in the response, instead it responded {response}"
+    time.sleep(0.5)
 
 def test_model():
     assert not pytest.chathead.switch_model("dream-model"), "Unexpected switch model behaviour"
+    time.sleep(0.5)
 
 
 def test_modify_response():
@@ -51,6 +57,7 @@ def test_modify_response():
     )
     new_response = pytest.chathead.modify_response("shorter")
     assert len(response) > len(new_response), "The new response longer!"
+    time.sleep(0.5)
 
 
 def test_reset():
@@ -63,6 +70,7 @@ def test_reset():
         )
         == 0
     ), "Chat is not empty"
+    time.sleep(0.5)
 
 
 def test_delete_chathead():

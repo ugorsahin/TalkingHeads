@@ -12,15 +12,6 @@ def test_start():
     assert pytest.chathead.ready, "The Client is not ready"
 
 
-def test_model_selection():
-    assert pytest.chathead.switch_model(
-        "google/gemma-1.1-7b-it"
-    ), "Model switch failed."
-    assert not pytest.chathead.switch_model(
-        "dream-company/dream-model"
-    ), "Unexpected model switch."
-
-
 def test_interaction():
     time.sleep(1)
     response = pytest.chathead.interact(
@@ -42,6 +33,14 @@ def test_reset():
         == 0
     ), "Chat is not empty"
 
+
+def test_model_selection():
+    assert pytest.chathead.switch_model(
+        "mistralai/Mistral-7B-Instruct-v0.3"
+    ), "Model switch failed."
+    assert not pytest.chathead.switch_model(
+        "dream-company/dream-model"
+    ), "Unexpected model switch."
 # Searching web is unstable, huggingchat fails to search web sometimes.
 # def test_search_web():
 #     pytest.chathead.toggle_search_web()

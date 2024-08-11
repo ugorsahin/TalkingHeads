@@ -46,7 +46,7 @@ def test_regenerate():
 
 
 def test_model_selection():
-    assert pytest.chathead.switch_model("Next"), "Model switch failed."
+    assert pytest.chathead.switch_model("Codestral"), "Model switch failed."
     assert not pytest.chathead.switch_model("dream-model"), "Unexpected model switch"
 
 
