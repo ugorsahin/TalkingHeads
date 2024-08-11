@@ -12,7 +12,7 @@ markers = EasyDict(
             "tutorial_xq"   : "//div[contains(text(), 'Okay, let’s go')]",
             "button_tq"     : "button",
             "done_xq"       : "//button[//div[text()='Done']]",
-            "menu_xq"       : "//img[@alt='User']",
+            "menu_xq"       : "//button[@data-testid='profile-button']",
             "custom_xq"     : "//div[contains(text(), 'Custom')]",
             "cust_toggle_xq": "//button[@role='switch']",
             "cust_txt_xq"   : "//textarea[@type='button']",
@@ -80,17 +80,20 @@ markers = EasyDict(
         "Gemini": {
             "file_types"    : ["jpg", "jpeg", "png", "webp"],
             "textarea_xq"   : '//div[@role="textbox"]',
-            "wait_xq"       : '//img[contains(@src, "sparkle_processing")]',
+            # "wait_xq"       : '//img[contains(@src, "sparkle_processing")]',
+            "wait_xq"       : '//rect',
+            # "wait_xq"       : '//mat-icon[@data-mat-icon-name="send"]',
             "chatbox_tq"    : "message-content",
             "new_chat_xq"   : '//expandable-button[contains(@aria-label, "New chat")]',
             "hist_off_xq"   : '//button[@data-test-id="bard-activity-disabled-button"]',
             "chat_conf_xq"  : '//button[@data-test-id="confirm-button"]',
-            "regen_1_xq"    : "//mat-expansion-panel[@data-test-id='drafts-expansion-panel']",
+            "regen_1_xq"    : "//span[@class='generate-drafts-button']",
             "regen_2_cq"    : "regenerate-button",
             "modify_xq"     : "//button[@aria-label='Modify response']",
             "mod_opt_xq"    : "//button[@role='menuitem'][not(contains(@style, 'none'))]",
             "img_upload_xq" : "//input[@name='Filedata']",
-            "img_btn_xq"    : "//mat-icon[contains(text(), 'add_photo_alternate')]",
+            # "img_btn_xq"    : "//mat-icon[contains(text(), 'add_photo_alternate')]",
+            "img_btn_xq"    : "//mat-icon[@data-mat-icon-name='add_photo_alternate']",
             # "send_btn_xq"   : "//button[@aria-label='Send message']",
             "img_loaded_xq" : "//img[@aria-label='Image preview']",
             "got_it_xq"     : "//button[@data-test-id='got-it-button']"
@@ -102,8 +105,8 @@ markers = EasyDict(
             "stop_gen_xq"   : "//button[@aria-label='Stop generation']",
             "chatbox_xq"    : "//*[contains(@class,'prose')]",
             "regen_xq"      : "//button[@aria-label='Rewrite']",
-            "model_xq"      : "//button[@aria-label='select model']",
-            "model_op_xq"   : "//div[@role='option']"
+            "model_xq"      : "//button/span[@class='truncate']",
+            "model_op_xq"   : "//div[contains(@class, 'w-full')]/div[contains(@class, 'text-sm')]"
         },
         "HuggingChat": {
             "login_xq"      : "//form[@action='/chat/login']",
