@@ -61,24 +61,35 @@ class GeminiClient(BaseBrowser):
     def postload_custom_func(self):
         self.browser.get(self.url)
 
-    def get_response(self) -> str:
+    def get_response(self, tick_step: int = 40, tick_period : float = 0.5, max_same_ans : int = 3) -> str:
         """Get the response from chat board
 
         Returns:
             str: The interaction text
         """
         self.logger.info("Message sent, waiting for response")
-        self.wait_until_disappear(By.XPATH, self.markers.wait_xq)
-        response = self.find_or_fail(
-            By.TAG_NAME, self.markers.chatbox_tq, return_type="last"
-        )
-        if not response:
-            self.logger.info("response is not found.")
+        self.interim_response = None
+        self.wait_until_appear(By.TAG_NAME, self.markers.chatbox_tq)
+        counter = 0
+        for _ in range(tick_step):
+            time.sleep(tick_period)
+            l_response = self.find_or_fail(
+                By.TAG_NAME, self.markers.chatbox_tq, return_type="last"
+            ).text
+            if l_response and l_response == self.interim_response:
+                counter += 1
+            if counter > max_same_ans:
+                break
+            self.interim_response = l_response
+
+        if not self.interim_response:
+            self.logger.error("There is no response, something is wrong")
             return ""
 
         self.logger.info("response is ready")
+        return self.interim_response
 
-        return response.text
+        # return response.text
 
 
     def upload_image(self, image_path: Union[str, Path]) -> bool:
@@ -212,7 +223,7 @@ class GeminiClient(BaseBrowser):
         draft_button.click()
         self.logger.info("Clicked drafts button")
 
-        WebDriverWait(self.browser, 10).until(
+        self.wait_object.until(
             EC.element_to_be_clickable((By.CLASS_NAME, self.markers.regen_2_cq))
         ).click()
         self.logger.info("Clicked regenerate button")
