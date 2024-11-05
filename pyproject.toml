@@ -12,7 +12,7 @@ name = "talkingheads"
 description = "A library to communicate with AI assistants such as ChatGPT, Claude, Copilot, Gemini, HuggingChat, and Pi, and enabling multiagent interactions between them."
 readme = "README.md"
 requires-python = ">=3.8"
-version = "0.5.2"
+version = "0.5.3"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
