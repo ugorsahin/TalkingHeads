@@ -209,21 +209,30 @@ class ChatGPTClient(BaseBrowser):
 
     def regenerate_response(self) -> str:
         """
-        Clicks the response to generate a new one and returns the new response.
+        Clicks the regenerate button to generate a new response
+            and returns the new response.
 
         Args:
             None
 
         Returns:
-            str
+            str: The newly generated response text. If the regeneration fails, returns an empty string.
         """
         regen_button = self.find_or_fail(
-            By.XPATH, self.markers.regen_xq, return_type="all"
+            By.XPATH, self.markers.regen_1_xq, return_type="first"
         )
         if not regen_button:
             return ""
-        regen_button[-3].click()
+        regen_button.click()
         self.logger.info("Clicked regenerate button")
+
+        try_again_button = self.find_or_fail(
+            By.XPATH, self.markers.regen_2_xq, return_type="last"
+        )
+        if not try_again_button:
+            return ""
+        try_again_button.click()
+        self.logger.info("Clicked Try again button")
 
         response = self.get_last_response()
         if not response:
