@@ -1,16 +1,13 @@
 """Class definition for Copilot client"""
 
 import time
-import re
 from pathlib import Path
-from typing import Union, Dict
+from typing import Union
 
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.remote.shadowroot import ShadowRoot
 from ..base_browser import BaseBrowser
 from ..utils import check_filetype, is_url
 
