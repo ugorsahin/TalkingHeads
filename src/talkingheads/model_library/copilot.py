@@ -236,28 +236,14 @@ class CopilotClient(BaseBrowser):
         Returns:
             Dict[str]: The generated response.
         """
-        main_area = self.find_or_fail(
-            By.TAG_NAME, self.markers.main_area_tq, return_shadow=True
-        )
-        action_bar = self.find_or_fail(
-            By.ID, self.markers.act_bar_iq, dom_element=main_area, return_shadow=True
-        )
-        input_bar = (
-            self.find_or_fail(
-                By.CLASS_NAME, self.markers.input_bar_cq, dom_element=action_bar
-            )
-            .children()[0]
-            .shadow_root
-        )
-        text_area = self.find_or_fail(
-            By.ID, self.markers.textarea_iq, dom_element=input_bar
-        )
+
+        text_area = self.find_or_fail(By.XPATH, self.markers.textarea_xq)
 
         if not text_area:
             self.logger.error("Unable to locate text area, interaction fails.")
             return ""
         if image_path:
-            self.upload_image(action_bar, image_path)
+            self.upload_image(image_path)
 
         for each_line in prompt.split("\n"):
             text_area.send_keys(each_line)
@@ -266,7 +252,11 @@ class CopilotClient(BaseBrowser):
         # Click enter and send the message
         text_area.send_keys(Keys.ENTER)
 
-        if not self.is_ready_to_prompt(text_area, action_bar):
+        self.close_location_modal()
+        if image_path:
+            time.sleep(1)
+
+        if not self.is_ready_to_prompt():
             self.logger.info("Cannot retrieve the response, something is wrong")
             return ""
 
