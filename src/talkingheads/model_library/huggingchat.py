@@ -153,10 +153,9 @@ class HuggingChatClient(BaseBrowser):
             else:
                 activate_button.click()
 
-        close_button = self.find_or_fail(By.XPATH, self.markers.model_a_xq)
-        if not close_button:
-            successful_switch = False
-        close_button.click()
+        close_button = self.find_or_fail(By.XPATH, self.markers.model_a_xq, fail_ok=True)
+        if close_button:
+            close_button.click()
 
         return successful_switch
 
