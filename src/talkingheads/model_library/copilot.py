@@ -282,21 +282,22 @@ class CopilotClient(BaseBrowser):
         Returns:
             bool: False always, it is not possible to reset in Pi.
         """
-        main_area = self.find_or_fail(
-            By.TAG_NAME, self.markers.main_area_tq, return_shadow=True
-        )
-        if not main_area:
-            return False
 
-        action_bar = self.find_or_fail(
-            By.ID, self.markers.act_bar_iq, dom_element=main_area, return_shadow=True
-        )
-        if not action_bar:
-            return False
+        # Find home button, but it may be fine even the button is not there.
+        home_button = self.find_or_fail(By.XPATH, self.markers.home_xq)
+        if not home_button:
+            self.logger.info("Home button is not found, trying view history button")
+        else:
+            home_button.click()
 
-        new_chat_button = self.find_or_fail(
-            By.CLASS_NAME, self.markers.new_chat_cq, dom_element=action_bar
-        )
+        # Find view history button to find new chat button.
+        view_history_button = self.find_or_fail(By.XPATH, self.markers.history_xq)
+        if not view_history_button:
+            return False
+        view_history_button.click()
+
+        # Find new chat button.
+        new_chat_button = self.find_or_fail(By.XPATH, self.markers.new_chat_xq)
         if not new_chat_button:
             return False
         new_chat_button.click()
