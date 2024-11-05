@@ -1,3 +1,19 @@
+## 0.5.3 (2024-11-05)
+
+### Fix
+
+- Introduced generic tests
+- Xpath updates for ChatGPT, Copilot, HuggingChat
+- **HuggingChat**: only click close button if it is present, and do not throw error because of the button
+- **ChatGPT**: Regenerate function try again button included
+- **Copilot**: fix various login issues
+- **Copilot**: Skip location modal in case it pops.
+- **Copilot**: Remove reduntant imports
+- **Copilot**: Reworked prompting, image utility, interact and reset_thread to be compatible with the new Copilot UI
+- **Copilot**: Plugin and model features removed.
+- **base_browser**: Docstrings, linting and formatting
+
+
 ## 0.5.2 (2024-08-11)
 
 ### Fix

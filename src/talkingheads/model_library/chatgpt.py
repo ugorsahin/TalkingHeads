@@ -71,16 +71,17 @@ class ChatGPTClient(BaseBrowser):
         # Find login button, click it
 
         login_button = self.wait_until_appear(By.XPATH, self.markers.login_xq)
+        self.wait_object.until(EC.element_to_be_clickable(login_button))
         login_button.click()
 
-        login_button = self.find_or_fail(
-            By.XPATH, self.markers.login_xq, fail_ok=True
-        )
-        login_button.click()
+        # login_button = self.find_or_fail(By.XPATH, self.markers.login_xq, fail_ok=True)
+        # login_button.click()
         self.logger.info("Clicked login button for the first time.")
 
         for _ in range(5):
-            email_box = self.wait_until_appear(By.XPATH, self.markers.email_xq, 5, fail_ok=True)
+            email_box = self.wait_until_appear(
+                By.XPATH, self.markers.email_xq, 5, fail_ok=True
+            )
             if email_box:
                 self.logger.info("Username area has found")
                 break
@@ -100,7 +101,6 @@ class ChatGPTClient(BaseBrowser):
         # Click continue
         continue_button = self.wait_until_appear(By.XPATH, self.markers.continue_xq)
         continue_button.click()
-        time.sleep(1)
         self.logger.info("Clicked continue button")
 
         # Find password textbox, enter password
@@ -108,9 +108,10 @@ class ChatGPTClient(BaseBrowser):
         pass_box.send_keys(password)
         self.logger.info("Filled password box")
         # Click continue
-        pass_box.send_keys(Keys.ENTER)
-        time.sleep(1)
-        self.logger.info("Logged in")
+        
+        continue_button = self.wait_until_appear(By.XPATH, self.markers.continue_xq)
+        continue_button.click()
+        self.logger.info("Clicked continue in password page")
 
         try:
             # Pass introduction
@@ -124,29 +125,58 @@ class ChatGPTClient(BaseBrowser):
         except Exception as err:
             self.logger.error("Something unexpected happened: %s", err)
             return False
-        return True
 
-    def get_last_response(self, tick_step: int = 200, tick_period: float = 0.5, max_same_ans=3) -> str:
-        """Retrieves the last response given by ChatGPT
+        text_area = self.wait_until_appear(By.TAG_NAME, self.markers.textarea_tq)
+
+        if text_area is not None:
+            self.logger.info("Login is not successful.")
+            return True
+
+        self.logger.error("Login is not successful.")
+        return False
+
+    def get_last_response(
+        self, num_step: int = 200, period: float = 0.5, same_answer_limit=3
+    ) -> str:
+        """
+        Continuously checks for a response in a chatbox-like element and
+            returns the last received response.
+
+        Args:
+            num_step (int): Number of cycles to check for updates to the response.
+                Defaults to 200.
+            period (float): Sleep time between each step, representing the delay between each check.
+                Defaults to 0.5 seconds.
+            same_answer_limit (int): The maximum number of times the same response can
+                be observed before concluding that the response is complete. Defaults to 3.
 
         Returns:
-            str: The last response
+            str: The last valid response from the chatbox element.
+                If no response is found, an empty string is returned.
+
+        Behavior:
+            - The function first waits for the chatbox element to appear on the page.
+            - It continuously checks for updates to the response in the chatbox.
+            - The response is checked continuously, `period` seconds between each check.
+            - If the response remains the same for more than `same_answer_limit` consecutive times,
+                the loop breaks, assuming the response is complete.
+            - If no response is found, it returns an empty string.
+            - If a response is found, it returns the last detected response.
         """
+
         self.logger.info("Checking the response")
-        # self.wait_until_disappear(By.XPATH, self.markers.wait_xq)
-        # self.wait_until_appear(By.XPATH, self.markers.send_btn_xq)
 
         self.interim_response = None
         self.wait_until_appear(By.XPATH, self.markers.chatbox_xq)
         counter = 0
-        for _ in range(tick_step):
-            time.sleep(tick_period)
+        for _ in range(num_step):
+            time.sleep(period)
             l_response = self.find_or_fail(
                 By.XPATH, self.markers.chatbox_xq, return_type="last"
             ).text
             if l_response and l_response == self.interim_response:
                 counter += 1
-            if counter > max_same_ans:
+            if counter > same_answer_limit:
                 break
             self.interim_response = l_response
 
@@ -174,10 +204,7 @@ class ChatGPTClient(BaseBrowser):
             str: The generated response.
         """
 
-        text_area = self.browser.find_elements(By.TAG_NAME, self.markers.textarea_tq)
-        if not text_area:
-            self.logger.info("Unable to locate text area tag. Switching to ID search")
-            text_area = self.browser.find_elements(By.ID, self.markers.textarea_iq)
+        text_area = self.browser.find_elements(By.XPATH, self.markers.textarea_xq)
         if not text_area:
             raise RuntimeError(
                 "Unable to find the text prompt area. Please raise an issue with verbose=True"
@@ -198,7 +225,6 @@ class ChatGPTClient(BaseBrowser):
     def reset_thread(self) -> bool:
         """Function to close the current thread and start new one"""
         self.browser.get(self.url)
-        time.sleep(0.5)
         text_area = self.wait_until_appear(By.TAG_NAME, self.markers.textarea_tq)
         if text_area:
             return True
@@ -209,21 +235,30 @@ class ChatGPTClient(BaseBrowser):
 
     def regenerate_response(self) -> str:
         """
-        Clicks the response to generate a new one and returns the new response.
+        Clicks the regenerate button to generate a new response
+            and returns the new response.
 
         Args:
             None
 
         Returns:
-            str
+            str: The newly generated response text. If the regeneration fails, returns an empty string.
         """
         regen_button = self.find_or_fail(
-            By.XPATH, self.markers.regen_xq, return_type="all"
+            By.XPATH, self.markers.regen_1_xq, return_type="first"
         )
         if not regen_button:
             return ""
-        regen_button[-3].click()
+        regen_button.click()
         self.logger.info("Clicked regenerate button")
+
+        try_again_button = self.find_or_fail(
+            By.XPATH, self.markers.regen_2_xq, return_type="last"
+        )
+        if not try_again_button:
+            return ""
+        try_again_button.click()
+        self.logger.info("Clicked Try again button")
 
         response = self.get_last_response()
         if not response:

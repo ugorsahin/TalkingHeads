@@ -1,12 +1,12 @@
 """LeChat test"""
 
 import time
-import psutil
 import pytest
 from selenium.webdriver.common.by import By
-from talkingheads import LeChatClient
-from utils import get_driver_arguments
 
+import generic
+from utils import get_driver_arguments
+from talkingheads import LeChatClient
 
 def test_start():
     pytest.chathead = LeChatClient(
@@ -17,12 +17,7 @@ def test_start():
 
 def test_interaction():
     time.sleep(1)
-    response = pytest.chathead.interact(
-        "Without any explanation or extra information, just repeat the following: book."
-    )
-    assert (
-        "book" in response.lower()
-    ), f'response is not "book.", instead it returned {response}'
+    generic.test_interaction()
 
 
 def test_reset():
@@ -51,7 +46,4 @@ def test_model_selection():
 
 
 def test_delete_chathead():
-    del pytest.chathead
-    assert not any(
-        "undetected_chromedriver" in p.name() for p in psutil.process_iter()
-    ), "Undetected chromedriver exists"
+    generic.test_delete_chathead()

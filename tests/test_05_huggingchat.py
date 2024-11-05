@@ -1,11 +1,12 @@
 """HuggingChat test"""
 
 import time
-import psutil
 import pytest
 from selenium.webdriver.common.by import By
-from talkingheads import HuggingChatClient
+
+import generic
 from utils import get_driver_arguments
+from talkingheads import HuggingChatClient
 
 def test_start():
     pytest.chathead = HuggingChatClient(**get_driver_arguments('huggingchat', incognito=True))
@@ -14,12 +15,7 @@ def test_start():
 
 def test_interaction():
     time.sleep(1)
-    response = pytest.chathead.interact(
-        "Without any explanation or extra information, just repeat the following: book."
-    )
-    assert (
-        "book" in response.lower()
-    ), f'response is not "book.", instead it returned {response}'
+    return generic.test_interaction()
 
 
 def test_reset():
@@ -36,11 +32,12 @@ def test_reset():
 
 def test_model_selection():
     assert pytest.chathead.switch_model(
-        "mistralai/Mistral-7B-Instruct-v0.3"
+        "microsoft/Phi-3.5-mini-instruct"
     ), "Model switch failed."
     assert not pytest.chathead.switch_model(
         "dream-company/dream-model"
     ), "Unexpected model switch."
+
 # Searching web is unstable, huggingchat fails to search web sometimes.
 # def test_search_web():
 #     pytest.chathead.toggle_search_web()
@@ -54,7 +51,4 @@ def test_model_selection():
 #     ), f'The dates are not in correct format or the result doesn\'t have the dates: {response}'
 
 def test_delete_chathead():
-    del pytest.chathead
-    assert not any(
-        "undetected_chromedriver" in p.name() for p in psutil.process_iter()
-    ), "Undetected chromedriver exists"
+    return generic.test_delete_chathead()
