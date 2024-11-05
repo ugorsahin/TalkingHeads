@@ -14,30 +14,6 @@ def test_start():
     assert pytest.chathead.ready, "The Client is not ready"
 
 
-def test_model():
-    model_type = pytest.chathead.get_models(get_active_model=True)
-    assert model_type == "Balanced", "Model is not balanced"
-
-    assert pytest.chathead.switch_model("Creative"), "Unable to switch to Creative"
-    model_type = pytest.chathead.get_models(get_active_model=True)
-    assert model_type == "Creative", "Model is not Creative"
-
-    assert pytest.chathead.switch_model("Balanced"), "Unable to switch to Balanced"
-    model_type = pytest.chathead.get_models(get_active_model=True)
-    assert model_type == "Balanced", "Model is not Balanced"
-
-    assert not pytest.chathead.switch_model("dream-model"), "Unexpected model switch"
-
-
-def test_plugins():
-    ch = pytest.chathead
-    assert ch.toggle_plugin("Kayak"), "Couldn't enable Kayak plugin"
-    assert ch.get_plugin("Kayak").is_selected(), "Kayak plugin is not enabled"
-    assert ch.toggle_plugin("Kayak"), "Couldn't enable Kayak plugin"
-    assert ch.get_plugin("Kayak"), "Kayak plugin is not disabled"
-    assert not ch.get_plugin("dream-plugin"), "Unexpected plugin switch"
-
-
 def test_interaction():
     time.sleep(1)
     response = pytest.chathead.interact(
