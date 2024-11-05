@@ -1,4 +1,25 @@
-"""Class definition for ChatGPT_Client"""
+"""
+This module provides a base class `BaseBrowser` for automating web interactions using the 
+`undetected_chromedriver` package and Selenium WebDriver.
+
+The `BaseBrowser` class establishes core for different chatbot interfaces, providing common 
+features such as headless mode, incognito browsing, login functionality, and interaction with 
+web elements. It also includes utility functions for handling timeouts, saving chat history, 
+and performing custom pre- and post-load actions on webpages.
+
+Key Features:
+    - Browser automation using undetected_chromedriver and Selenium.
+    - Configurable headless, incognito modes, and driver arguments.
+    - Timeout management for page load and element interactions.
+    - Automatic login and credential management using environment variables.
+    - Logging and verbose mode for detailed tracking of actions.
+    - Functions to find, wait for, and interact with web elements.
+    - Chat history saving and automatic response logging.
+
+The module also includes abstract methods (`login`, `interact`, `reset_thread`, etc.) 
+that should be implemented by subclasses for specific automation workflows, like interacting 
+with a chatbot or performing other automated web tasks.
+"""
 
 import abc
 import os
@@ -19,33 +40,43 @@ import selenium.common.exceptions as Exceptions
 from .object_map import markers
 from .utils import detect_chrome_version, save_func_map
 
+
 class BaseBrowser:
     """
-    BaseBrowser class to provide utility function and flow for LLMs
+    A base class for browser automation that includes login, interaction, and session management
+    for various clients. This class provides essential browser functionality like loading web pages,
+    managing timeouts, saving chat logs, and handling login processes, which can be customized
+    for different clients.
 
     Args:
-        client_name (str): A string representing the name of the client.
-        url (str): The URL to be used as an entrypoint.
-        uname_var (str): The username environment variable, to enable multiple agents.
-        pwd_var (str): The password environment variable, to enable multiple agents.
-        username (str, optional): Deprecated. Use environment variables instead.
-        password (str, optional): Deprecated. Use environment variables instead.
+        client_name (str): Name of the client.
+        url (str): URL to be used as the starting point of the session.
+        uname_var (str): Environment variable name for the username.
+        pwd_var (str): Environment variable name for the password.
+        username (str, optional): Username (deprecated, environment variables recommended).
+        password (str, optional): Password (deprecated, environment variables recommended).
         headless (bool, optional): Enables/disables headless mode. Default: True.
-        cold_start (bool, optional): If set, loads the chat endpoints and returns. Default: False.
-        incognito (bool, optional): A boolean to set incognito mode. Default: True.
-        driver_arguments (list, optional): A list of arguments for the driver. Default: None.
-        driver_version (int, optional): The version of the chromedriver. Default: None.
+        cold_start (bool, optional): If True, load the page and return. Default: False.
+        incognito (bool, optional): Enables incognito mode if True. Default: True.
+        driver_arguments (list, optional): Additional arguments for the browser driver.
+        driver_version (int, optional): Version of the ChromeDriver to use.
         auto_save (bool, optional): A boolean to enable/disable automatic saving. Default: False.
-        save_path (str, optional): The file path to save chat logs. Default: None.
+        save_path (str, optional): Path to save chat logs.
         verbose (bool, optional): A boolean to enable/disable logging. Default: False.
         credential_check (bool, optional): Enables/disables credential check. Default: True.
         skip_login (bool, optional): If True, skips the login procedure. Default: False.
-        user_data_dir (str, optional): The directory path to user profile. Default: None.
-        uc_params (dict, optional): Parameters for uc.Chrome().
+        user_data_dir (str, optional): The directory path to user profile.
+        uc_params (dict, optional): Additional parameters for undetected Chrome (uc.Chrome).
             Some examples : driver_executable_path, browser_executable_path
 
-    Returns:
-        BaseBrowser: The base driver object.
+    Attributes:
+        client_name (str): Client name provided during initialization.
+        browser (uc.Chrome): The undetected Chrome browser instance.
+        markers (dict): Markers used for locating elements on the page.
+        logger (logging.Logger): Logger for the browser class.
+        ready (bool): Whether the browser is fully initialized and ready.
+        timeout_dur (int): Page load and element wait timeout duration.
+        chat_history (pd.DataFrame): DataFrame that holds chat history.
     """
 
     def __init__(
@@ -70,7 +101,7 @@ class BaseBrowser:
         user_data_dir: str = None,
         uc_params: dict = None,
         tag: str = None,
-        multihead = False
+        multihead=False,
     ):
         self.client_name = client_name
         self.markers = markers[client_name]
@@ -79,6 +110,7 @@ class BaseBrowser:
         self.pwd_var = pwd_var or f"{client_name}_PWD"
         self.headless = headless
         self.ready = False
+        self.browser = None
         self.auto_save = auto_save
         self.last_prompt = ""
         self.tag = tag or self.client_name
@@ -120,17 +152,25 @@ class BaseBrowser:
         options.headless = self.headless
         if incognito:
             options.add_argument("--incognito")
+
+        # chrome_prefs = {
+        #     "profile.default_content_settings" : {"images": 2},
+        #     "profile.managed_default_content_settings" : {"images": 2}
+        # }
+
+        # options.experimental_options["prefs"] = chrome_prefs
+
         if driver_arguments:
             if isinstance(driver_arguments, dict):
-                driver_arguments = list(map(
-                    lambda kv: f"--{kv[0]}" + ("" if kv[1] is True else f"={kv[1]}"),
-                    driver_arguments.items()
-                ))
+                driver_arguments = list(
+                    map(
+                        lambda kv: f"--{kv[0]}"
+                        + ("" if kv[1] is True else f"={kv[1]}"),
+                        driver_arguments.items(),
+                    )
+                )
 
-            _ = list(map(
-                options.add_argument,
-                driver_arguments
-            ))
+            _ = list(map(options.add_argument, driver_arguments))
 
         self.logger.info("Loading undetected Chrome")
         uc_params = uc_params or {}
@@ -170,37 +210,44 @@ class BaseBrowser:
         self.set_save_path(save_path)
 
     def __del__(self):
-        # If there is an error in the initialisation,
-        # the browser attribute is not assigned,
-        # so we first check if the object has the browser attribute.
-        if hasattr(self, 'browser'):
+        if self.browser is not None:
             self.browser.close()
             self.browser.quit()
 
         if self.auto_save:
             self.save()
 
-    def set_timeout_dur(self, timeout_dur : int):
-        """Sets the timeout duration.
+    def set_timeout_dur(self, timeout_dur: int):
+        """
+        Sets the duration for page load and element wait timeout.
 
         Args:
-            timeout_dur (int): The timeout duration (seconds).
+            timeout_dur (int): The timeout duration in seconds.
         """
 
         self.browser.set_page_load_timeout(timeout_dur)
         self.wait_object = WebDriverWait(self.browser, timeout_dur)
 
     def set_save_path(self, save_path: str):
-        """Sets the path to save the file
+        """
+        The file path to save the chat log. If not provided, a timestamped file
+        with the default extension 'csv' is created in the current working directory.
 
         Args:
             save_path (str): The saving path
         """
-        self.save_path = save_path or datetime.now().strftime(f"{self.tag}_%Y_%m_%d_%H_%M_%S.csv")
+        self.save_path = save_path or datetime.now().strftime(
+            f"{self.tag}_%Y_%m_%d_%H_%M_%S.csv"
+        )
         self.file_type = save_path.split(".")[-1] if save_path else "csv"
 
     def save(self) -> bool:
-        """Saves the conversation."""
+        """
+        Saves the chat history to a file using the provided save path and file format.
+
+        Returns:
+            bool: True if the file was successfully saved, False otherwise.
+        """
         save_func = save_func_map.get(self.file_type, None)
         if save_func:
             save_func = getattr(self.chat_history, save_func)
@@ -219,17 +266,20 @@ class BaseBrowser:
         return_shadow: bool = False,
         fail_ok: bool = False,
         dom_element: WebElement = None,
-    ):
-        """Finds a list of elements given elem_query, if none of the items exists, throws an error
+    ) -> Union[WebElement, None]:
+        """
+        Finds elements based on the provided query and locator method.
+        Raises an error if no element is found and fail_ok is False.
 
         Args:
-            by (selenium.webdriver.common.by.By): The method used to locate the element.
-            elem_query (str): The elem_query string to locate the element.
-            return_type (str): first|all|last. Return first element, all elements or the last one.
-            fail_ok (bool): Do not produce error if it is ok to fail.
+            by (By): The method used to locate the element (e.g., By.ID, By.XPATH).
+            elem_query (str): The query string for locating the element.
+            return_type (str): Defines which element to return ('first', 'all', or 'last'). Default is 'first'.
+            return_shadow (bool, optional): If True, returns the shadow root of the element. Default is False.
+            fail_ok (bool): o not produce error if it is ok to fail.
             dom_element (WebElement): If set, finds within that element.
         Returns:
-            WebElement: Web element or None if not found.
+            WebElement: The found web element or None if not found.
         """
 
         if return_type not in {"first", "last", "all"}:
@@ -243,7 +293,8 @@ class BaseBrowser:
         if not dom_element:
             if not fail_ok:
                 self.logger.error(
-                    " %s is not located. Please raise an issue with verbose=True", elem_query
+                    " %s is not located. Please raise an issue with verbose=True",
+                    elem_query,
                 )
             else:
                 self.logger.info(" %s is not located.", elem_query)
@@ -257,21 +308,28 @@ class BaseBrowser:
             "last": lambda x: x[-1],
         }[return_type](dom_element)
 
-        if return_shadow:
-            return element.shadow_root
+        if return_shadow and return_type == "all":
+            self.logger.warning(
+                "Returning shadow root of a list of elements is not implemented."
+            )
+        elif return_shadow:
+            element = element.shadow_root
+
         return element
 
-    def check_login_page(self):
+    def is_login_page(self):
         """
-        Checks if the login page is displayed in the browser.
+        Checks whether the login page is currently displayed.
 
         Returns:
-            bool: True if the login page is not present, False otherwise.
+            bool: True if the login button is not present, False otherwise.
         """
         login_button = self.browser.find_elements(By.XPATH, self.markers.login_xq)
-        return len(login_button) == 0
+        return len(login_button) == 1
 
-    def wait_until_appear(self, by: By, elem_query: str, timeout_dur: int = None, fail_ok=False) -> Union[WebElement, None]:
+    def wait_until_appear(
+        self, by: By, elem_query: str, timeout_dur: int = None, fail_ok=False
+    ) -> Union[WebElement, None]:
         """
         Waits until the specified web element appears on the page.
 
@@ -283,21 +341,23 @@ class BaseBrowser:
             by (selenium.webdriver.common.by.By): The method used to locate the element.
             elem_query (str): The elem_query string to locate the element.
             timeout_dur (int, optional): Waiting time before the timeout. Default: 15.
+            fail_ok (bool, optional): If True, does not log an error when the element does not appear.
 
         Returns:
-            (WebElement | None): If element is appeared, it returns the element. Otherwise,
-            it returns None.
+            WebElement | None: The web element if found, otherwise None.
         """
         self.logger.info("Waiting element %s to appear.", elem_query)
         element = None
         try:
-            element = WebDriverWait(self.browser, timeout_dur or self.timeout_dur).until(
-                EC.presence_of_element_located((by, elem_query))
-            )
+            element = WebDriverWait(
+                self.browser, timeout_dur or self.timeout_dur
+            ).until(EC.presence_of_element_located((by, elem_query)))
             self.logger.info("Element %s appeared.", elem_query)
         except Exceptions.TimeoutException:
             if not fail_ok:
-                self.logger.error("Element %s is not present, something is wrong.", elem_query)
+                self.logger.error(
+                    "Element %s is not present, something is wrong.", elem_query
+                )
         return element
 
     def wait_until_disappear(self, by: By, elem_query: str) -> bool:
@@ -328,7 +388,7 @@ class BaseBrowser:
             self.logger.info("Element %s still here, something is wrong.", elem_query)
             return False
 
-    def _multihead_wait(self, by: By, elem_query: str, pool_time : float = 0.5) -> bool:
+    def _multihead_wait(self, by: By, elem_query: str, pool_time: float = 0.5) -> bool:
         """
         This is a temporary function to wait until the element disappears.
 
@@ -350,7 +410,7 @@ class BaseBrowser:
             if not item:
                 self.logger.debug("The item %s %s is not located", by, elem_query)
                 return True
-            logging.debug('The item is still present, waiting')
+            logging.debug("The item is still present, waiting")
             time.sleep(pool_time)
         logging.error("Item is still present")
         return False
@@ -430,7 +490,9 @@ class BaseBrowser:
         """
         Abstract function to open a new thread.
         """
-        self.logger.warning("Resetting thread is either not implemented or not available")
+        self.logger.warning(
+            "Resetting thread is either not implemented or not available"
+        )
 
     @abc.abstractmethod
     def regenerate_response(self) -> str:
@@ -449,4 +511,6 @@ class BaseBrowser:
         Args:
             model_name: (str) = The name of the model.
         """
-        self.logger.warning("Switching model is either not implemented or not available")
+        self.logger.warning(
+            "Switching model is either not implemented or not available"
+        )
