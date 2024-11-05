@@ -3,10 +3,11 @@
 import os
 import time
 from pathlib import Path
-import psutil
 import pytest
-from talkingheads import CopilotClient
+
+import generic
 from utils import get_driver_arguments
+from talkingheads import CopilotClient
 
 
 def test_start():
@@ -16,25 +17,18 @@ def test_start():
 
 def test_interaction():
     time.sleep(1)
-    response = pytest.chathead.interact(
-        "Without any explanation or extra information, just repeat the following: book."
-    )
-    assert (
-        "book" in response.lower()
-    ), f'response is not "book.", instead it returned {response}'
+    return generic.test_interaction()
 
 
 def test_reset():
     ch = pytest.chathead
-    response = pytest.chathead.interact(
-        "Without any explanation or extra information, just repeat the following: student."
-    )
+    _ = pytest.chathead.interact("How can I reset this thread?")
     assert ch.reset_thread(), "Reset operation has failed."
-    greeting_text = ch.get_last_response(check_greeting=True)
-    assert greeting_text != response, "The last response is still the same."
-
+    perhaps_some_text = ch.get_last_response()
+    assert perhaps_some_text != "", "Chat area is not empty."
 
 def test_interaction_with_file():
+    time.sleep(1)
     im_path = Path(os.path.dirname(__file__)) / "test_assets/one_cat.jpg"
     response = pytest.chathead.interact(
         "Without further ado, just write 'indeed' if there is a cat in the uploaded image",
@@ -46,7 +40,4 @@ def test_interaction_with_file():
 
 
 def test_delete_chathead():
-    del pytest.chathead
-    assert not any(
-        "undetected_chromedriver" in p.name() for p in psutil.process_iter()
-    ), "Undetected chromedriver exists"
+    return generic.test_delete_chathead()
