@@ -128,16 +128,7 @@ class CopilotClient(BaseBrowser):
         if check_greeting:
             return resp.text
 
-        resp = self.find_or_fail(
-            By.CLASS_NAME, self.markers.con_last_cq, dom_element=resp, fail_ok=check_greeting
-        )
-        text = "".join([elem.text for elem in resp.children()])
-        # Fix citations
-        text = re.sub(r"\n(\d{1,2})", r"[\g<1>]", text)
-
-        return text
-
-    def upload_image(self, action_bar: ShadowRoot, image_path: Union[str, Path]) -> bool:
+    def upload_image(self, image_path: Union[str, Path]) -> bool:
         """Upload an image or a url and wait until it is uploaded,
         then returns.
 
@@ -156,41 +147,12 @@ class CopilotClient(BaseBrowser):
         if not (url or file):
             self.logger.warning("Given path is neither an image path nor a url")
             return False
-        if url:
-            camera_button = self.find_or_fail(
-                By.ID,
-                self.markers.cam_btn_iq,
-                dom_element=action_bar
-            )
-            camera_button.click()
-            vs = self.find_or_fail(
-                By.CLASS_NAME,
-                self.markers.vis_srch_cq,
-                dom_element=action_bar
-            )
-            url_bar = self.find_or_fail(
-                By.ID,
-                self.markers.url_iq,
-                dom_element=vs.children()[0].shadow_root
-            )
-            url_bar.send_keys(image_path)
-            url_bar.send_keys(Keys.ENTER)
-        elif file:
-            im_input_element = self.find_or_fail(
-                By.ID,
-                self.markers.img_upload_iq,
-                dom_element=action_bar,
-            )
-            im_input_element.send_keys(image_path)
 
-        at_list = self.find_or_fail(
-            By.CSS_SELECTOR, self.markers.at_list_cq, dom_element=action_bar, return_shadow=True
-        )
-        file_item = self.find_or_fail(
-            By.CSS_SELECTOR, self.markers.file_item_cq, dom_element=at_list, return_shadow=True
-        )
-        condition = EC.presence_of_element_located((By.CLASS_NAME, self.markers.thumbnail_cq))
-        WebDriverWait(file_item, 10).until(condition)
+        im_input_element = self.find_or_fail(By.XPATH, self.markers.img_upload_xq)
+        im_input_element.send_keys(image_path)
+
+        condition = EC.element_to_be_clickable((By.XPATH, self.markers.dismiss_xq))
+        WebDriverWait(self.browser, 10).until(condition)
         return True
 
     def remove_attached_image(self) -> bool:
@@ -199,25 +161,13 @@ class CopilotClient(BaseBrowser):
         Returns:
             bool: True if the action is valid
         """
-        main_area = self.find_or_fail(
-            By.TAG_NAME, self.markers.main_area_tq, return_shadow=True
-        )
-        action_bar = self.find_or_fail(
-            By.ID, self.markers.act_bar_iq, dom_element=main_area, return_shadow=True
-        )
-        at_list = self.find_or_fail(
-            By.CSS_SELECTOR, self.markers.at_list_cq, dom_element=action_bar, return_shadow=True
-        )
-        file_item = self.find_or_fail(
-            By.CSS_SELECTOR, self.markers.file_item_cq, dom_element=at_list, return_shadow=True
-        )
-        discard_button = self.find_or_fail(
-            By.CLASS_NAME,
-            self.markers.dismiss_cq,
-            dom_element=file_item
-        )
-        discard_button.click()
-        return True
+        discard_button = self.find_or_fail(By.XPATH, self.markers.dismiss_xq)
+        if discard_button:
+            self.logger.info("Clicking remove image button")
+            discard_button.click()
+            return True
+
+        return False
 
     def interact(self, prompt: str, image_path: Union[str, Path] = None) -> str:
         """Sends a prompt and retrieves the response from the Copilot system.
