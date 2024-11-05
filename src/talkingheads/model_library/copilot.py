@@ -55,7 +55,7 @@ class CopilotClient(BaseBrowser):
         self.browser.get(self.url)
         time.sleep(1)
 
-    def is_ready_to_prompt(self, text_area, shadow_element) -> bool:
+    def is_ready_to_prompt(self) -> bool:
         """
         Checks if the Copilot is ready to be prompted.
         The indication for an ongoing message generation process
@@ -67,66 +67,39 @@ class CopilotClient(BaseBrowser):
         Returns:
             bool : return if the system is ready to be prompted.
         """
+        text_area = self.find_or_fail(By.XPATH, self.markers.textarea_xq)
         text_area.send_keys(".")
 
-        button = self.find_or_fail(
-            By.CLASS_NAME, self.markers.button_cq, dom_element=shadow_element
-        )
-        button = self.find_or_fail(By.TAG_NAME, "button", dom_element=button)
-        if not button:
+        submit_button = self.find_or_fail(By.XPATH, self.markers.submit_xq)
+        if not submit_button:
             return False
 
-        self.wait_object.until(EC.element_to_be_clickable(button))
+        self.wait_object.until(EC.element_to_be_clickable(submit_button))
 
         # Then, we clear the text area to make space for new interacton :)
         text_area.send_keys(Keys.CONTROL + "a", Keys.DELETE)
         return True
 
-    def get_last_response(self, check_greeting: bool = False) -> str:
+    def get_last_response(self) -> str:
         """Returns the last response in the chat view.
 
         Args:
-            check_greeting (bool): If set, checks the greeting message, provided after clicking New Topic.
+            check_greeting (bool):
+                If set, checks the greeting message, provided after clicking New Topic.
 
         Returns:
             str: The last generated response
         """
 
-        # Shadow roots, aren't they amazing!
-        main_area = self.find_or_fail(
-            By.TAG_NAME, self.markers.main_area_tq, return_shadow=True
-        )
-        resp = self.find_or_fail(
-            By.ID, self.markers.con_main_iq, dom_element=main_area, return_shadow=True
-        )
-        resp = self.find_or_fail(
-            By.CSS_SELECTOR,
-            self.markers.con_chat_sq,
-            dom_element=resp,
-            return_type="last",
-            return_shadow=True,
-        )
-        resp = self.find_or_fail(
-            By.CLASS_NAME,
-            self.markers.con_resp_cq,
-            dom_element=resp,
-            return_shadow=True,
-        )
-        resp = self.find_or_fail(
-            By.CSS_SELECTOR,
-            self.markers.con_msg_sq,
-            dom_element=resp,
-            return_type="last",
-            return_shadow=True,
-        )
-        resp = self.find_or_fail(
-            By.CSS_SELECTOR, self.markers.con_ins_sq, dom_element=resp
-        )
         # If New topic button is clicked, the new message will be in different structure,
         # failing the last check below. If check_greeting is set,
         # we can return the text of this greeting element, instead of parsing the response.
-        if check_greeting:
-            return resp.text
+
+        resp = self.find_or_fail(By.XPATH, self.markers.answer_xq, return_type="last")
+        if not resp:
+            return ""
+
+        return resp.text
 
     def upload_image(self, image_path: Union[str, Path]) -> bool:
         """Upload an image or a url and wait until it is uploaded,
