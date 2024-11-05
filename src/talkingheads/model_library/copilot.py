@@ -216,3 +216,8 @@ class CopilotClient(BaseBrowser):
 
     def regenerate_response(self):
         raise NotImplementedError("Copilot doesn't provide response regeneration")
+
+    def close_location_modal(self):
+        maybe_later = self.find_or_fail(By.XPATH, self.markers.location_xq, fail_ok=True)
+        if maybe_later:
+            maybe_later.click()
