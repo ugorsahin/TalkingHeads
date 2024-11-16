@@ -204,8 +204,6 @@ class ChatGPTClient(BaseBrowser):
             str: The generated response.
         """
 
-        with open("source.html", "w") as f:
-            f.write(self.browser.page_source)
         text_area = self.wait_until_appear(By.XPATH, self.markers.textarea_xq)
         if not text_area:
             raise RuntimeError(
