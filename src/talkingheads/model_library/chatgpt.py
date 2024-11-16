@@ -204,14 +204,13 @@ class ChatGPTClient(BaseBrowser):
             str: The generated response.
         """
 
-        text_area = self.browser.find_elements(By.XPATH, self.markers.textarea_xq)
+        with open("source.html", "w") as f:
+            f.write(self.browser.page_source)
+        text_area = self.wait_until_appear(By.XPATH, self.markers.textarea_xq)
         if not text_area:
             raise RuntimeError(
                 "Unable to find the text prompt area. Please raise an issue with verbose=True"
             )
-
-        text_area = text_area[0]
-
         for each_line in prompt.split("\n"):
             text_area.send_keys(each_line)
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)

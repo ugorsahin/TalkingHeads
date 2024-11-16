@@ -27,7 +27,7 @@ markers = EasyDict(
             "regen_2_xq"      : "//div[@role='menuitem']",
             "textarea_tq"   : "textarea",
             "send_btn_xq"   : "//button[@data-testid='send-button']",
-            "textarea_xq"   : "//div[@id='prompt-textarea']",
+            "textarea_xq"   : "//div[@contenteditable='true']",
             "gpt_xq"        : "//span[text()='{}']"
         },
         "Claude": {
