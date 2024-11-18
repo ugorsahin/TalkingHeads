@@ -1,3 +1,9 @@
+## 0.5.4 (2024-11-18)
+
+### Fix
+
+- **ChatGPT**: New XPATH for text input
+
 ## 0.5.3 (2024-11-05)
 
 ### Fix
