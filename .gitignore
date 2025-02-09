@@ -36,3 +36,5 @@ artifacts
 
 # Testing
 talkingheads_userprofile
+
+.pytest_cache/
