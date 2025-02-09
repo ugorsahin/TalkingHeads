@@ -1,7 +1,7 @@
 """Initialization file of talkingheads library"""
 from .base_browser import BaseBrowser
 from .utils import is_url, check_filetype, detect_chrome_version
-from .model_library import ChatGPTClient, ClaudeClient, CopilotClient, \
+from .model_library import ChatGPTClient, CopilotClient, DeepSeekClient, \
     GeminiClient, HuggingChatClient, LeChatClient, PiClient
 from .multiagent.multiagent import MultiAgent, Conversation
 
@@ -11,8 +11,8 @@ __all__ = [
     "detect_chrome_version",
     "BaseBrowser",
     "ChatGPTClient",
-    "ClaudeClient",
     "CopilotClient",
+    "DeepSeekClient",
     "GeminiClient",
     "HuggingChatClient",
     "LeChatClient",
