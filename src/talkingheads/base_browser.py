@@ -26,19 +26,15 @@ import os
 import logging
 import time
 from datetime import datetime
-from typing import Union, Dict, List
+from typing import Union, Optional
+from pathlib import Path
 
-import undetected_chromedriver as uc
 import pandas as pd
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.remote.webelement import WebElement
-import selenium.common.exceptions as Exceptions
+import nodriver as nd
 
 from .object_map import markers
-from .utils import detect_chrome_version, save_func_map
+from .utils import save_func_map
 
 
 class BaseBrowser:
@@ -85,23 +81,16 @@ class BaseBrowser:
         url: str,
         uname_var: Union[str, None] = None,
         pwd_var: Union[str, None] = None,
-        username: Union[str, None] = None,
-        password: Union[str, None] = None,
         headless: bool = True,
-        cold_start: bool = False,
-        incognito: bool = True,
-        driver_arguments: Union[List, Dict] = None,
-        driver_version: int = None,
-        timeout_dur: int = 90,
         auto_save: bool = False,
         save_path: str = None,
         verbose: bool = False,
         credential_check: bool = True,
         skip_login: bool = False,
         user_data_dir: str = None,
-        uc_params: dict = None,
+        browser_arguments: list = None,
         tag: str = None,
-        multihead=False,
+        multihead=False
     ):
         self.client_name = client_name
         self.markers = markers[client_name]
@@ -109,124 +98,73 @@ class BaseBrowser:
         self.uname_var = uname_var or f"{client_name}_UNAME"
         self.pwd_var = pwd_var or f"{client_name}_PWD"
         self.headless = headless
-        self.ready = False
         self.browser = None
         self.auto_save = auto_save
         self.last_prompt = ""
         self.tag = tag or self.client_name
-        self.timeout_dur = timeout_dur
         self.multihead = multihead
         self.interim_response = None
+        self.user_data_dir = user_data_dir or ""
+        self.browser_arguments = browser_arguments or []
+        self.skip_login = skip_login
+        self.tab = None
+        self.ready = False
 
         if credential_check:
-            if username or password:
-                logging.warning(
-                    "The username and password parameters are deprecated and will be removed soon."
-                    " Please adjust your environment variables to pass username and password."
-                )
+            if not os.environ.get(self.uname_var):
+                raise NameError(f"Set the environment variable {self.uname_var}")
+            if not os.environ.get(self.pwd_var):
+                raise NameError(f"Set the environment variable {self.pwd_var}")
 
-            username = username or os.environ.get(self.uname_var)
-            password = password or os.environ.get(self.pwd_var)
-
-            if not username:
-                raise NameError(
-                    f"Either provide username or set the environment variable {self.uname_var}"
-                )
-
-            if not password:
-                raise NameError(
-                    f"Either provide password or set the environment variable {self.pwd_var}"
-                )
-
-        # Create a new of the logger
+        # Get currenty logging level
         r_level = logging.getLogger().getEffectiveLevel()
-
+        # Set new logger
         self.logger = logging.getLogger(self.tag)
         self.logger.setLevel(r_level)
+
         # If verbose is provided and the current log level is higher
         # than info, it will decrease logging level.
         if verbose and not self.logger.isEnabledFor(logging.INFO):
             self.logger.setLevel(logging.INFO)
             self.logger.info("Verbose mode active")
-        options = uc.ChromeOptions()
-        options.headless = self.headless
-        if incognito:
-            options.add_argument("--incognito")
-
-        # chrome_prefs = {
-        #     "profile.default_content_settings" : {"images": 2},
-        #     "profile.managed_default_content_settings" : {"images": 2}
-        # }
-
-        # options.experimental_options["prefs"] = chrome_prefs
-
-        if driver_arguments:
-            if isinstance(driver_arguments, dict):
-                driver_arguments = list(
-                    map(
-                        lambda kv: f"--{kv[0]}"
-                        + ("" if kv[1] is True else f"={kv[1]}"),
-                        driver_arguments.items(),
-                    )
-                )
-
-            _ = list(map(options.add_argument, driver_arguments))
-
-        self.logger.info("Loading undetected Chrome")
-        uc_params = uc_params or {}
-        self.browser = uc.Chrome(
-            user_data_dir=user_data_dir,
-            options=options,
-            headless=headless,
-            version_main=detect_chrome_version(driver_version),
-            **uc_params,
-        )
-        # self.browser.set_page_load_timeout(timeout_dur)
-        self.wait_object = WebDriverWait(self.browser, timeout_dur)
-
-        agent = self.browser.execute_script("return navigator.userAgent")
-        self.browser.execute_cdp_cmd(
-            "Network.setUserAgentOverride", {"userAgent": agent.replace("Headless", "")}
-        )
-
-        self.logger.info("Loaded undetected Chrome")
-        self.logger.info("Opening %s", self.client_name)
-
-        self.preload_custom_func()
-        self.browser.get(self.url)
-        if cold_start:
-            return
-
-        self.postload_custom_func()
-        if not self.pass_verification():
-            raise RuntimeError("Verification failed, please check your connection.")
-
-        if not skip_login:
-            self.login(username, password)
 
         self.logger.info("%s is ready to interact", self.client_name)
         self.ready = True
         self.chat_history = pd.DataFrame(columns=["role", "is_regen", "content"])
         self.set_save_path(save_path)
 
-    def __del__(self):
-        if self.browser is not None:
-            self.browser.close()
-            self.browser.quit()
+    async def start(self):
+        """_summary_
 
-        if self.auto_save:
-            self.save()
-
-    def set_timeout_dur(self, timeout_dur: int):
+        Raises:
+            RuntimeError: _description_
         """
-        Sets the duration for page load and element wait timeout.
+        self.logger.info("Loading nodriver")
+        self.browser = await nd.start(user_data_dir=self.user_data_dir, headless=self.headless)
 
-        Args:
-            timeout_dur (int): The timeout duration in seconds.
-        """
+        self.logger.info("Loaded nodriver")
+        self.logger.info("Opening %s", self.client_name)
 
-        self.browser.set_page_load_timeout(timeout_dur)
-        self.wait_object = WebDriverWait(self.browser, timeout_dur)
+        await self.preload_custom_func()
+        self.tab = await self.browser.get(self.url)
+        await self.postload_custom_func()
+
+        if not await self.pass_verification():
+            raise RuntimeError("Verification failed, please check your connection.")
+
+        if not self.skip_login:
+            await self.login()
+
+        self.logger.info("%s is ready to interact", self.client_name)
+        self.ready = True
+
+    # def __del__(self):
+    #     # if self.browser is not None and not self.browser.stopped:
+    #     #     self.browser.stop()
+
+    #     if self.auto_save:
+    #         self.save()
+
 
     def set_save_path(self, save_path: str):
         """
@@ -249,24 +187,22 @@ class BaseBrowser:
             bool: True if the file was successfully saved, False otherwise.
         """
         save_func = save_func_map.get(self.file_type, None)
-        if save_func:
-            save_func = getattr(self.chat_history, save_func)
-            save_func(self.save_path)
-            self.logger.info("File saved to %s", self.save_path)
-            return True
+        if save_func is None:
+            self.logger.error("Unsupported file type %s", self.file_type)
+            return False
 
-        self.logger.error("Unsupported file type %s", self.file_type)
-        return False
+        save_func = getattr(self.chat_history, save_func)
+        if save_func is None:
+            logging.error("No such save function")
+            return False
 
-    def find_or_fail(
-        self,
-        by: By,
-        elem_query: str,
-        return_type: str = "first",
-        return_shadow: bool = False,
-        fail_ok: bool = False,
-        dom_element: WebElement = None,
-    ) -> Union[WebElement, None]:
+        save_func(self.save_path)
+        self.logger.info("File saved to %s", self.save_path)
+        return True
+
+    async def find_or_fail(
+        self, xpath: str, return_type: str = "first", fail_ok: bool = False
+    ):
         """
         Finds elements based on the provided query and locator method.
         Raises an error if no element is found and fail_ok is False.
@@ -274,62 +210,47 @@ class BaseBrowser:
         Args:
             by (By): The method used to locate the element (e.g., By.ID, By.XPATH).
             elem_query (str): The query string for locating the element.
-            return_type (str): Defines which element to return ('first', 'all', or 'last'). Default is 'first'.
-            return_shadow (bool, optional): If True, returns the shadow root of the element. Default is False.
+            return_type (str): What to return ('first', 'all', or 'last'). Default is 'first'.
             fail_ok (bool): o not produce error if it is ok to fail.
             dom_element (WebElement): If set, finds within that element.
         Returns:
             WebElement: The found web element or None if not found.
         """
 
-        if return_type not in {"first", "last", "all"}:
-            return ValueError("Unrecognized return type")
-
-        if dom_element is None:
-            dom_element = self.browser.find_elements(by, elem_query)
-        else:
-            dom_element = dom_element.find_elements(by, elem_query)
-
-        if not dom_element:
-            if not fail_ok:
-                self.logger.error(
-                    " %s is not located. Please raise an issue with verbose=True",
-                    elem_query,
-                )
-            else:
-                self.logger.info(" %s is not located.", elem_query)
-            return None
-
-        self.logger.info(" %s is located.", elem_query)
-
-        element = {
+        return_types = {
             "first": lambda x: x[0],
             "all": lambda x: x,
             "last": lambda x: x[-1],
-        }[return_type](dom_element)
+        }
 
-        if return_shadow and return_type == "all":
-            self.logger.warning(
-                "Returning shadow root of a list of elements is not implemented."
-            )
-        elif return_shadow:
-            element = element.shadow_root
+        return_fn = return_types.get(return_type)
 
-        return element
+        if return_fn is None:
+            return ValueError("Unrecognized return type")
 
-    def is_login_page(self):
+        dom_elements = await self.tab.find_elements_by_text(xpath)
+
+        if not dom_elements:
+            log_fn = self.logger.info if fail_ok else self.logger.error
+            log_fn(" %s is not located.", xpath)
+            return None
+
+        self.logger.info(" %s is located.", xpath)
+
+        dom_element = return_fn(dom_elements)
+        return dom_element
+
+    async def is_login_page(self):
         """
         Checks whether the login page is currently displayed.
 
         Returns:
             bool: True if the login button is not present, False otherwise.
         """
-        login_button = self.browser.find_elements(By.XPATH, self.markers.login_xq)
+        login_button = await self.tab.find_elements_by_text(self.markers.login)
         return len(login_button) == 1
 
-    def wait_until_appear(
-        self, by: By, elem_query: str, timeout_dur: int = None, fail_ok=False
-    ) -> Union[WebElement, None]:
+    async def wait_until_appear(self, xpath: str, timeout: int = 5, fail_ok=False):
         """
         Waits until the specified web element appears on the page.
 
@@ -340,27 +261,27 @@ class BaseBrowser:
         Args:
             by (selenium.webdriver.common.by.By): The method used to locate the element.
             elem_query (str): The elem_query string to locate the element.
-            timeout_dur (int, optional): Waiting time before the timeout. Default: 15.
-            fail_ok (bool, optional): If True, does not log an error when the element does not appear.
+            timeout (int, optional): Waiting time before the timeout. Default: 15.
+            fail_ok (bool, optional): If True, skips logging error if element is absent.
 
         Returns:
             WebElement | None: The web element if found, otherwise None.
         """
-        self.logger.info("Waiting element %s to appear.", elem_query)
+        self.logger.info("Waiting element %s to appear.", xpath)
         element = None
         try:
-            element = WebDriverWait(
-                self.browser, timeout_dur or self.timeout_dur
-            ).until(EC.presence_of_element_located((by, elem_query)))
-            self.logger.info("Element %s appeared.", elem_query)
-        except Exceptions.TimeoutException:
+            element = await self.tab.wait_for(text=xpath, timeout=timeout)
+            self.logger.info("Element %s appeared.", xpath)
+        except TimeoutError:
             if not fail_ok:
                 self.logger.error(
-                    "Element %s is not present, something is wrong.", elem_query
+                    "Element %s is not present, something is wrong.", xpath
                 )
         return element
 
-    def wait_until_disappear(self, by: By, elem_query: str) -> bool:
+    async def wait_until_disappear(
+        self, xpath: str, timeout: int = 10, wait_per_step: int = 0.2
+    ) -> bool:
         """
         Waits until the specified web element disappears from the page.
 
@@ -369,50 +290,25 @@ class BaseBrowser:
         Once the element has disappeared, the function returns.
 
         Args:
-            by (selenium.webdriver.common.by.By): The method used to locate the element.
-            elem_query (str): The elem_query string to locate the element.
-            timeout_dur (int, optional): Waiting time before the timeout. Default: 15.
+            xpath (str): The xpath string to locate the element.
+            timeout (int, optional): Waiting time before the timeout. Default: 10.
 
         Returns:
             (bool) : True if element disappears, false otherwise.
         """
-        if self.multihead:
-            return self._multihead_wait(by, elem_query)
 
-        self.logger.info("Waiting element %s to disappear.", elem_query)
-        try:
-            self.wait_object.until(EC.invisibility_of_element_located((by, elem_query)))
-            self.logger.info("Element %s disappeared.", elem_query)
-            return True
-        except Exceptions.TimeoutException:
-            self.logger.info("Element %s still here, something is wrong.", elem_query)
-            return False
-
-    def _multihead_wait(self, by: By, elem_query: str, pool_time: float = 0.5) -> bool:
-        """
-        This is a temporary function to wait until the element disappears.
-
-        A bug causes WebDriverWait to fail in conditions and this function mitigates the
-        problem while a permanent solution is found.
-
-        Args:
-            by (selenium.webdriver.common.by.By): The method used to locate the element.
-            elem_query (str): The elem_query string to locate the element.
-            timeout_dur (int, optional): Waiting time before the timeout. Default: 15.
-
-        Returns:
-            (bool) : True if element disappears, false otherwise.
-        """
-        self.logger.info("Waiting element %s to disappear.", elem_query)
-
-        for _ in range(int(self.timeout_dur / pool_time)):
-            item = self.find_or_fail(by, elem_query, fail_ok=True)
+        start = time.time()
+        current = time.time()
+        while current - start < timeout:
+            item = await self.find_or_fail(xpath, fail_ok=True)
             if not item:
-                self.logger.debug("The item %s %s is not located", by, elem_query)
+                self.logger.info("The item %s has disappeared", xpath)
                 return True
-            logging.debug("The item is still present, waiting")
-            time.sleep(pool_time)
-        logging.error("Item is still present")
+            self.logger.debug("The item is still present, waiting")
+            time.sleep(max(0, wait_per_step - (time.time() - current)))
+            current = time.time()
+
+        self.logger.error("Item is still present")
         return False
 
     def log_chat(
@@ -446,19 +342,19 @@ class BaseBrowser:
             ]
         return True
 
-    def preload_custom_func(self) -> None:
+    async def preload_custom_func(self) -> None:
         """
         A function to implement custom instructions before loading the webpage
         """
         self.logger.debug("No custom preload function is implemented")
 
-    def postload_custom_func(self) -> None:
+    async def postload_custom_func(self) -> None:
         """
         A function to implement custom instructions after loading the webpage
         """
         self.logger.debug("No custom postload function is implemented")
 
-    def pass_verification(self) -> bool:
+    async def pass_verification(self) -> bool:
         """
         Performs the verification process on the page if challenge is present.
         Returns:
@@ -468,7 +364,7 @@ class BaseBrowser:
         return True
 
     @abc.abstractmethod
-    def login(self, username: str, password: str) -> bool:
+    async def login(self) -> bool:
         """
         Performs the login process with the provided username and password.
         """
@@ -476,17 +372,122 @@ class BaseBrowser:
             "If you are creating a custom automation, please implement this method!"
         )
 
-    @abc.abstractmethod
-    def interact(self, prompt: str) -> str:
+    async def get_last_response(
+        self, num_step: int = 200, period: float = 0.5, same_answer_limit=3
+    ) -> str:
         """
-        Abstract function to interact with the language model.
+        Continuously checks for a response in a chatbox-like element and
+            returns the last received response.
+
+        Args:
+            num_step (int): Number of cycles to check for updates to the response.
+                Defaults to 200.
+            period (float): Sleep time between each step, representing the delay between each check.
+                Defaults to 0.5 seconds.
+            same_answer_limit (int): The maximum number of times the same response can
+                be observed before concluding that the response is complete. Defaults to 3.
+
+        Returns:
+            str: The last valid response from the chatbox element.
+                If no response is found, an empty string is returned.
+
+        Behavior:
+            - The function first waits for the chatbox element to appear on the page.
+            - It continuously checks for updates to the response in the chatbox.
+            - The response is checked continuously, `period` seconds between each check.
+            - If the response remains the same for more than `same_answer_limit` consecutive times,
+                the loop breaks, assuming the response is complete.
+            - If no response is found, it returns an empty string.
+            - If a response is found, it returns the last detected response.
         """
-        self.logger.warning(
-            "If you are creating a custom automation, please implement this method!"
-        )
+
+        self.logger.info("Checking the response")
+
+        self.interim_response = None
+        await self.wait_until_appear(self.markers.chatbox)
+
+        same_answer = 0
+        for _ in range(num_step):
+            time.sleep(period)
+            l_response = await self.response_parser()
+            same_answer = [0, same_answer + 1][l_response == self.interim_response]
+
+            self.interim_response = l_response
+            if same_answer > same_answer_limit:
+                break
+
+        if not self.interim_response:
+            self.logger.error("There is no response, something is wrong")
+            return ""
+
+        self.logger.info("response is ready")
+        return self.interim_response
+
+    async def interact(self, prompt: str, image_path: Union[str, Path] = None) -> str:
+        """Sends a prompt and retrieves the response from the user interface.
+
+        This function interacts with the user interface.
+        It takes the prompt as input and sends it to the system.
+        The prompt may contain multiple lines separated by '\\n'.
+        In this case, the function simulates pressing SHIFT+ENTER for each line.
+        Upon arrival of the interaction, the function waits for the response.
+        Once the response is ready, the function will return the response.
+
+        Args:
+            prompt (str): The interaction text.
+
+        Returns:
+            str: The generated response.
+        """
+        if image_path:
+            uploaded = await self.upload_file(image_path)
+            if not uploaded:
+                self.logger.error("Image is not uploaded.")
+                return ""
+
+        text_area = await self.wait_until_appear(self.markers.textarea)
+        if not text_area:
+            raise RuntimeError(
+                "Unable to find the text prompt area. Please raise an issue with verbose=True"
+            )
+
+        prompt = prompt.replace("\n", "\r\n")
+        await text_area.focus()
+        await self.tab.send(nd.cdp.input_.insert_text(text=prompt))
+        await self.tab.send(nd.cdp.input_.insert_text(text='\n'))
+
+        send_button = await self.find_or_fail(self.markers.send)
+        await send_button.click()
+
+        response = await self.get_last_response()
+
+        self.log_chat(prompt=prompt, response=response)
+        return response
+
+    async def response_parser(self) -> Optional[str]:
+        """
+        Abstract function to open a new thread.
+        """
+        response_element = await self.find_or_fail(self.markers.chatbox, return_type="last")
+        if response_element:
+            return response_element.text_all
+        self.logger.warning("Response is not available.")
+        return None
+    
+    @staticmethod
+    async def clear_input(element):
+        await element.apply('function (element) { element.select() } ')
+        return await element.tab.send(nd.cdp.input_.insert_text(''))
 
     @abc.abstractmethod
-    def reset_thread(self) -> bool:
+    async def upload_file(self, file_path: Union[str, Path]) -> bool:
+        """
+        Abstract function to open a new thread.
+        """
+        self.logger.warning("File upload is either not implemented or not available")
+
+    @abc.abstractmethod
+    async def reset_thread(self) -> bool:
         """
         Abstract function to open a new thread.
         """
@@ -495,7 +496,7 @@ class BaseBrowser:
         )
 
     @abc.abstractmethod
-    def regenerate_response(self) -> str:
+    async def regenerate_response(self) -> str:
         """
         Abstract function to regenerate the responses.
         """
@@ -504,7 +505,7 @@ class BaseBrowser:
         )
 
     @abc.abstractmethod
-    def switch_model(self, model_name: str) -> bool:
+    async def switch_model(self, model_name: str) -> bool:
         """
         Abstract function to switch the model.
 
