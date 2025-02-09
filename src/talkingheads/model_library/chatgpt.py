@@ -1,32 +1,25 @@
 """Class definition for ChatGPTClient"""
 
+import os
 import time
 from datetime import datetime
-
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import selenium.common.exceptions as Exceptions
-
+import asyncio
+from nodriver import cdp
 from .. import BaseBrowser
 
 
 class ChatGPTClient(BaseBrowser):
     """ChatGPTClient class to interact with ChatGPT"""
 
+    custom_areas = {"name": 0, "occupation": 1, "modulation": 2, "extra_information": 3}
+
     def __init__(self, **kwargs):
         super().__init__(client_name="ChatGPT", url="https://chatgpt.com", **kwargs)
 
-    def postload_custom_func(self):
-        today_str = datetime.today().strftime("%Y-%m-%d")
-        self.browser.execute_script(
-            f"window.localStorage.setItem('oai/apps/hasSeenOnboarding/chat', {today_str});"
-            "window.localStorage.setItem('oai/apps/hasUserContextFirstTime/2023-06-29', true);"
-            "window.localStorage.setItem('oai/apps/announcement/customInstructions', 1694012515508);"
-        )
+    async def postload_custom_func(self):
+        pass
 
-    def pass_verification(self, max_trial: int = 10, wait_time: int = 1) -> bool:
+    async def pass_verification(self, max_trial: int = 10, wait_time: int = 1) -> bool:
         """
         Performs the verification process on the page if challenge is present.
 
@@ -36,23 +29,23 @@ class ChatGPTClient(BaseBrowser):
 
         Returns: None
         """
-        for _ in range(max_trial):
-            verify_button = self.browser.find_elements(By.ID, "challenge-stage")
-            if not verify_button:
-                break
-            try:
-                verify_button[0].click()
-                self.logger.info("Clicked verification button")
-            except Exceptions.ElementNotInteractableException:
-                self.logger.info("Verification button is not present or clickable")
-            time.sleep(wait_time)
-        else:
-            self.logger.error("It is not possible to pass verification")
-            return False
+        # for _ in range(max_trial):
+        #     verify_button = self.find_or_fail("challenge-stage")
+        #     if not verify_button:
+        #         break
+        #     try:
+        #         verify_button[0].click()
+        #         self.logger.info("Clicked verification button")
+        #     except Exceptions.ElementNotInteractableException:
+        #         self.logger.info("Verification button is not present or clickable")
+        #     time.sleep(wait_time)
+        # else:
+        #     self.logger.error("It is not possible to pass verification")
+        #     return False
 
         return True
 
-    def login(self, username: str, password: str) -> bool:
+    async def login(self) -> bool:
         """
         Performs the login process with the provided username and password.
 
@@ -69,74 +62,79 @@ class ChatGPTClient(BaseBrowser):
         """
 
         # Find login button, click it
+        await self.tab.save_screenshot('/home/bigsmiley/Desktop/shot.png')
+        login_button = await self.wait_until_appear(self.markers.login)
+        # self.wait_object.until(EC.element_to_be_clickable(login_button))
+        await login_button.mouse_click()
 
-        login_button = self.wait_until_appear(By.XPATH, self.markers.login_xq)
-        self.wait_object.until(EC.element_to_be_clickable(login_button))
-        login_button.click()
-
-        # login_button = self.find_or_fail(By.XPATH, self.markers.login_xq, fail_ok=True)
+        # login_button = self.find_or_fail(self.markers.login, fail_ok=True)
         # login_button.click()
         self.logger.info("Clicked login button for the first time.")
 
         for _ in range(5):
-            email_box = self.wait_until_appear(
-                By.XPATH, self.markers.email_xq, 5, fail_ok=True
+            email_box = await self.wait_until_appear(
+                self.markers.email, 5, fail_ok=True
             )
             if email_box:
                 self.logger.info("Username area has found")
                 break
-            login_button = self.find_or_fail(
-                By.XPATH, self.markers.login_xq, fail_ok=True
-            )
+            login_button = await self.find_or_fail(self.markers.login, fail_ok=True)
+
             if login_button:
-                login_button.click()
+                await login_button.mouse_click()
                 self.logger.info("Trying to click login button once more")
         else:
             self.logger.error("Can't reach email page")
             return False
 
-        email_box.send_keys(username)
+        await email_box.send_keys(os.environ.get(self.uname_var))
         self.logger.info("Filled email box")
 
         # Click continue
-        continue_button = self.wait_until_appear(By.XPATH, self.markers.continue_xq)
-        continue_button.click()
+        continue_button = await self.wait_until_appear(self.markers.continue_btn)
+        await continue_button.click()
         self.logger.info("Clicked continue button")
 
         # Find password textbox, enter password
-        pass_box = self.wait_until_appear(By.ID, self.markers.pwd_iq)
-        pass_box.send_keys(password)
+        pass_box = await self.wait_until_appear(self.markers.pwd)
+        await pass_box.send_keys(os.environ.get(self.pwd_var))
         self.logger.info("Filled password box")
         # Click continue
-        
-        continue_button = self.wait_until_appear(By.XPATH, self.markers.continue_xq)
-        continue_button.click()
+
+        continue_button = await self.wait_until_appear(self.markers.continue_btn)
+        await continue_button.mouse_click()
+
+        for _ in range(5):
+            continue_button = await self.find_or_fail(
+                self.markers.continue_btn, fail_ok=True
+            )
+            if continue_button:
+                await continue_button.mouse_click()
+                self.logger.info("Trying to click login button once more")
+                time.sleep(2)
+            else:
+                break
+
         self.logger.info("Clicked continue in password page")
 
-        try:
-            # Pass introduction
-            WebDriverWait(self.browser, 2).until(
-                EC.presence_of_element_located((By.XPATH, self.markers.tutorial_xq))
-            ).click()
-
+        tutorial = await self.find_or_fail(self.markers.tutorial, fail_ok=True)
+        if tutorial:
+            await tutorial.click()
             self.logger.info("Info screen passed")
-        except Exceptions.TimeoutException:
+        else:
             self.logger.info("Info screen skipped")
-        except Exception as err:
-            self.logger.error("Something unexpected happened: %s", err)
-            return False
 
-        text_area = self.wait_until_appear(By.TAG_NAME, self.markers.textarea_tq)
+        text_area = await self.wait_until_appear(self.markers.textarea)
 
         if text_area is not None:
-            self.logger.info("Login is not successful.")
+            self.logger.info("Login is successful.")
             return True
 
         self.logger.error("Login is not successful.")
         return False
 
-    def get_last_response(
-        self, num_step: int = 200, period: float = 0.5, same_answer_limit=3
+    async def get_last_response(
+        self, num_step: int = 200, period: float = 0.2, same_answer_limit=3
     ) -> str:
         """
         Continuously checks for a response in a chatbox-like element and
@@ -167,17 +165,20 @@ class ChatGPTClient(BaseBrowser):
         self.logger.info("Checking the response")
 
         self.interim_response = None
-        self.wait_until_appear(By.XPATH, self.markers.chatbox_xq)
+        await self.wait_until_appear(self.markers.chatbox)
         counter = 0
-        for _ in range(num_step):
+        while (
+            await self.find_or_fail(self.markers.stop, fail_ok=True)
+            or counter < same_answer_limit
+        ):
+            l_response = await self.find_or_fail(
+                self.markers.chatbox, return_type="last"
+            )
             time.sleep(period)
-            l_response = self.find_or_fail(
-                By.XPATH, self.markers.chatbox_xq, return_type="last"
-            ).text
-            if l_response and l_response == self.interim_response:
-                counter += 1
-            if counter > same_answer_limit:
-                break
+            l_response = l_response.text_all if l_response else ""
+            if l_response:
+                counter = [0, counter + 1][l_response == self.interim_response]
+
             self.interim_response = l_response
 
         if not self.interim_response:
@@ -187,7 +188,19 @@ class ChatGPTClient(BaseBrowser):
         self.logger.info("response is ready")
         return self.interim_response
 
-    def interact(self, prompt: str) -> str:
+    async def toggle_search(self):
+        search_button = await self.find_or_fail(self.markers.search)
+        await search_button.click()
+        search_button = await self.find_or_fail(self.markers.search)
+        return search_button.attrs["aria-pressed"] == "true"
+
+    async def toggle_reason(self):
+        reason_button = await self.find_or_fail(self.markers.reason)
+        await reason_button.click()
+        reason_button = await self.find_or_fail(self.markers.reason)
+        return reason_button.attrs["aria-pressed"] == "true"
+
+    async def interact(self, prompt: str) -> str:
         """Sends a prompt and retrieves the response from the ChatGPT system.
 
         This function interacts with the ChatGPT.
@@ -204,25 +217,29 @@ class ChatGPTClient(BaseBrowser):
             str: The generated response.
         """
 
-        text_area = self.wait_until_appear(By.XPATH, self.markers.textarea_xq)
+        # prompt = prompt.replace("\n", "\r\n")
+        text_area = await self.wait_until_appear(self.markers.textarea)
         if not text_area:
             raise RuntimeError(
                 "Unable to find the text prompt area. Please raise an issue with verbose=True"
             )
-        for each_line in prompt.split("\n"):
-            text_area.send_keys(each_line)
-            text_area.send_keys(Keys.SHIFT + Keys.ENTER)
-        text_area.send_keys(Keys.RETURN)
+        # await text_area.send_keys(prompt)
+        await text_area.focus()
+        await self.tab.send(cdp.input_.insert_text(text=prompt))
+        # await text_area.apply(f'function (element) {{ element.value = {prompt} }} ')
 
-        response = self.get_last_response()
+        send_button = await self.find_or_fail(self.markers.send)
+        await send_button.click()
+
+        response = await self.get_last_response()
 
         self.log_chat(prompt=prompt, response=response)
         return response
 
-    def reset_thread(self) -> bool:
+    async def reset_thread(self) -> bool:
         """Function to close the current thread and start new one"""
-        self.browser.get(self.url)
-        text_area = self.wait_until_appear(By.TAG_NAME, self.markers.textarea_tq)
+        await self.browser.get(self.url)
+        text_area = await self.wait_until_appear(self.markers.textarea)
         if text_area:
             return True
         self.logger.error(
@@ -230,7 +247,7 @@ class ChatGPTClient(BaseBrowser):
         )
         return False
 
-    def regenerate_response(self) -> str:
+    async def regenerate_response(self) -> str:
         """
         Clicks the regenerate button to generate a new response
             and returns the new response.
@@ -241,23 +258,21 @@ class ChatGPTClient(BaseBrowser):
         Returns:
             str: The newly generated response text. If the regeneration fails, returns an empty string.
         """
-        regen_button = self.find_or_fail(
-            By.XPATH, self.markers.regen_1_xq, return_type="first"
-        )
+        regen_button = await self.find_or_fail(self.markers.regen_1)
+
         if not regen_button:
             return ""
-        regen_button.click()
+        await regen_button.mouse_click()
         self.logger.info("Clicked regenerate button")
 
-        try_again_button = self.find_or_fail(
-            By.XPATH, self.markers.regen_2_xq, return_type="last"
-        )
+        try_again_button = await self.wait_until_appear(self.markers.regen_2)
         if not try_again_button:
             return ""
-        try_again_button.click()
+        await try_again_button.click()
         self.logger.info("Clicked Try again button")
 
-        response = self.get_last_response()
+        time.sleep(1)
+        response = await self.get_last_response()
         if not response:
             self.logger.error("Regeneration failed")
             return ""
@@ -265,109 +280,91 @@ class ChatGPTClient(BaseBrowser):
         self.log_chat(response=response, regenerated=True)
         return response
 
-    def switch_model(self, model_name: str) -> bool:
-        """
-        Switch the model for ChatGPT+ users.
-
-        Args:
-            model_name: str = The name of the model, either GPT-3.5 or GPT-4
-
-        Returns:
-            bool: True on success, False on fail
-        """
-        if model_name in ["GPT-3.5", "GPT-4"]:
-            self.logger.info("Switching model to %s", model_name)
-            try:
-                self.browser.find_element(
-                    By.XPATH, self.markers.gpt_xq.format(model_name)
-                ).click()
-                return True
-            except Exceptions.NoSuchElementException:
-                self.logger.error("Button is not present")
-        else:
-            self.logger.error("Model name is not ")
-        return False
-
-    def open_custom_instruction_tab(self) -> bool:
+    async def open_custom_instruction_tab(self) -> bool:
         """Opens the modal to access custom interactions.
 
         Returns:
             bool: True if the process is successful, False otherwise
         """
 
-        menu_button = self.find_or_fail(By.XPATH, self.markers.menu_xq)
-        menu_button.click()
-        custom_button = self.find_or_fail(By.XPATH, self.markers.custom_xq)
-        custom_button.click()
-        custom_tutorial = self.find_or_fail(
-            By.XPATH, self.markers.cust_tut_xq, fail_ok=True
-        )
+        menu_button = await self.wait_until_appear(self.markers.menu)
+        await menu_button.mouse_click()
+        custom_button = await self.wait_until_appear(self.markers.custom)
+        await custom_button.click()
+        custom_tutorial = await self.find_or_fail(self.markers.cust_tut, fail_ok=True)
         if custom_tutorial:
-            custom_tutorial.click()
+            await custom_tutorial.click()
 
-        custom_switch = self.find_or_fail(By.XPATH, self.markers.cust_toggle_xq)
+        custom_switch = await self.find_or_fail(self.markers.cust_toggle)
         if not custom_switch:
             return False
 
         # If disabled, enable custom interactions
-        if custom_switch.get_attribute("data-state") == "checked":
+        if custom_switch.attrs["data-state"] == "checked":
             self.logger.info("Custom instructions is enabled")
         else:
-            custom_switch.click()
-        time.sleep(0.2)
+            await custom_switch.click()
+        await asyncio.sleep(0.5)
 
         return True
 
-    def get_custom_instruction(self, mode: str) -> str:
+    async def get_custom_instruction(self, mode: str) -> str:
         """Gets custom instructions
 
         Args:
             mode (str): Either 'extra_information' or 'modulation'. Check OpenAI help pages.
         """
-        if mode not in ["extra_information", "modulation"]:
+
+        if mode not in self.custom_areas:
             self.logger.error(
-                "Given mode is unrecognized. Either provide extra_information or modulation"
+                "Given mode is unrecognized. Possible keys are %s",
+                ", ".join(self.custom_areas.keys()),
             )
             return ""
-        if not self.open_custom_instruction_tab():
+
+        if not await self.open_custom_instruction_tab():
             return ""
-        text_areas = self.find_or_fail(
-            By.XPATH, self.markers.cust_txt_xq, return_type="all"
-        )
-        text = text_areas[{"extra_information": 0, "modulation": 1}[mode]].text
+
+        await self.wait_until_appear(self.markers.cust_txt)
+        asyncio.sleep(0.5)
+        text_areas = await self.find_or_fail(self.markers.cust_txt, return_type="all")
+        text = text_areas[self.custom_areas[mode]].text_all
         self.logger.info("Custom instruction is obtained: %s", text)
 
-        save_button = self.find_or_fail(By.XPATH, self.markers.cust_cancel_xq)
-        save_button.click()
+        cancel_button = await self.find_or_fail(self.markers.cust_cancel)
+        await cancel_button.click()
+        await self.wait_until_disappear(self.markers.cust_cancel)
         return text
 
-    def set_custom_instruction(self, mode: str, instruction: str):
+    async def set_custom_instruction(self, mode: str, instruction: str):
         """Sets custom instructions
 
         Args:
             mode (str): Either 'extra_information' or 'modulation'. Check OpenAI help pages.
             instruction (str): _description_
         """
-        if not self.open_custom_instruction_tab():
+
+        if mode not in self.custom_areas:
+            self.logger.error(
+                "Given mode is unrecognized. Possible keys are %s",
+                ", ".join(self.custom_areas.keys()),
+            )
+            return ""
+
+        if not await self.open_custom_instruction_tab():
             return False
 
-        WebDriverWait(self.browser, 5).until(
-            EC.presence_of_element_located((By.XPATH, self.markers.cust_txt_xq))
-        )
-        text_areas = self.find_or_fail(
-            By.XPATH, self.markers.cust_txt_xq, return_type="all"
-        )
-        text_area = text_areas[{"extra_information": 0, "modulation": 1}[mode]]
+        await self.wait_until_appear(self.markers.cust_txt)
+        text_areas = await self.find_or_fail(self.markers.cust_txt, return_type="all")
+        text_area = text_areas[self.custom_areas[mode]]
 
-        text_area.send_keys(Keys.CONTROL + "a")
-        time.sleep(0.1)
-        text_area.send_keys(Keys.DELETE)
-        time.sleep(0.1)
-        text_area.send_keys(instruction)
-        time.sleep(0.1)
-        text_area.send_keys(" ")
+        await BaseBrowser.clear_input(text_area)
+        await text_area.send_keys(instruction)
         self.logger.info("Custom instruction-%s has provided", mode)
 
-        save_button = self.find_or_fail(By.XPATH, self.markers.cust_save_xq)
-        save_button.click()
+        save_button = await self.find_or_fail(self.markers.cust_save)
+        await save_button.mouse_click()
+
+        await self.wait_until_disappear(self.markers.cust_save)
+        time.sleep(0.5)
         return True
