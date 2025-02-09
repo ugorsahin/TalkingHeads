@@ -1,6 +1,6 @@
 """Multiagent"""
 
-import time
+import asyncio
 import logging
 from datetime import datetime
 from collections import OrderedDict
@@ -35,7 +35,7 @@ class MultiAgent:
     """An interface to use multiple instances together."""
 
     def __init__(self, configuration_path: str):
-        with open(configuration_path) as fd:
+        with open(configuration_path, encoding="utf-8") as fd:
             self.config = yaml.safe_load(fd)
 
         ma_settings = self.config.get("multiagent_settings")
@@ -48,25 +48,24 @@ class MultiAgent:
             self.set_save_path(self.save_path)
 
         self.logger = logging.getLogger('root')
-        verbose = self.config["driver_settings"].get("shared").get("verbose")
+        verbose = self.config["browser_settings"].get("shared").get("verbose")
         if verbose and not self.logger.isEnabledFor(logging.INFO):
             self.logger.setLevel(logging.INFO)
             self.logger.info("Verbose mode active")
 
         self.agent_swarm = {}
-        driver_settings = self.config["driver_settings"]
-        shared_config = driver_settings.get("shared")
-        nodes = driver_settings.get("nodes")
+        browser_settings = self.config["browser_settings"]
+        shared_config = browser_settings.get("shared")
+        nodes = browser_settings.get("nodes")
 
         self.agent_swarm = {
-            vals.get("tag", key) : self.open_agent(
+            vals.get("tag", key) : self.construct_agent(
                 key,
                 merge(shared_config, vals, {"auto_save": False, "multihead": True}),
             )
             for key, vals in nodes.items()
         }
-        self.ready = True
-        self.logger.info("All models are successfully loaded")
+        self.ready = False
 
     def __del__(self):
         self.agent_swarm.clear()
@@ -74,7 +73,7 @@ class MultiAgent:
             self.save()
 
     @staticmethod
-    def dictmap(lambda_func: Callable, dictionary: Dict) -> Dict[str, Any]:
+    async def dictmap(dictionary: Dict) -> Dict[str, Any]:
         """Takes a lambda function which accepts two parameters,
         and returns a dictionary based on this lambda function
 
@@ -86,11 +85,27 @@ class MultiAgent:
         Returns:
             Dict[str, Any]: A dictionary in the form defined by lambda_func
         """
-        with ThreadPoolExecutor() as executor:
-            result = OrderedDict(executor.map(lambda_func, *zip(*dictionary.items())))
-        return result
+        results = await asyncio.gather(*dictionary.values())
+        return {
+            agent_name : result
+            for agent_name, result in zip(dictionary.keys(), results)
+        }
 
-    def open_agent(self, client_name: str, config: Dict[str, str]) -> BaseBrowser:
+    async def start(self):
+        tasks = [
+            agent.start()
+            for agent in self.agent_swarm.values()
+        ]
+        _ = await asyncio.gather(*tasks)
+
+        if all(list(map(
+            lambda agent: agent.ready,
+            self.agent_swarm.values()
+        ))):
+            self.ready = True
+        self.logger.info("All models are successfully loaded")
+
+    def construct_agent(self, client_name: str, config: Dict[str, str]) -> BaseBrowser:
         """Open the given client
 
         Args:
@@ -100,7 +115,6 @@ class MultiAgent:
         Returns:
             BaseBrowser: The agent object
         """
-        time.sleep(random() * randint(1, 4))
         client_constructor = get_client(client_name)
         return client_constructor(**config)
 
@@ -113,14 +127,14 @@ class MultiAgent:
         self.save_path = save_path or datetime.now().strftime("%Y_%m_%d_%H_%M_%S.csv")
         self.file_type = save_path.split(".")[-1] if save_path else "csv"
 
-    def interact(self, head_name: str, prompt: str) -> str:
+    async def interact(self, head_name: str, prompt: str) -> str:
         """interact with the given head"""
         client = self.agent_swarm[head_name]
-        response = client.interact(prompt)
+        response = await client.interact(prompt)
         self.log_chat(client_name=client.client_name, response=response)
         return response
 
-    def broadcast(self, prompt: str, exclude: List[str] = None) -> Dict[str, str]:
+    async def broadcast(self, prompt: str, exclude: List[str] = None) -> Dict[str, str]:
         """Interacts with the agent swarm and returns back the results,
         before interacting, the agents defined in the exclude list will be removed.
 
@@ -137,16 +151,16 @@ class MultiAgent:
             agents = dict(filter(lambda kv: kv[0] not in exclude, agents.items()))
 
         self.log_chat(prompt=prompt)
-        responses = self.dictmap(
-            lambda agent_name, _: (
-                agent_name,
-                self.interact(agent_name, prompt),
-            ),
-            agents,
+
+        responses = await self.dictmap(
+            {
+                agent_name: self.interact(agent_name, prompt)
+                for agent_name in agents
+            }
         )
         return responses
 
-    def aggregate(
+    async def aggregate(
         self,
         agents: Union[str, List[str]],
         prompt: str,
@@ -154,7 +168,7 @@ class MultiAgent:
         reset_before_agg: bool = True,
     ):
         """This function
-        - Feeds all the responses into the selected agent(s) to aggregation,
+        - Feeds all the responses into the selected agent(s) for aggregation,
 
         - Returns the response(s)
 
@@ -191,15 +205,15 @@ class MultiAgent:
         responses = emoji.replace_emoji(responses, replace="")
 
         if reset_before_agg:
-            self.reset_agents(agents)
+            await self.reset_agents(agents)
 
         final_prompt = f"{prompt}\nHere are the options:\n{responses}"
 
-        agg_response = self.broadcast(final_prompt, exclude=exclude_agents)
+        agg_response = await self.broadcast(final_prompt, exclude=exclude_agents)
 
         return agg_response
 
-    def broadcast_and_aggregate(
+    async def broadcast_and_aggregate(
         self,
         prompt: str,
         agg_agents: Union[str, List[str]],
@@ -237,8 +251,8 @@ class MultiAgent:
         agg_agents = [agg_agents] if isinstance(agg_agents, str) else agg_agents
         exclude = agg_agents if exclude_agg_agents else None
 
-        responses = self.broadcast(prompt, exclude=exclude)
-        final_responses = self.aggregate(
+        responses = await self.broadcast(prompt, exclude=exclude)
+        final_responses = await self.aggregate(
             agents=agg_agents,
             prompt=agg_prompt,
             responses=responses,
@@ -247,7 +261,7 @@ class MultiAgent:
 
         return responses, final_responses
 
-    def broadcast_and_vote(self, prompt: str, voting_prompt: str) -> Dict[str, str]:
+    async def broadcast_and_vote(self, prompt: str, voting_prompt: str) -> Dict[str, str]:
         """
         This function
         - Broadcasts the prompt to all agents.
@@ -266,14 +280,14 @@ class MultiAgent:
             and voting steps.
         """
 
-        return self.broadcast_and_aggregate(
+        return await self.broadcast_and_aggregate(
             prompt=prompt,
             agg_agents=self.agent_swarm,
             agg_prompt=voting_prompt,
             exclude_agg_agents=False,
         )
 
-    def reset_agents(self, agents: List[str] = None) -> List[bool]:
+    async def reset_agents(self, agents: List[str] = None) -> List[bool]:
         """This function resets the conversations of the given agents. If the agents is empty,
         it resets all of them.
 
@@ -344,6 +358,14 @@ class MultiAgent:
 
         self.logger.error("Unsupported file type %s", self.file_type)
         return False
+    
+    def stop(self):
+        _ = list(
+            map(
+                lambda agent : agent.browser.stop(),
+                self.agent_swarm.values()
+            )
+        )
 
 class Conversation(MultiAgent):
     """A special Multiagent setting where two agents carry a conversation"""
@@ -357,7 +379,7 @@ class Conversation(MultiAgent):
         self.head_1_response = None
         self.head_2_response = None
 
-    def start_conversation(
+    async def start_conversation(
         self, intro_prompt_1: str, intro_prompt_2: str, use_response_1: bool = True
     ):
         """Starts a conversation between two heads
@@ -371,14 +393,14 @@ class Conversation(MultiAgent):
         Returns:
             Tuple[str]: The responses of the respective chat bots.
         """
-        self.head_1_response = self.interact(self.head_1, intro_prompt_1)
+        self.head_1_response = await self.interact(self.head_1, intro_prompt_1)
         if use_response_1:
             intro_prompt_2 += f"\n{self.head_1_response}"
-        self.head_2_response = self.interact(self.head_2, intro_prompt_2)
+        self.head_2_response = await self.interact(self.head_2, intro_prompt_2)
 
         return self.head_1_response, self.head_2_response
 
-    def continue_conversation(self, prompt_1: str = None, prompt_2: str = None) -> Tuple[str]:
+    async def continue_conversation(self, prompt_1: str = None, prompt_2: str = None) -> Tuple[str]:
         """Make another round of conversation.
         If prompt_1 or prompt_2 is given, the response is not used
 
@@ -392,9 +414,9 @@ class Conversation(MultiAgent):
             Tuple[str]: The responses of the respective chat bots.
         """
         prompt_1 = prompt_1 or self.head_2_response
-        self.head_1_response = self.interact(self.head_1, prompt_1)
+        self.head_1_response = await self.interact(self.head_1, prompt_1)
 
         prompt_2 = prompt_2 or self.head_1_response
-        self.head_2_response = self.interact(self.head_2, prompt_2)
+        self.head_2_response = await self.interact(self.head_2, prompt_2)
 
         return self.head_1_response, self.head_2_response
