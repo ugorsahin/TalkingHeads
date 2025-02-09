@@ -1,8 +1,7 @@
 """Class definition for HuggingChat client"""
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as EC
+import os
+import time
 from .. import BaseBrowser
 
 
@@ -21,7 +20,7 @@ class HuggingChatClient(BaseBrowser):
             **kwargs,
         )
 
-    def login(self, username: str, password: str):
+    async def login(self):
         """
         Performs the login process with the provided username and password.
 
@@ -38,29 +37,27 @@ class HuggingChatClient(BaseBrowser):
         """
 
         # Find login button, click it
-        login_button = self.wait_until_appear(By.XPATH, self.markers.login_xq)
-        login_button.submit()
+        login_button = await self.wait_until_appear(self.markers.login)
+        await login_button.click()
         self.logger.info("Clicked login button")
 
         # Find email textbox, enter e-mail
-        email_box = self.wait_until_appear(By.XPATH, self.markers.username_xq)
-        email_box.send_keys(username)
+        email_box = await self.wait_until_appear(self.markers.username)
+        await email_box.send_keys(os.environ.get(self.uname_var))
         self.logger.info("Filled username/email")
 
         # Find password textbox, enter password
-        pass_box = self.wait_until_appear(By.XPATH, self.markers.password_xq)
-        pass_box.send_keys(password)
+        pass_box = await self.wait_until_appear(self.markers.password)
+        await pass_box.send_keys(os.environ.get(self.pwd_var))
         self.logger.info("Filled password box")
 
-        pass_box.send_keys(Keys.ENTER)
+        await pass_box.send_keys('\r\n')
 
         # Click continue
-        # a_login_button = self.wait_until_appear(By.XPATH, self.markers.a_login_xq)
-        # a_login_button.click()
-        # self.logger.info("Clicked login button")
+        await self.wait_until_appear(self.markers.textarea)
         return True
 
-    def interact(self, prompt: str):
+    async def interact(self, prompt: str):
         """Sends a prompt and retrieves the response from the HuggingChat system.
 
         This function interacts with the HuggingChat.
@@ -77,42 +74,48 @@ class HuggingChatClient(BaseBrowser):
             str: The generated response.
         """
 
-        text_area = self.find_or_fail(By.XPATH, self.markers.textarea_xq)
+        text_area = await self.find_or_fail(self.markers.textarea)
         if not text_area:
             return ""
 
         for each_line in prompt.split("\n"):
-            text_area.send_keys(each_line)
-            text_area.send_keys(Keys.SHIFT + Keys.ENTER)
-        text_area.send_keys(Keys.RETURN)
+            await text_area.send_keys(each_line)
+            await text_area.send_keys('\r\n')
+
+        time.sleep(0.5)
+        send_button = await self.find_or_fail(self.markers.send)
+        await send_button.click()
         self.logger.info("Message sent, waiting for response")
-        self.wait_until_disappear(By.XPATH, self.markers.stop_gen_xq)
-        response = self.find_or_fail(
-            By.XPATH, self.markers.chatbox_xq, return_type="last"
-        )
+
+        await self.wait_until_disappear(self.markers.stop_gen)
+        response = await self.get_last_response()
         if not response:
             return ""
-        self.logger.info("response is ready")
-        self.log_chat(prompt=prompt, response=response.text)
-        return response.text
 
-    def reset_thread(self) -> bool:
+        self.logger.info("response is ready")
+        self.log_chat(prompt=prompt, response=response)
+        return response
+
+    async def reset_thread(self) -> bool:
         """Function to close the current thread and start new one"""
-        self.browser.get(self.url)
+        await self.browser.get(self.url)
         return True
 
-    def toggle_search_web(self) -> bool:
+    async def toggle_search_web(self) -> bool:
         """Function to enable/disable web search feature"""
-        search_web_toggle = self.find_or_fail(By.XPATH, self.markers.search_xq)
+        search_web_toggle = await self.find_or_fail(self.markers.search)
         if not search_web_toggle:
             return False
-        search_web_toggle.click()
-        status = search_web_toggle.get_attribute("aria-checked")
-        status = status == "true"
+        await search_web_toggle.click()
+        
+        # Find the button once more, this time to retrieve status
+        search_web_toggle = await self.find_or_fail(self.markers.search)
+        status = search_web_toggle.text_all
+        status = "Search" in status
         self.logger.info("Search web is %s", ["disabled", "enabled"][status])
         return status
 
-    def switch_model(self, model_name: str) -> bool:
+    async def switch_model(self, model_name: str) -> bool:
         """
         Switch the model.
 
@@ -122,42 +125,36 @@ class HuggingChatClient(BaseBrowser):
         Returns:
             bool: True on success, False on fail
         """
-        model_button = self.find_or_fail(By.XPATH, self.markers.model_xq)
+        model_button = await self.find_or_fail(self.markers.models)
         if not model_button:
             return False
-        model_button.click()
+        await model_button.click()
 
-        self.wait_object.until(
-            EC.presence_of_element_located((By.XPATH, self.markers.settings_xq))
-        )
-        models = self.find_or_fail(
-            By.XPATH, self.markers.model_li_xq, return_type="all"
-        )
+        await self.wait_until_appear(self.markers.model_li)
+        models = await self.find_or_fail(self.markers.model_li, return_type="all")
+
         if not models:
             return False
-        models = {m.text.strip(): m for m in models}
 
-        successful_switch = True
+        models = {m.href.replace("/chat/models/", "").strip(): m for m in models}
+
+        successful_switch = False
         model = models.get(model_name, None)
         if model is None:
             self.logger.error("Model %s has not found", model_name)
             self.logger.error("Available models are: %s", str(models.keys()))
             successful_switch = False
         else:
-            model.click()
+            await model.click()
             self.logger.info("Clicked model card %s", model_name)
+            successful_switch = True
 
-            activate_button = self.find_or_fail(By.XPATH, self.markers.model_act_xq)
-            if not activate_button:
-                successful_switch = False
-            else:
-                activate_button.click()
-
-        close_button = self.find_or_fail(By.XPATH, self.markers.model_a_xq, fail_ok=True)
-        if close_button:
-            close_button.click()
+        if successful_switch is False:
+            close_button = await self.find_or_fail(self.markers.model_a, fail_ok=True)
+            if close_button:
+                await close_button.click()
 
         return successful_switch
 
-    def regenerate_response(self):
+    async def regenerate_response(self):
         raise NotImplementedError("HuggingChat doesn't provide response regeneration")
