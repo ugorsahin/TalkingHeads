@@ -13,7 +13,7 @@ import pandas as pd
 from mergedeep import merge
 import emoji
 from .. import (
-    ChatGPTClient, ClaudeClient, CopilotClient, GeminiClient,
+    ChatGPTClient, CopilotClient, DeepSeekClient, GeminiClient,
     HuggingChatClient, LeChatClient, PiClient
 )
 from ..base_browser import BaseBrowser
@@ -23,7 +23,7 @@ def get_client(client_name):
     """Returns the client by their tag name"""
     return {
         "ChatGPT": ChatGPTClient,
-        "Claude": ClaudeClient,
+        "DeepSeek": DeepSeekClient,
         "Copilot": CopilotClient,
         "Gemini": GeminiClient,
         "HuggingChat": HuggingChatClient,
