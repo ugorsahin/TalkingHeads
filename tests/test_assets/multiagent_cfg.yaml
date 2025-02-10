@@ -1,19 +1,21 @@
 multiagent_settings:
     auto_save: true
     save_path: 'artifacts/multihead.csv'
-driver_settings:
+browser_settings:
     shared:
         verbose: true
         headless : false
-        incognito : true
-        driver_arguments:
-            remote-debugging-port: 20222
-            disable-gpu: true
-            disable-dev-shm-usage: true
-            password-store: basic
+        auto_save : true
+        browser_arguments:
+            - "--disable-gpu"
+            - "--disable-dev-shm-usage"
+            - "--password-store=basic"
     nodes:
-        Copilot: {}
-        Pi: {}
+        HuggingChat:
+            browser_arguments:
+                - "--incognito"
+        Pi:
+            browser_arguments:
+                - "--incognito"
         Gemini:
             user_data_dir : /home/bigsmiley/Desktop/misc_coding/talkingheads_docker/talkingheads_userprofile
-            incognito : false

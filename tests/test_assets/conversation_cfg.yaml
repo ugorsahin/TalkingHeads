@@ -1,15 +1,16 @@
 multiagent_settings:
     auto_save: true
     save_path: 'artifacts/test_conversation.csv'
-driver_settings:
+browser_settings:
     shared:
+        auto_save: true
         verbose: true
         headless : true
-        incognito : true
-        driver_arguments:
-          disable-gpu: true
-          disable-dev-shm-usage: true
-          password-store: basic
+        browser_arguments:
+          - "--disable-gpu"
+          - "--disable-dev-shm-usage"
+          - "--password-store: basic"
+          - "--incognito"
     nodes:
         ChatGPT: {}
         Pi: {}
