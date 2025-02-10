@@ -23,14 +23,13 @@ async def test_interaction():
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_reset():
-    assert await generic.test_reset(pytest.chathead)
-    assert item is None, "Chat is not empty"
+    await generic.test_reset(pytest.chathead)
 
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_regenerate():
     first_response = await pytest.chathead.interact(
-        "Without any explanation or extra information, type five animal names."
+        "List 5 animals that are maximally different from each other."
     )
     second_response = await pytest.chathead.regenerate_response()
     assert (
