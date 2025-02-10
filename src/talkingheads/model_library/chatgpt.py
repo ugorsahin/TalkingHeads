@@ -62,7 +62,6 @@ class ChatGPTClient(BaseBrowser):
         """
 
         # Find login button, click it
-        await self.tab.save_screenshot('/home/bigsmiley/Desktop/shot.png')
         login_button = await self.wait_until_appear(self.markers.login)
         # self.wait_object.until(EC.element_to_be_clickable(login_button))
         await login_button.mouse_click()
