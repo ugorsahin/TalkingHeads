@@ -38,3 +38,4 @@ artifacts
 talkingheads_userprofile
 
 .pytest_cache/
+donotfollow/
