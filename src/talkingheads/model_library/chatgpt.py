@@ -63,8 +63,7 @@ class ChatGPTClient(BaseBrowser):
 
         # Find login button, click it
         login_button = await self.wait_until_appear(self.markers.login)
-        # self.wait_object.until(EC.element_to_be_clickable(login_button))
-        await login_button.mouse_click()
+        await login_button.click()
 
         # login_button = self.find_or_fail(self.markers.login, fail_ok=True)
         # login_button.click()
@@ -80,7 +79,7 @@ class ChatGPTClient(BaseBrowser):
             login_button = await self.find_or_fail(self.markers.login, fail_ok=True)
 
             if login_button:
-                await login_button.mouse_click()
+                await login_button.click()
                 self.logger.info("Trying to click login button once more")
         else:
             self.logger.error("Can't reach email page")
@@ -88,11 +87,7 @@ class ChatGPTClient(BaseBrowser):
 
         await email_box.send_keys(os.environ.get(self.uname_var))
         self.logger.info("Filled email box")
-
-        # Click continue
-        continue_button = await self.wait_until_appear(self.markers.continue_btn)
-        await continue_button.click()
-        self.logger.info("Clicked continue button")
+        await email_box.send_keys('\r\n')
 
         # Find password textbox, enter password
         pass_box = await self.wait_until_appear(self.markers.pwd)
@@ -225,7 +220,6 @@ class ChatGPTClient(BaseBrowser):
         # await text_area.send_keys(prompt)
         await text_area.focus()
         await self.tab.send(cdp.input_.insert_text(text=prompt))
-        # await text_area.apply(f'function (element) {{ element.value = {prompt} }} ')
 
         send_button = await self.find_or_fail(self.markers.send)
         await send_button.click()
