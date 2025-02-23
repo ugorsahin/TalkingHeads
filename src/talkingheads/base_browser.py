@@ -21,6 +21,7 @@ that should be implemented by subclasses for specific automation workflows, like
 with a chatbot or performing other automated web tasks.
 """
 
+import asyncio
 import abc
 import os
 import logging
@@ -90,7 +91,8 @@ class BaseBrowser:
         user_data_dir: str = None,
         browser_arguments: list = None,
         tag: str = None,
-        multihead=False
+        multihead: bool = False,
+        debug: bool = True
     ):
         self.client_name = client_name
         self.markers = markers[client_name]
@@ -109,6 +111,7 @@ class BaseBrowser:
         self.skip_login = skip_login
         self.tab = None
         self.ready = False
+        self.debug = debug
 
         if credential_check:
             if not os.environ.get(self.uname_var):
@@ -233,6 +236,9 @@ class BaseBrowser:
         if not dom_elements:
             log_fn = self.logger.info if fail_ok else self.logger.error
             log_fn(" %s is not located.", xpath)
+            if self.debug:
+                xpath_str = xpath.replace("/", "_")
+                await self.tab.save_screenshot(f"{self.client_name}_{xpath_str}_{time.time()}.png")
             return None
 
         self.logger.info(" %s is located.", xpath)
@@ -270,8 +276,12 @@ class BaseBrowser:
         self.logger.info("Waiting element %s to appear.", xpath)
         element = None
         try:
-            element = await self.tab.wait_for(text=xpath, timeout=timeout)
-            self.logger.info("Element %s appeared.", xpath)
+            for _ in range(timeout):
+                element = await self.find_or_fail(xpath, fail_ok=True)
+                if element:
+                    self.logger.info("Element %s appeared.", xpath)
+                    break
+                await asyncio.sleep(1)
         except TimeoutError:
             if not fail_ok:
                 self.logger.error(
