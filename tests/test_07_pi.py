@@ -10,7 +10,7 @@ from talkingheads import PiClient
 
 @pytest.mark.asyncio(loop_scope='session')
 async def test_start():
-    pytest.chathead = PiClient(**get_driver_arguments("pi", incognito=True))
+    pytest.chathead = PiClient(**get_driver_arguments("pi", no_user_data_dir=True))
     await pytest.chathead.start()
     assert pytest.chathead.ready, "The Client is not ready"
 

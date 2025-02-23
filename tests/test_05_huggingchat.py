@@ -9,7 +9,7 @@ from talkingheads import HuggingChatClient
 
 @pytest.mark.asyncio(loop_scope='session')
 async def test_start():
-    pytest.chathead = HuggingChatClient(**get_driver_arguments('huggingchat', incognito=True))
+    pytest.chathead = HuggingChatClient(**get_driver_arguments('huggingchat', no_user_data_dir==True))
     await pytest.chathead.start()
     assert pytest.chathead.ready, "The Client is not ready"
 
