@@ -9,7 +9,7 @@ from talkingheads import DeepSeekClient
 
 @pytest.mark.asyncio(loop_scope='session')
 async def test_start():
-    pytest.chathead = DeepSeekClient(**get_driver_arguments("deepseek"))
+    pytest.chathead = DeepSeekClient(**get_driver_arguments("deepseek"), skip_login=True)
     await pytest.chathead.start()
     assert pytest.chathead.ready, "The Client is not ready"
 

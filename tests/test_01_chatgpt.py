@@ -9,7 +9,7 @@ from talkingheads.model_library import ChatGPTClient
 
 @pytest.mark.asyncio(loop_scope='session')
 async def test_start():
-    pytest.chathead = ChatGPTClient(**get_driver_arguments('chatgpt', incognito=True))
+    pytest.chathead = ChatGPTClient(**get_driver_arguments('chatgpt'), skip_login=True)
     await pytest.chathead.start()
     assert pytest.chathead.ready, "The Client is not ready"
 
