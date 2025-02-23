@@ -1,13 +1,18 @@
 import pytest
 import psutil
+import random
 
 async def test_interaction(chathead):
+    num1 = random.randint(0, 20)
+    num2 = random.randint(0, 20)
+    answer = str(num1 + num2)
+
     response = await chathead.interact(
-        "What object is most often found on a bookshelf?"
+        f"Without further explanation, provide the numerical answer of the following question: {num1} + {num2}"
     )
     assert (
-        "book" in response.lower()
-    ), f'response is not "book.", the full response: {response}'
+        answer in response.lower()
+    ), f'response is not "{answer}", the full response: {response}'
 
 async def test_delete_chathead(chathead):
     chathead.browser.stop()
