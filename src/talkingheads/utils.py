@@ -9,7 +9,7 @@ from undetected_chromedriver import find_chrome_executable
 import validators
 
 
-def check_filetype(filepath, extensions: List[str]) -> bool:
+def check_filetype(filepath, extensions: List[str]) -> Optional[str]:
     """Checks if the given file is expected, return False if the extension
     is not included in expected extensions
 
@@ -18,12 +18,11 @@ def check_filetype(filepath, extensions: List[str]) -> bool:
         extensions (List[str]): accepted file extensions
 
     Returns:
-        bool: True if file extension exists in extension list, False otherwise
+        Optional[str]: extension name if file extension exists in extension list, None otherwise
     """
 
     extension = filetype.guess_extension(filepath)
-
-    return extension in extensions
+    return extension if extension in extensions else None
 
 
 def detect_chrome_version(version_num: int = None) -> Union[int, None]:
