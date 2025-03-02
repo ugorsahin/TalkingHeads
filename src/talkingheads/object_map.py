@@ -33,7 +33,8 @@ markers = EasyDict(
             "gpt"        : "//span[text()='{}']"
         },
         "Copilot": {
-            "file_types"    : ["gif", "jpg", "jpeg", "png", "webp"],
+            "file_types"    : ["jpg", "jpeg", "png", "webp", "json", "pdf", "xlsx",
+                "svg", "docx", "csv"],
             "textarea"      : "//textarea[@id='userInput']",
             "chatbox"       : "//div[@data-content='ai-message']/div",
             "send"          : "//button[@aria-label='Submit message']",
@@ -51,8 +52,8 @@ markers = EasyDict(
             "think_active"  : "//span[contains(text(), 'Think')]"
         },
         "Gemini": {
-            "file_types" : ["jpg", "jpeg", "png", "webp"],
-            # "textarea"   : '//div[@role="textbox"]',
+            "file_types" : ["jpg", "jpeg", "png", "webp", "txt", "pdf", "doc", "docx", 
+                "dot", "dotx", "rtf", "hwp", "hwpx", "odt", "pptx"],
             "textarea"   : '//div[@contenteditable="true"]',
             "wait"       : '//rect',
             "chatbox"    : "//message-content",
@@ -62,8 +63,9 @@ markers = EasyDict(
             "hist_off"   : '//button[@data-test-id="bard-activity-disabled-button"]',
             "regen"      : "//button[@aria-label='Regenerate']",
             "mod_opt"    : "//button[@role='menuitem'][not(contains(@style, 'none'))]",
+            "add_btn"    : "//button[contains(@aria-label, 'upload')]",
             "img_btn"    : "//mat-icon[@fonticon='add_photo_alternate']",
-            "img_upload" : "//input[@name='Filedata']",
+            "file_input" : "//input[@name='Filedata' and contains(@accept, '{file_type}')]",
             "img_loaded" : "//img[@aria-label='Image preview']",
             "got_it"     : "//button[@data-test-id='got-it-button']"
         },
