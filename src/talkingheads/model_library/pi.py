@@ -15,13 +15,15 @@ class PiClient(BaseBrowser):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(
-            client_name="Pi",
-            url="https://pi.ai/talk",
-            credential_check=False, 
-            skip_login=True,
-            **kwargs
+        kwargs.update(
+            {
+                "client_name"   : "Pi",
+                "url"           : "https://pi.ai/talk",
+                "skip_login"    : True,
+                "credential_check" : False
+            }
         )
+        super().__init__(**kwargs)
 
     async def login(self):
         """
