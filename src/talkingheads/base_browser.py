@@ -256,7 +256,7 @@ class BaseBrowser:
         login_button = await self.tab.find_elements_by_text(self.markers.login)
         return len(login_button) == 1
 
-    async def wait_until_appear(self, xpath: str, timeout: int = 5, fail_ok=False):
+    async def wait_until_appear(self, xpath: str, timeout: int = 10, fail_ok=False):
         """
         Waits until the specified web element appears on the page.
 
@@ -267,7 +267,7 @@ class BaseBrowser:
         Args:
             by (selenium.webdriver.common.by.By): The method used to locate the element.
             elem_query (str): The elem_query string to locate the element.
-            timeout (int, optional): Waiting time before the timeout. Default: 15.
+            timeout (int, optional): Waiting time before the timeout. Default: 10
             fail_ok (bool, optional): If True, skips logging error if element is absent.
 
         Returns:
