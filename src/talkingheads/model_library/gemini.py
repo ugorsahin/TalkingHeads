@@ -106,14 +106,23 @@ class GeminiClient(BaseBrowser):
         """
         if isinstance(file_path, Path):
             file_path = str(file_path)
-        if not check_filetype(file_path, self.markers.file_types):
+        file_type = check_filetype(file_path, self.markers.file_types)
+        if not file_type:
             self.logger.error(
                 "File type should be one of the following: %s",
                 ", ".join(self.markers.file_types),
             )
             return False
+        add_button = await self.find_or_fail(self.markers.add_btn)
+        if not add_button:
+            return False
 
-        im_input_element = await self.find_or_fail(self.markers.img_upload, fail_ok=True)
+        await add_button.click()
+        input_xpath = self.markers.file_input.format(file_type=file_type)
+        im_input_element = await self.find_or_fail(
+            input_xpath,
+            fail_ok=True
+        )
 
         if not im_input_element:
             # Input element only appears when we click the image button
@@ -135,7 +144,7 @@ class GeminiClient(BaseBrowser):
                 time.sleep(0.3)
                 await im_button.mouse_click()
 
-            im_input_element = await self.wait_until_appear(self.markers.img_upload)
+            im_input_element = await self.wait_until_appear(input_xpath)
             if not im_input_element:
                 return False
 
