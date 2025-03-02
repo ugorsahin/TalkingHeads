@@ -236,7 +236,7 @@ class BaseBrowser:
         if not dom_elements:
             log_fn = self.logger.info if fail_ok else self.logger.error
             log_fn(" %s is not located.", xpath)
-            if self.debug:
+            if not fail_ok and self.debug:
                 xpath_str = xpath.replace("/", "_")
                 await self.tab.save_screenshot(f"{self.client_name}_{xpath_str}_{time.time()}.png")
             return None
