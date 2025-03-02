@@ -113,7 +113,7 @@ class BaseBrowser:
         self.ready = False
         self.debug = debug
 
-        if credential_check:
+        if not skip_login and credential_check:
             if not os.environ.get(self.uname_var):
                 raise NameError(f"Set the environment variable {self.uname_var}")
             if not os.environ.get(self.pwd_var):
