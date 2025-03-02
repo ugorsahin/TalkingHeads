@@ -319,8 +319,8 @@ class ChatGPTClient(BaseBrowser):
             return ""
 
         await self.wait_until_appear(self.markers.cust_txt)
-        asyncio.sleep(0.5)
         text_areas = await self.find_or_fail(self.markers.cust_txt, return_type="all")
+        await asyncio.sleep(1.)
         text = text_areas[self.custom_areas[mode]].text_all
         self.logger.info("Custom instruction is obtained: %s", text)
 
