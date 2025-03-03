@@ -60,7 +60,7 @@ async def test_continue_conversation():
         "north america" in response[0].lower()
     ), "Round 2: The keyword 'North America' is absent in first response"
     assert all(
-        i in response[1].lower() for i in {"united states", "canada", "mexico"}
+        i in response[1].lower() for i in ["united states", "canada", "mexico"]
     ), f"Round 2: The countries are wrong. Response: {response[1].lower()}"
 
 
