@@ -25,6 +25,7 @@ import asyncio
 import abc
 import os
 import logging
+import re
 import time
 from datetime import datetime
 from typing import Union, Optional
@@ -241,8 +242,7 @@ class BaseBrowser:
             log_fn = self.logger.info if fail_ok else self.logger.error
             log_fn(" %s is not located.", xpath)
             if not fail_ok and self.debug:
-                xpath_str = xpath.replace("/", "_")
-                await self.tab.save_screenshot(f"{self.client_name}_{xpath_str}_{time.time()}.png")
+                self.save_screenshot(xpath)
             return None
 
         self.logger.info(" %s is located.", xpath)
@@ -488,6 +488,10 @@ class BaseBrowser:
         self.logger.warning("Response is not available.")
         return None
     
+    async def save_screenshot(self, xpath):
+        xpath = re.sub("\_+", "_", xpath)
+        await self.tab.save_screenshot(f"{self.client_name}_{xpath}_{time.time()}.png")
+
     @staticmethod
     async def clear_input(element):
         await element.apply('function (element) { element.select() } ')
