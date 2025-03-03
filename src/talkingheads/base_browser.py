@@ -83,8 +83,7 @@ class BaseBrowser:
         uname_var: Union[str, None] = None,
         pwd_var: Union[str, None] = None,
         headless: bool = True,
-        auto_save: bool = False,
-        save_path: str = None,
+        save_path: Union[str, bool] = None,
         verbose: bool = False,
         credential_check: bool = True,
         skip_login: bool = False,
@@ -101,7 +100,6 @@ class BaseBrowser:
         self.pwd_var = pwd_var or f"{client_name}_PWD"
         self.headless = headless
         self.browser = None
-        self.auto_save = auto_save
         self.last_prompt = ""
         self.tag = tag or self.client_name
         self.multihead = multihead
@@ -161,26 +159,32 @@ class BaseBrowser:
         self.logger.info("%s is ready to interact", self.client_name)
         self.ready = True
 
-    # def __del__(self):
-    #     # if self.browser is not None and not self.browser.stopped:
-    #     #     self.browser.stop()
+    def __del__(self):
+        if getattr(self, "browser") and not self.browser.stopped:
+            self.browser.stop()
 
-    #     if self.auto_save:
-    #         self.save()
+        if getattr(self, "save_path"):
+            self.save()
 
 
-    def set_save_path(self, save_path: str):
+    def set_save_path(self, save_path: Union[str, bool]):
         """
-        The file path to save the chat log. If not provided, a timestamped file
-        with the default extension 'csv' is created in the current working directory.
+        Sets the file path to save the chat log. If a boolean value is provided,
+        a timestamped file with the default extension 'csv' is created in the current
+        working directory.
 
         Args:
-            save_path (str): The saving path
+            save_path (Union[str, bool]): The save path for the chat log. If True,
+            a timestamped file name with the 'csv' extension is generated.
         """
-        self.save_path = save_path or datetime.now().strftime(
-            f"{self.tag}_%Y_%m_%d_%H_%M_%S.csv"
-        )
-        self.file_type = save_path.split(".")[-1] if save_path else "csv"
+        if isinstance(save_path, bool):
+            self.save_path = datetime.now().strftime(
+                f"{self.tag}_%Y_%m_%d_%H_%M_%S.csv"
+            )
+        else:
+            self.save_path = save_path
+
+        self.file_type = save_path.split(".")[-1]
 
     def save(self) -> bool:
         """
@@ -334,7 +338,7 @@ class BaseBrowser:
         Returns:
             bool: True if the interaction is logged, False otherwise.
         """
-        if not self.auto_save:
+        if not self.save_path:
             return False
 
         if prompt:
