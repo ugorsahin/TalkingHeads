@@ -142,7 +142,11 @@ class BaseBrowser:
             RuntimeError: _description_
         """
         self.logger.info("Loading nodriver")
-        self.browser = await nd.start(user_data_dir=self.user_data_dir, headless=self.headless)
+        self.browser = await nd.start(
+            user_data_dir=self.user_data_dir,
+            headless=self.headless,
+            browser_args=self.browser_arguments
+        )
 
         self.logger.info("Loaded nodriver")
         self.logger.info("Opening %s", self.client_name)
@@ -161,10 +165,10 @@ class BaseBrowser:
         self.ready = True
 
     def __del__(self):
-        if getattr(self, "browser") and not self.browser.stopped:
+        if getattr(self, "browser", None) and not self.browser.stopped:
             self.browser.stop()
 
-        if getattr(self, "save_path"):
+        if getattr(self, "save_path", None):
             self.save()
 
 
@@ -242,7 +246,7 @@ class BaseBrowser:
             log_fn = self.logger.info if fail_ok else self.logger.error
             log_fn(" %s is not located.", xpath)
             if not fail_ok and self.debug:
-                self.save_screenshot(xpath)
+                await self.save_screenshot(xpath)
             return None
 
         self.logger.info(" %s is located.", xpath)
@@ -291,6 +295,8 @@ class BaseBrowser:
                 self.logger.error(
                     "Element %s is not present, something is wrong.", xpath
                 )
+                if self.debug:
+                    await self.save_screenshot(xpath)
         return element
 
     async def wait_until_disappear(
@@ -489,7 +495,7 @@ class BaseBrowser:
         return None
     
     async def save_screenshot(self, xpath):
-        xpath = re.sub("\_+", "_", xpath)
+        xpath = re.sub(r"/+", "_", xpath)
         await self.tab.save_screenshot(f"{self.client_name}_{xpath}_{time.time()}.png")
 
     @staticmethod
