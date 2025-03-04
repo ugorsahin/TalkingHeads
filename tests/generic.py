@@ -27,3 +27,12 @@ async def test_reset(chathead):
     assert (
         chat_item is None
     ), "Chat is not empty"
+
+async def test_regenerate(chathead):
+    first_response = await chathead.interact(
+        "List 5 animals that are maximally different from each other."
+    )
+    second_response = await chathead.regenerate_response()
+    assert (
+        first_response.lower() != second_response.lower()
+    ), "The regenerated response is the same."

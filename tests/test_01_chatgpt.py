@@ -26,11 +26,7 @@ async def test_reset():
 @pytest.mark.asyncio(loop_scope='session')
 async def test_regenerate():
     await asyncio.sleep(2)
-    first_response = await pytest.chathead.interact(
-        "Without any explanation or extra information, type three animal names."
-    )
-    second_response = await pytest.chathead.regenerate_response()
-    assert first_response.lower() != second_response.lower(), "The regenerated response is the same."
+    await generic.test_regenerate(pytest.chathead)
 
 @pytest.mark.asyncio(loop_scope='session')
 async def test_custom_interactions():
