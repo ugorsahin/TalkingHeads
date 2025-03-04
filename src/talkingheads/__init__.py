@@ -1,6 +1,6 @@
 """Initialization file of talkingheads library"""
 from .base_browser import BaseBrowser
-from .utils import is_url, check_filetype, detect_chrome_version
+from .utils import is_url, check_filetype
 from .model_library import ChatGPTClient, CopilotClient, DeepSeekClient, \
     GeminiClient, HuggingChatClient, LeChatClient, PiClient
 from .multiagent.multiagent import MultiAgent, Conversation
@@ -8,7 +8,6 @@ from .multiagent.multiagent import MultiAgent, Conversation
 __all__ = [
     "is_url",
     "check_filetype",
-    "detect_chrome_version",
     "BaseBrowser",
     "ChatGPTClient",
     "CopilotClient",
