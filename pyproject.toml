@@ -6,8 +6,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 authors = [
-  { name="Ugur Sahin", email="ugorsahin@tutanota.de"},
+  { name="Ugur Sahin", email="ugorsahin@tutanota.de"}
 ]
+
 name = "talkingheads"
 description = "A library to communicate with AI assistants such as ChatGPT, Claude, Copilot, Gemini, HuggingChat, and Pi, and enabling multiagent interactions between them."
 readme = "README.md"
@@ -15,12 +16,11 @@ requires-python = ">=3.8"
 version = "0.5.4"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
+    "Operating System :: OS Independent"
 ]
 
 dependencies = [
-   'selenium>=4.10.0',
-   'undetected-chromedriver>=3.5.3',
+   'nodriver @ git+https://github.com/ugorsahin/nodriver.git',
    'pandas>=2.0.0',
    'easydict',
    'validators>=0.22.0',
@@ -30,12 +30,17 @@ dependencies = [
    'mergedeep>=1.3.4'
 ]
 
+[optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.25.0",
+    "psutil>=7.0.0"
+]
+
 [project.urls]
 Source = "https://github.com/ugorsahin/TalkingHeads"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-tag_format = "$version"
 version_scheme = "pep440"
-version_provider = "pep621"
 update_changelog_on_bump = true
