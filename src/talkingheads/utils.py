@@ -49,9 +49,12 @@ def detect_chrome_version(version_num: int = None) -> Union[int, None]:
     if version_num:
         logging.debug("Version number is provided: %d", version_num)
         return version_num
-
+        
     chrome_path = find_chrome_executable()
 
+    if chrome_path is None:
+        raise ValueError("Chrome path cannot be None. Please ensure Chrome is installed and the path is properly set.")
+    
     out = subprocess.check_output([chrome_path, "--version"])
     out = re.search(r"Google\s+Chrome\s+(\d{3})", out.decode())
 
