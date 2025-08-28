@@ -57,7 +57,7 @@ Open a terminal and type the following command:
 
 .. code-block:: bash
 
-google-chrome --user-data-dir=path/to/user/profile
+    google-chrome --user-data-dir=path/to/user/profile
 
 Chrome will welcome you. From here, navigate to the Claude, Copilot, or Gemini webpage and log in. After that, you are ready to use your user profile with talkingheads. Take a look at the below example:
 
